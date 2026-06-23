@@ -36,10 +36,13 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
   if (!last.ok) return { error: last.error };
 
   const email = parsed.data.email.toLowerCase();
+  // NOTE: We intentionally return distinct "email exists" vs "username taken" messages.
+  // For this small, admin-approved, invite-only pool the usability win outweighs the
+  // low-value account-enumeration leak. Revisit if signup ever becomes public.
   if (await db.user.findUnique({ where: { email } })) {
     return { error: 'An account with that email already exists.' };
   }
-  if (await db.user.findFirst({ where: { username: { equals: uname.value, mode: 'insensitive' } } })) {
+  if (await db.user.findUnique({ where: { usernameLower: uname.value.toLowerCase() } })) {
     return { error: 'That username is taken.' };
   }
 
@@ -52,6 +55,7 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
     data: {
       name: `${first.value} ${last.value}`,
       username: uname.value,
+      usernameLower: uname.value.toLowerCase(),
       firstName: first.value,
       lastName: last.value,
       email,

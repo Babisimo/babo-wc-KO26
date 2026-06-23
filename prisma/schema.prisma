@@ -19,6 +19,7 @@ model User {
   email               String     @unique
   name                String
   username            String?    @unique
+  usernameLower       String?    @unique
   firstName           String?
   lastName            String?
   usernameChangeCount Int        @default(0)
