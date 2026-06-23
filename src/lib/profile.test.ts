@@ -13,6 +13,15 @@ describe('validateUsername', () => {
     const r = validateUsername('bad name!');
     expect(r.ok).toBe(false);
   });
+  it('accepts exactly 3 chars', () => {
+    expect(validateUsername('abc').ok).toBe(true);
+  });
+  it('accepts exactly 20 chars', () => {
+    expect(validateUsername('a'.repeat(20)).ok).toBe(true);
+  });
+  it('rejects 21 chars', () => {
+    expect(validateUsername('a'.repeat(21)).ok).toBe(false);
+  });
 });
 
 describe('validateName', () => {
@@ -23,6 +32,15 @@ describe('validateName', () => {
     const r = validateName('   ', 'First name');
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toContain('First name');
+  });
+  it('accepts exactly 1 char', () => {
+    expect(validateName('A', 'First name').ok).toBe(true);
+  });
+  it('accepts exactly 50 chars', () => {
+    expect(validateName('a'.repeat(50), 'First name').ok).toBe(true);
+  });
+  it('rejects 51 chars', () => {
+    expect(validateName('a'.repeat(51), 'First name').ok).toBe(false);
   });
 });
 

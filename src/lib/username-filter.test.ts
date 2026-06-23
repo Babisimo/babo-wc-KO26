@@ -9,4 +9,10 @@ describe('checkUsernameAllowed', () => {
     const r = checkUsernameAllowed('admin');
     expect(r.ok).toBe(false);
   });
+  it('rejects case-insensitive match (mixed case)', () => {
+    expect(checkUsernameAllowed('Admin').ok).toBe(false);
+  });
+  it('rejects case-insensitive match (uppercase)', () => {
+    expect(checkUsernameAllowed('ADMIN').ok).toBe(false);
+  });
 });
