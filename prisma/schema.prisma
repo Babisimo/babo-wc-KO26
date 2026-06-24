@@ -64,6 +64,7 @@ model Match {
   teamA        String?       // team code; set for R32, derived for later rounds
   teamB        String?       // team code; set for R32, derived for later rounds
   actualWinner String?       // team code; null until decided
+  winnerSource String?       // "ADMIN" | "FEED"; null when undecided
   kickoff      DateTime?
   feedRef      String?       // external results-feed id (used in Plan 4)
   updatedAt    DateTime  @updatedAt
@@ -76,4 +77,10 @@ model Bracket {
   submittedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model PoolConfig {
+  id        String   @id @default("default")
+  potCents  Int      @default(0)
+  updatedAt DateTime @updatedAt
 }
