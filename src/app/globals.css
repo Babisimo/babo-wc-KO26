@@ -18,6 +18,9 @@
   --ink: #06210f;             /* text on gold */
   --radius: 14px;
   --radius-sm: 9px;
+  --bx-line: rgba(255, 255, 255, 0.2);
+  --bx-cw: 26px;             /* bracket connector width */
+  --bx-card: 160px;          /* bracket card width */
   --shadow: 0 18px 44px -18px rgba(0, 0, 0, 0.7);
   --maxw: 1060px;
 }
@@ -288,6 +291,41 @@ tbody tr:last-child td { border-bottom: none; }
 .mm-match button.mm-btn.sel { background: rgba(255, 210, 63, 0.2); color: var(--gold); font-weight: 800; }
 .mm-match button.mm-btn:disabled { opacity: 0.5; cursor: default; }
 .mm-match button.mm-btn .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- Recursive tournament bracket (true two-sided tree) ---- */
+.bx-wrap { display: flex; align-items: center; justify-content: flex-start; overflow-x: auto; padding: 30px 4px 26px; }
+.bx { display: flex; align-items: center; }
+.bx-kids { display: flex; flex-direction: column; justify-content: center; }
+.bx-leaf, .bx-self { display: flex; align-items: center; padding: 5px 0; }
+.bx-wrap .mm-match { width: var(--bx-card); flex: none; }
+
+/* the centerpiece Final */
+.bx-final { position: relative; display: flex; align-items: center; margin: 0 var(--bx-cw); }
+.bx-final .mm-match { width: 178px; box-shadow: 0 0 0 1px rgba(255, 210, 63, 0.35), var(--shadow); }
+.bx-final::before, .bx-final::after { content: ""; position: absolute; top: 50%; width: var(--bx-cw); height: 2px; background: var(--bx-line); }
+.bx-final::before { right: 100%; }
+.bx-final::after { left: 100%; }
+.bx-final-tag {
+  position: absolute; top: -24px; left: 50%; transform: translateX(-50%); white-space: nowrap;
+  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem; color: var(--gold);
+}
+.bx-trophy { position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); font-size: 1.4rem; }
+
+/* LEFT half: kids | connector | self */
+.bx.left > .bx-self { margin-left: var(--bx-cw); position: relative; }
+.bx.left > .bx-self::before { content: ""; position: absolute; right: 100%; top: 50%; width: var(--bx-cw); height: 2px; background: var(--bx-line); }
+.bx.left > .bx-kids > * { position: relative; }
+.bx.left > .bx-kids > *::after { content: ""; position: absolute; left: 100%; width: calc(var(--bx-cw) / 2); border-right: 2px solid var(--bx-line); }
+.bx.left > .bx-kids > *:first-child::after { top: 50%; bottom: -1px; border-top: 2px solid var(--bx-line); }
+.bx.left > .bx-kids > *:last-child::after { top: -1px; bottom: 50%; border-bottom: 2px solid var(--bx-line); }
+
+/* RIGHT half mirrored: self | connector | kids */
+.bx.right > .bx-self { margin-right: var(--bx-cw); position: relative; }
+.bx.right > .bx-self::after { content: ""; position: absolute; left: 100%; top: 50%; width: var(--bx-cw); height: 2px; background: var(--bx-line); }
+.bx.right > .bx-kids > * { position: relative; }
+.bx.right > .bx-kids > *::before { content: ""; position: absolute; right: 100%; width: calc(var(--bx-cw) / 2); border-left: 2px solid var(--bx-line); }
+.bx.right > .bx-kids > *:first-child::before { top: 50%; bottom: -1px; border-top: 2px solid var(--bx-line); }
+.bx.right > .bx-kids > *:last-child::before { top: -1px; bottom: 50%; border-bottom: 2px solid var(--bx-line); }
 
 /* ---- Bracket tree (read-only view) ---- */
 .bk-tree { display: flex; gap: 16px; overflow-x: auto; padding: 4px 2px 16px; }
