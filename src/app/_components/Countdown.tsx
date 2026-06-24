@@ -18,20 +18,33 @@ export default function Countdown({
   }, []);
 
   if (!lockTimeIso) {
-    return <p>Brackets are not open yet.</p>;
+    return (
+      <div className="countdown">
+        <span className="cd-label">Bracket status</span>
+        <span className="cd-time" style={{ fontSize: '1.4rem' }}>Not open yet</span>
+        <span className="cd-when">Waiting on the Round-of-32 matchups.</span>
+      </div>
+    );
   }
 
   const lockMs = new Date(lockTimeIso).getTime();
   const remaining = lockMs - now;
 
   if (remaining <= 0) {
-    return <p><strong>Brackets are locked.</strong></p>;
+    return (
+      <div className="countdown">
+        <span className="cd-label">Brackets locked</span>
+        <span className="cd-time">Locked</span>
+        <span className="cd-when">Picks are final — results decide the rest.</span>
+      </div>
+    );
   }
 
   return (
-    <p>
-      Brackets lock in <strong>{formatRemaining(remaining)}</strong>
-      {lockLabel ? <> — {lockLabel}</> : null}
-    </p>
+    <div className="countdown">
+      <span className="cd-label">Brackets lock in</span>
+      <span className="cd-time">{formatRemaining(remaining)}</span>
+      {lockLabel ? <span className="cd-when">Locks {lockLabel}</span> : null}
+    </div>
   );
 }

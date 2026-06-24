@@ -17,21 +17,43 @@ export default function SignupPage() {
   );
 
   return (
-    <main style={{ maxWidth: 380, margin: '48px auto', padding: 16 }}>
-      <h1>Request an account</h1>
-      <p style={{ opacity: 0.8 }}>New accounts require admin approval before you can log in.</p>
-      <form action={formAction} style={{ display: 'grid', gap: 10 }}>
-        <input name="firstName" placeholder="First name" required />
-        <input name="lastName" placeholder="Last name" required />
-        <input name="username" placeholder="Username" required />
-        <input name="email" type="email" placeholder="Email" required />
-        <input name="password" type="password" placeholder="Password (8+ chars)" required />
-        {state?.error && <p style={{ color: '#ff8080' }}>{state.error}</p>}
-        <button disabled={pending} type="submit">{pending ? 'Submitting…' : 'Request account'}</button>
-      </form>
-      <p style={{ marginTop: 12 }}>
-        Already have an account? <Link href="/login">Log in</Link>
-      </p>
+    <main className="auth-card reveal">
+      <div className="panel">
+        <p className="eyebrow">WC26 Knockout</p>
+        <h1 style={{ fontSize: '2rem' }}>Request an account</h1>
+        <p className="muted" style={{ fontSize: '0.92rem' }}>
+          This is an invite-quality pool — new accounts need admin approval before you can log in.
+        </p>
+        <form action={formAction} className="field-list" style={{ marginTop: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label htmlFor="firstName">First name</label>
+              <input id="firstName" name="firstName" placeholder="Lionel" required />
+            </div>
+            <div>
+              <label htmlFor="lastName">Last name</label>
+              <input id="lastName" name="lastName" placeholder="Messi" required />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="username">Username</label>
+            <input id="username" name="username" placeholder="pele_10" required />
+          </div>
+          <div>
+            <label htmlFor="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="you@example.com" required />
+          </div>
+          <div>
+            <label htmlFor="password">Password</label>
+            <input id="password" name="password" type="password" placeholder="At least 8 characters" required />
+          </div>
+          {state?.error && <p className="banner error">{state.error}</p>}
+          <button disabled={pending} type="submit" className="btn-block">{pending ? 'Submitting…' : 'Request account'}</button>
+        </form>
+        <p className="muted" style={{ marginTop: 16, fontSize: '0.9rem' }}>
+          Already have an account? <Link href="/login">Log in</Link>
+        </p>
+      </div>
     </main>
   );
 }

@@ -32,22 +32,31 @@ function LoginForm() {
   }
 
   return (
-    <main style={{ maxWidth: 380, margin: '48px auto', padding: 16 }}>
-      <h1>Log in</h1>
-      {justRegistered && (
-        <p style={{ color: 'var(--accent)' }}>
-          Account requested. An admin must approve it before you can log in.
+    <main className="auth-card reveal">
+      <div className="panel">
+        <p className="eyebrow">WC26 Knockout</p>
+        <h1 style={{ fontSize: '2rem' }}>Log in</h1>
+        {justRegistered && (
+          <p className="banner info" style={{ margin: '12px 0' }}>
+            Account requested. An admin must approve it before you can log in.
+          </p>
+        )}
+        <form onSubmit={onSubmit} className="field-list" style={{ marginTop: 16 }}>
+          <div>
+            <label htmlFor="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="you@example.com" required />
+          </div>
+          <div>
+            <label htmlFor="password">Password</label>
+            <input id="password" name="password" type="password" placeholder="••••••••" required />
+          </div>
+          {error && <p className="banner error">{error}</p>}
+          <button disabled={pending} type="submit" className="btn-block">{pending ? 'Logging in…' : 'Log in'}</button>
+        </form>
+        <p className="muted" style={{ marginTop: 16, fontSize: '0.9rem' }}>
+          Need an account? <Link href="/signup">Request one</Link>
         </p>
-      )}
-      <form onSubmit={onSubmit} style={{ display: 'grid', gap: 10 }}>
-        <input name="email" type="email" placeholder="Email" required />
-        <input name="password" type="password" placeholder="Password" required />
-        {error && <p style={{ color: '#ff8080' }}>{error}</p>}
-        <button disabled={pending} type="submit">{pending ? 'Logging in…' : 'Log in'}</button>
-      </form>
-      <p style={{ marginTop: 12 }}>
-        Need an account? <Link href="/signup">Request one</Link>
-      </p>
+      </div>
     </main>
   );
 }

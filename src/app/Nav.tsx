@@ -5,22 +5,24 @@ import { logout } from '@/app/actions/auth';
 export default async function Nav() {
   const session = (await auth()) as AppSession | null;
   return (
-    <nav style={{ display: 'flex', gap: 12, padding: 12, borderBottom: '1px solid #ffffff22' }}>
-      <Link href="/" style={{ fontWeight: 700 }}>WC26 KO</Link>
-      <span style={{ flex: 1 }} />
+    <nav className="topnav">
+      <Link href="/" className="wordmark">WC26&nbsp;KO</Link>
+      <span className="nav-spacer" />
       {session?.user ? (
         <>
-          <Link href="/bracket">My bracket</Link>
-          <Link href="/brackets">Brackets</Link>
-          {session.user.isAdmin && <Link href="/admin">Admin</Link>}
-          <form action={logout}>
-            <button type="submit">Log out</button>
+          <Link href="/" className="navlink">Leaderboard</Link>
+          <Link href="/official" className="navlink">Official</Link>
+          <Link href="/bracket" className="navlink">My bracket</Link>
+          <Link href="/brackets" className="navlink">Brackets</Link>
+          {session.user.isAdmin && <Link href="/admin" className="navlink">Admin</Link>}
+          <form action={logout} style={{ marginLeft: 6 }}>
+            <button type="submit" className="btn-ghost btn-sm">Log out</button>
           </form>
         </>
       ) : (
         <>
-          <Link href="/login">Log in</Link>
-          <Link href="/signup">Request account</Link>
+          <Link href="/login" className="navlink">Log in</Link>
+          <Link href="/signup" className="btn btn-sm">Request account</Link>
         </>
       )}
     </nav>

@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { applyPick, bracketComplete, contestantsForSlot, type Picks, type OfficialR32 } from '@/lib/bracket-picks';
 import { slotsForRound } from '@/lib/bracket-structure';
+import { teamName, teamColor } from '@/lib/team-name';
 import type { Round } from '@prisma/client';
 import { saveBracket } from '@/app/actions/bracket-entry';
 
@@ -29,6 +30,7 @@ export default function BracketFill({
   const [pending, start] = useTransition();
 
   const complete = useMemo(() => bracketComplete(picks), [picks]);
+  const made = useMemo(() => Object.keys(picks).length, [picks]);
 
   function pick(slot: number, team: string | null) {
     if (locked || !team) return;
@@ -52,19 +54,12 @@ export default function BracketFill({
     return (
       <button
         type="button"
+        className={`fill-team${selected ? ' sel' : ''}`}
         disabled={locked || !team}
         onClick={() => pick(slot, team)}
-        style={{
-          minWidth: 90,
-          padding: '4px 8px',
-          fontWeight: selected ? 700 : 400,
-          background: selected ? 'var(--accent)' : 'transparent',
-          color: selected ? '#06210f' : 'var(--line)',
-          border: '1px solid #ffffff33',
-          borderRadius: 6,
-        }}
       >
-        {team ?? '—'}
+        <span className="chip" style={{ background: teamColor(team) }} />
+        <span>{teamName(team)}</span>
       </button>
     );
   }
@@ -72,32 +67,31 @@ export default function BracketFill({
   return (
     <div>
       {ROUNDS.map(({ round, label }) => (
-        <section key={round} style={{ marginBottom: 16 }}>
+        <section key={round} className="fill-round">
           <h3>{label}</h3>
-          <div style={{ display: 'grid', gap: 6 }}>
-            {slotsForRound(round).map((slot) => {
-              const { teamA, teamB } = contestantsForSlot(slot, officialR32, picks);
-              return (
-                <div key={slot} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <span style={{ opacity: 0.6, width: 28 }}>#{slot}</span>
-                  {teamButton(slot, teamA)}
-                  <span style={{ opacity: 0.5 }}>vs</span>
-                  {teamButton(slot, teamB)}
-                </div>
-              );
-            })}
-          </div>
+          {slotsForRound(round).map((slot) => {
+            const { teamA, teamB } = contestantsForSlot(slot, officialR32, picks);
+            return (
+              <div key={slot} className="fill-match">
+                <span className="fill-no">{slot}</span>
+                {teamButton(slot, teamA)}
+                {teamButton(slot, teamB)}
+              </div>
+            );
+          })}
         </section>
       ))}
 
-      {error && <p style={{ color: '#ff8080' }}>{error}</p>}
-      {ok && <p style={{ color: 'var(--accent)' }}>Bracket saved.</p>}
       {!locked && (
-        <button type="button" disabled={pending || !complete} onClick={save}>
-          {pending ? 'Saving…' : complete ? 'Save bracket' : 'Pick every game to save'}
-        </button>
+        <div className="savebar">
+          <button type="button" disabled={pending || !complete} onClick={save}>
+            {pending ? 'Saving…' : complete ? 'Save bracket' : `Pick every game (${made}/31)`}
+          </button>
+          {ok && <span className="banner ok" style={{ padding: '6px 12px' }}>Bracket saved ✓</span>}
+          {error && <span className="banner error" style={{ padding: '6px 12px' }}>{error}</span>}
+        </div>
       )}
-      {locked && <p><strong>Brackets are locked.</strong></p>}
+      {locked && <p className="banner info" style={{ marginTop: 12 }}>Brackets are locked — picks are final.</p>}
     </div>
   );
 }

@@ -78,15 +78,18 @@ export default function R32SkeletonForm({
                   type="datetime-local"
                   value={r.kickoff}
                   onChange={(e) => update(i, { kickoff: e.target.value })}
+                  style={{ width: 220 }}
                 />
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      {error && <p style={{ color: '#ff8080' }}>{error}</p>}
-      {ok && <p style={{ color: 'var(--accent)' }}>Saved.</p>}
-      <button disabled={pending} onClick={submit}>{pending ? 'Saving…' : 'Save R32 skeleton'}</button>
+      <div className="savebar" style={{ position: 'static', background: 'none', paddingBottom: 0 }}>
+        <button disabled={pending} onClick={submit}>{pending ? 'Saving…' : 'Save Round-of-32'}</button>
+        {ok && <span className="banner ok" style={{ padding: '6px 12px' }}>Saved ✓</span>}
+        {error && <span className="banner error" style={{ padding: '6px 12px' }}>{error}</span>}
+      </div>
     </div>
   );
 }
