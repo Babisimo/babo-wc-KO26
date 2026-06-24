@@ -154,13 +154,15 @@ layout, flags, cards, labels, mobile).
 3. **Projection engine** — `wc26-seeding` (pure) + tests.
 4. **Standings adapter + toggle** — ESPN standings action, `/official` toggle wiring.
 
-## Open questions for spec review
+## Resolved decisions (spec review, 2026-06-24)
 
-- OK to approximate the conduct / FIFA-ranking third-place tiebreakers in v1 (exact later)?
-- Is the v1 "Confirmed" definition (group-complete; thirds only when all 12 done)
-  acceptable, or do you want mid-group clinch detection now?
-- Should the home page leaderboard hero also adopt the new bracket card style, or only
-  `/official` and `/bracket`?
+- **Third-place tiebreakers:** approximate conduct + FIFA-ranking in v1 (points → GD →
+  goals exact from ESPN; the last two tiebreakers approximated, made exact later).
+- **"Confirmed" definition:** v1 stands — group winner/runner-up Confirmed once that group
+  has played all matches; third-place slots Confirmed only once all 12 groups complete.
+  No mid-group clinch detection in v1.
+- **Restyle scope:** apply the FotMob card/layout style to `/official`, `/bracket`, and the
+  read-only per-user bracket views. The home-page leaderboard hero stays as-is for now.
 
 ## Sources
 
