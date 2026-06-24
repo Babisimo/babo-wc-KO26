@@ -43,3 +43,28 @@ model PasswordResetToken {
 
   @@index([userId])
 }
+
+enum Round {
+  R32
+  R16
+  QF
+  SF
+  FINAL
+}
+
+model Team {
+  code  String @id // FIFA code, e.g. "ARG"
+  name  String
+  color String     // hex, e.g. "#6cace4"
+}
+
+model Match {
+  slot         Int       @id // fixed bracket position, 1..31
+  round        Round
+  teamA        String?       // team code; set for R32, derived for later rounds
+  teamB        String?       // team code; set for R32, derived for later rounds
+  actualWinner String?       // team code; null until decided
+  kickoff      DateTime?
+  feedRef      String?       // external results-feed id (used in Plan 4)
+  updatedAt    DateTime  @updatedAt
+}
