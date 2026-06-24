@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+:root {
+  --pitch: #0b6b3a;
+  --pitch-dark: #07331d;
+  --line: #e8fff1;
+  --accent: #e7c200;
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--pitch-dark);
+  color: var(--line);
+  font-family: system-ui, sans-serif;
+}
