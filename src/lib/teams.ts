@@ -1,0 +1,58 @@
+// The 48 WC2026 teams: FIFA code, display name, and a representative color.
+// Ported from wc26's lib/teams.ts (code+name) and lib/team-colors.ts (color).
+export interface TeamData {
+  code: string;
+  name: string;
+  color: string;
+}
+
+export const TEAMS: TeamData[] = [
+  { code: 'ALG', name: 'Algeria', color: '#1Fa85c' },
+  { code: 'ARG', name: 'Argentina', color: '#6cace4' },
+  { code: 'AUS', name: 'Australia', color: '#ffcd00' },
+  { code: 'AUT', name: 'Austria', color: '#ef3340' },
+  { code: 'BEL', name: 'Belgium', color: '#f3c000' },
+  { code: 'BIH', name: 'Bosnia and Herzegovina', color: '#ffd100' },
+  { code: 'BRA', name: 'Brazil', color: '#ffdf00' },
+  { code: 'CAN', name: 'Canada', color: '#ff4d4d' },
+  { code: 'CIV', name: 'Ivory Coast', color: '#ff8200' },
+  { code: 'COD', name: 'Congo DR', color: '#36c4f0' },
+  { code: 'COL', name: 'Colombia', color: '#fcd116' },
+  { code: 'CPV', name: 'Cape Verde', color: '#4d7fd0' },
+  { code: 'CRO', name: 'Croatia', color: '#ef4351' },
+  { code: 'CUW', name: 'Curaçao', color: '#4d7fd0' },
+  { code: 'CZE', name: 'Czechia', color: '#4d8fe0' },
+  { code: 'ECU', name: 'Ecuador', color: '#ffdd00' },
+  { code: 'EGY', name: 'Egypt', color: '#e5333f' },
+  { code: 'ENG', name: 'England', color: '#ff5a5a' },
+  { code: 'ESP', name: 'Spain', color: '#e0413a' },
+  { code: 'FRA', name: 'France', color: '#3b6fe0' },
+  { code: 'GER', name: 'Germany', color: '#ffce00' },
+  { code: 'GHA', name: 'Ghana', color: '#2ea84f' },
+  { code: 'HAI', name: 'Haiti', color: '#3b78d0' },
+  { code: 'IRN', name: 'Iran', color: '#23a85c' },
+  { code: 'IRQ', name: 'Iraq', color: '#2eb45f' },
+  { code: 'JOR', name: 'Jordan', color: '#e0414a' },
+  { code: 'JPN', name: 'Japan', color: '#e5295a' },
+  { code: 'KOR', name: 'South Korea', color: '#e63b5a' },
+  { code: 'KSA', name: 'Saudi Arabia', color: '#1fa85c' },
+  { code: 'MAR', name: 'Morocco', color: '#e0414a' },
+  { code: 'MEX', name: 'Mexico', color: '#1f9e55' },
+  { code: 'NED', name: 'Netherlands', color: '#ff6a13' },
+  { code: 'NOR', name: 'Norway', color: '#e0556a' },
+  { code: 'NZL', name: 'New Zealand', color: '#cfd8e0' },
+  { code: 'PAN', name: 'Panama', color: '#3b6fe0' },
+  { code: 'PAR', name: 'Paraguay', color: '#e0414a' },
+  { code: 'POR', name: 'Portugal', color: '#e0414a' },
+  { code: 'QAT', name: 'Qatar', color: '#c0426a' },
+  { code: 'RSA', name: 'South Africa', color: '#1fa85c' },
+  { code: 'SCO', name: 'Scotland', color: '#4d8fe0' },
+  { code: 'SEN', name: 'Senegal', color: '#2ea84f' },
+  { code: 'SUI', name: 'Switzerland', color: '#ff4d4d' },
+  { code: 'SWE', name: 'Sweden', color: '#ffd24d' },
+  { code: 'TUN', name: 'Tunisia', color: '#e5333f' },
+  { code: 'TUR', name: 'Türkiye', color: '#f03b47' },
+  { code: 'URU', name: 'Uruguay', color: '#5ab0e0' },
+  { code: 'USA', name: 'USA', color: '#4d8fe0' },
+  { code: 'UZB', name: 'Uzbekistan', color: '#1eb6d0' },
+];
