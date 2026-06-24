@@ -166,13 +166,13 @@ routing, no middleware, no `next-intl`/`next-i18next` — plain React context on
 - **Commit identity:** plain `Co-Authored-By` trailers commit fine in this local repo
   (no Vercel-Hobby co-author block here), so no special commit-identity handling is needed.
 
-## Open questions for spec review
+## Resolved decisions (spec review, 2026-06-24)
 
-- Some public **pages are server components** with inline copy (e.g. `official/page.tsx`,
-  `brackets/[user]/page.tsx`). Preferred conversion: (a) make the whole page a thin client
-  component, or (b) keep the page a server component and move its visible copy into a small
-  client subcomponent? (Recommendation: per-page minimal — most already have client
-  children to extend; convert the page only when it's mostly copy.)
-- Should the login/signup **server-action auth error strings** be translated (they render
-  on public pages) — yes per "translate all public UI," but confirm you want auth errors in
-  Spanish too.
+- **Server-component conversion: per-page minimal.** For each public page, make the
+  smallest change — if it already has a client child, move the copy there; convert the
+  whole page to a client component only when it is mostly copy. Keep server-side data
+  fetching where it matters.
+- **Auth errors: translated.** Login/signup validation + auth error messages render on
+  public pages, so they get Spanish too. Pattern: server actions/validators return a
+  **`StringKey`** (or `{ errorKey }`) and the client page renders it via `t(errorKey)`
+  (don't translate inside the server action — return the key, translate at the view).
