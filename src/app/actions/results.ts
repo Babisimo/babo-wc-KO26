@@ -41,23 +41,31 @@ export async function setMatchWinner(slot: number, winner: string | null): Promi
 
   const after = applyWinner(officialR32, before, slot, winner);
 
-  // Persist every slot whose winner changed.
+  // Persist every slot whose winner changed, in a single transaction.
+  const persistOps: ReturnType<typeof db.match.update>[] = [];
   for (let s = 1; s <= TOTAL_SLOTS; s++) {
     const wb = before[s] ?? null;
     const wa = after[s] ?? null;
     if (wb === wa) continue;
     if (s === slot) {
-      await db.match.update({
-        where: { slot: s },
-        data: { actualWinner: winner, winnerSource: winner === null ? null : 'ADMIN' },
-      });
+      persistOps.push(
+        db.match.update({
+          where: { slot: s },
+          data: { actualWinner: winner, winnerSource: winner === null ? null : 'ADMIN' },
+        }),
+      );
     } else {
       // downstream slot got cleared by the cascade
-      await db.match.update({
-        where: { slot: s },
-        data: { actualWinner: null, winnerSource: null },
-      });
+      persistOps.push(
+        db.match.update({
+          where: { slot: s },
+          data: { actualWinner: null, winnerSource: null },
+        }),
+      );
     }
+  }
+  if (persistOps.length > 0) {
+    await db.$transaction(persistOps);
   }
 
   revalidatePath('/admin/bracket');
@@ -80,29 +88,41 @@ export async function refreshResults(): Promise<{ error?: string; updated?: numb
   const official = await getOfficialBracket();
   const officialR32 = officialR32FromSlots(official.slots);
   const feed = mapEspnKnockout(json);
-  const resolved = resolveOfficialWinners(officialR32, feed);
 
-  // Which slots are admin-locked? Those keep their winner.
   const rows = await db.match.findMany({ select: { slot: true, winnerSource: true, actualWinner: true } });
   const adminSlot = new Set(rows.filter((r) => r.winnerSource === 'ADMIN').map((r) => r.slot));
   const existing: OfficialWinners = {};
-  for (const r of rows) existing[r.slot] = r.actualWinner;
+  const adminSeed: OfficialWinners = {};
+  for (const r of rows) {
+    existing[r.slot] = r.actualWinner;
+    if (r.winnerSource === 'ADMIN') adminSeed[r.slot] = r.actualWinner;
+  }
 
-  let updated = 0;
+  // Seed from admin winners and lock those slots so the feed can't contradict the admin subtree.
+  const resolved = resolveOfficialWinners(officialR32, feed, adminSeed, adminSlot);
+
+  const changes: { slot: number; next: string | null }[] = [];
   for (let s = 1; s <= TOTAL_SLOTS; s++) {
     if (adminSlot.has(s)) continue;
     const next = resolved[s] ?? null;
     if ((existing[s] ?? null) === next) continue;
-    await db.match.update({
-      where: { slot: s },
-      data: { actualWinner: next, winnerSource: next === null ? null : 'FEED' },
-    });
-    updated++;
+    changes.push({ slot: s, next });
+  }
+
+  if (changes.length > 0) {
+    await db.$transaction(
+      changes.map((c) =>
+        db.match.update({
+          where: { slot: c.slot },
+          data: { actualWinner: c.next, winnerSource: c.next === null ? null : 'FEED' },
+        }),
+      ),
+    );
   }
 
   revalidatePath('/admin/bracket');
   revalidatePath('/');
-  return { updated };
+  return { updated: changes.length };
 }
 
 export async function setPot(dollars: number): Promise<{ error?: string }> {

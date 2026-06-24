@@ -69,4 +69,16 @@ describe('resolveOfficialWinners', () => {
     expect(w[2]).toBe('FRA');
     expect(w[17]).toBe('ARG');
   });
+  it('respects an admin-seeded upstream winner for downstream pairings', () => {
+    // Feed says ARG beat BRA, but the admin overrode slot 1 to BRA (locked).
+    const feed: FeedResult[] = [
+      { teamA: 'ARG', teamB: 'BRA', winner: 'ARG' },
+      { teamA: 'ESP', teamB: 'FRA', winner: 'FRA' },
+      { teamA: 'BRA', teamB: 'FRA', winner: 'BRA' }, // the R16 slot-17 game uses BRA (admin), not ARG
+    ];
+    const w = resolveOfficialWinners(OFFICIAL, feed, { 1: 'BRA' }, new Set([1]));
+    expect(w[1]).toBe('BRA');        // admin winner preserved
+    expect(w[2]).toBe('FRA');        // feed-decided
+    expect(w[17]).toBe('BRA');       // derived from BRA vs FRA, NOT the feed's ARG
+  });
 });

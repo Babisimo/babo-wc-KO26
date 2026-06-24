@@ -1,5 +1,4 @@
 import { resolveCode } from '@/lib/team-resolve';
-import { applyWinner } from '@/lib/official-winners';
 import { slotsForRound } from '@/lib/bracket-structure';
 import { contestantsForSlot, type OfficialR32 } from '@/lib/bracket-picks';
 import { winnersToPicks, type OfficialWinners } from '@/lib/scoring';
@@ -43,22 +42,28 @@ function pairKey(a: string, b: string): string {
 
 /**
  * Build the official winners map from feed results by walking the bracket in
- * round order: each slot's current contestants (from already-decided feeders)
- * are matched to a feed result by unordered team pair.
+ * round order. Seeds from `seed` (e.g. admin-set winners) so downstream
+ * contestants respect those, and never overwrites a `lockedSlots` slot.
  */
-export function resolveOfficialWinners(officialR32: OfficialR32, feed: FeedResult[]): OfficialWinners {
+export function resolveOfficialWinners(
+  officialR32: OfficialR32,
+  feed: FeedResult[],
+  seed: OfficialWinners = {},
+  lockedSlots: Set<number> = new Set(),
+): OfficialWinners {
   const byPair = new Map<string, FeedResult>();
   for (const f of feed) byPair.set(pairKey(f.teamA, f.teamB), f);
 
-  let winners: OfficialWinners = {};
+  let winners: OfficialWinners = { ...seed };
   const rounds = ['R32', 'R16', 'QF', 'SF', 'FINAL'] as const;
   for (const round of rounds) {
     for (const slot of slotsForRound(round)) {
+      if (lockedSlots.has(slot)) continue; // keep the admin-set winner; the feed cannot override it
       const { teamA, teamB } = contestantsForSlot(slot, officialR32, winnersToPicks(winners));
       if (!teamA || !teamB) continue;
       const match = byPair.get(pairKey(teamA, teamB));
       if (match && match.winner && (match.winner === teamA || match.winner === teamB)) {
-        winners = applyWinner(officialR32, winners, slot, match.winner);
+        winners = { ...winners, [slot]: match.winner };
       }
     }
   }
