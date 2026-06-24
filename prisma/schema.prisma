@@ -70,13 +70,25 @@ model Match {
   updatedAt    DateTime  @updatedAt
 }
 
+enum BracketStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Bracket {
-  id          String    @id @default(cuid())
-  userId      String    @unique
-  picks       Json      @default("{}")
+  id          String        @id @default(cuid())
+  userId      String
+  name        String        @default("Bracket 1")
+  status      BracketStatus @default(APPROVED)
+  picks       Json          @default("{}")
   submittedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  approvedAt  DateTime?
+  approvedBy  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([userId])
 }
 
 model PoolConfig {

@@ -50,3 +50,20 @@ export async function removeUser(targetUserId: string): Promise<{ error?: string
   revalidatePath('/admin');
   return {};
 }
+
+export async function approveBracket(bracketId: string): Promise<{ error?: string }> {
+  const session = await requireAdmin();
+  await db.bracket.update({
+    where: { id: bracketId },
+    data: { status: 'APPROVED', approvedAt: new Date(), approvedBy: session.user.id },
+  });
+  revalidatePath('/admin');
+  return {};
+}
+
+export async function rejectBracket(bracketId: string): Promise<{ error?: string }> {
+  await requireAdmin();
+  await db.bracket.update({ where: { id: bracketId }, data: { status: 'REJECTED' } });
+  revalidatePath('/admin');
+  return {};
+}

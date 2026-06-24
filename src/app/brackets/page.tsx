@@ -24,13 +24,14 @@ export default async function BracketsPage() {
         <div className="panel">
           <table>
             <thead>
-              <tr><th>#</th><th>Player</th><th style={{ textAlign: 'right' }}>Points</th></tr>
+              <tr><th>#</th><th>Player</th><th>Brackets</th><th style={{ textAlign: 'right' }}>Best</th></tr>
             </thead>
             <tbody>
               {index.entries.map((e, i) => (
                 <tr key={e.username}>
                   <td className="muted">{i + 1}</td>
                   <td><Link href={`/brackets/${encodeURIComponent(e.username)}`}>{e.name}</Link></td>
+                  <td className="muted">{e.count}</td>
                   <td style={{ textAlign: 'right' }}>{e.total}</td>
                 </tr>
               ))}
