@@ -6,6 +6,7 @@ import type { OfficialWinners } from './scoring';
 const OFFICIAL: OfficialR32 = {
   1: { teamA: 'ARG', teamB: 'BRA' },
   2: { teamA: 'ESP', teamB: 'FRA' },
+  5: { teamA: 'GER', teamB: 'POR' },
 };
 
 describe('buildBracketView', () => {
@@ -30,8 +31,8 @@ describe('buildBracketView', () => {
     expect(s1.status).toBe('pending');
   });
   it('derives later-round contestants from the user picks', () => {
-    const picks: Picks = { 1: 'ARG', 2: 'FRA', 17: 'ARG' };
+    const picks: Picks = { 2: 'FRA', 5: 'GER', 17: 'FRA' };
     const s17 = buildBracketView(OFFICIAL, picks, {}).find((s) => s.slot === 17)!;
-    expect(s17).toMatchObject({ teamA: 'ARG', teamB: 'FRA', pick: 'ARG' });
+    expect(s17).toMatchObject({ teamA: 'FRA', teamB: 'GER', pick: 'FRA' });
   });
 });

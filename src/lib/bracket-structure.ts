@@ -29,12 +29,19 @@ export function slotsForRound(round: Round): number[] {
   return slots;
 }
 
+// FIFA WC26 official routing. Match numbers 73–104 map to app slots
+// (slot = match − 72; Final match 104 → slot 31). Each higher slot lists its two feeders.
+const FEEDERS: Record<number, [number, number]> = {
+  17: [2, 5],  18: [1, 3],  19: [4, 6],  20: [7, 8],
+  21: [11, 12], 22: [9, 10], 23: [14, 16], 24: [13, 15],
+  25: [17, 18], 26: [21, 22], 27: [19, 20], 28: [23, 24],
+  29: [25, 26], 30: [27, 28],
+  31: [29, 30],
+};
+
 export function feedersForSlot(slot: number): [number, number] | null {
-  const layer = layerForSlot(slot);
-  if (layer.round === 'R32') return null;
-  const localIndex = slot - layer.first; // 0-based within the layer
-  const a = layer.prevFirst + 2 * localIndex;
-  return [a, a + 1];
+  layerForSlot(slot); // validates range (throws RangeError outside 1..31)
+  return FEEDERS[slot] ?? null;
 }
 
 export const ROUND_POINTS: Record<Round, number> = {
