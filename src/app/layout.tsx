@@ -3,7 +3,12 @@ import { Big_Shoulders, Hanken_Grotesk } from 'next/font/google';
 import './globals.css';
 import Nav from './Nav';
 
-const display = Big_Shoulders({ subsets: ['latin'], weight: ['600', '800'], variable: '--font-display' });
+const display = Big_Shoulders({
+  subsets: ['latin'],
+  weight: ['600', '800'],
+  variable: '--font-display',
+  adjustFontFallback: false, // Big Shoulders has no fallback size-adjust metrics; silences the build warning
+});
 const body = Hanken_Grotesk({ subsets: ['latin'], variable: '--font-body' });
 
 export const metadata: Metadata = {
