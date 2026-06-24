@@ -26,6 +26,9 @@ export default function R32SkeletonForm({
     setRows((prev) =>
       prev.map((r, i) => ({ ...r, kickoff: isoToLocalInput(initial[i].kickoffIso) }))
     );
+    // Seed local datetime values once on mount (browser timezone); `initial` is a
+    // stable prefill from the server and intentionally not a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function update(i: number, patch: Partial<Row>) {
