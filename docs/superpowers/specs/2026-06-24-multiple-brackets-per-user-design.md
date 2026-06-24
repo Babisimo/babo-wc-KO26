@@ -123,12 +123,12 @@ multi-bracket API keyed by `bracketId`, all auth-guarded and ownership-checked:
 
 ### Post-lock visibility — `src/app/actions/browse.ts`, `/brackets`, `/brackets/[user]`
 
-- `/brackets` (index) lists each **approved** bracket (by name) once brackets are visible
-  (after lock, per existing `bracket-visibility.ts` rules — unchanged).
-- `/brackets/[user]` → keyed by `bracketId` now (a user may have several). Simplest: route
-  becomes `/brackets/[bracketId]` showing one approved bracket; the index links each
-  approved bracket to its own page. (Confirm route shape in the plan; keep the existing
-  visibility gate.)
+- `/brackets` (index) lists each **user who has ≥1 approved bracket**, once brackets are
+  visible (after lock, per existing `bracket-visibility.ts` rules — unchanged), linking to
+  that user's page.
+- **`/brackets/[user]` stays keyed by user** and shows **all of that user's approved
+  brackets stacked**, each under its name (read-only tree). Leaderboard rows link to the
+  owning user's page (not a per-bracket deep link). Keep the existing visibility gate.
 
 ### Pages / components
 
@@ -176,9 +176,10 @@ multi-bracket API keyed by `bracketId`, all auth-guarded and ownership-checked:
 - **Manual:** create 2 brackets as a user (1st approved, 2nd pending), approve as admin,
   confirm pot = $50 × approved and both approved rows on the leaderboard.
 
-## Open questions for spec review
+## Resolved decisions (spec review, 2026-06-24)
 
-- Route shape for per-bracket public view: `/brackets/[bracketId]` (recommended) vs keeping
-  `/brackets/[user]` and listing that user's approved brackets on one page?
-- Bracket-name max length (proposed 32) and whether to reuse any part of the existing
-  `username-filter` for sanitization (proposed: no — labels are low-stakes).
+- **Public route:** keep `/brackets/[user]` and stack all of that user's approved brackets
+  on one page (each under its name). The `/brackets` index lists users with ≥1 approved
+  bracket; leaderboard rows link to the owning user's page.
+- **Bracket-name:** max length 32, trimmed/whitespace-collapsed/control-stripped, empty →
+  `"Bracket N"`. No reuse of `username-filter` (labels are low-stakes).
