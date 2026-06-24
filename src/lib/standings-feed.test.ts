@@ -10,7 +10,7 @@ describe('mapEspnStandings', () => {
     expect(a.teams[0]).toMatchObject({ code: 'MEX', rank: 1, points: 7, gd: 4, gf: 5 });
     expect(a.teams.map((t) => t.rank)).toEqual([1, 2, 3, 4]); // ordered by rank
   });
-  it('marks a group incomplete when any team has gamesPlayed < 3', () => {
+  it('marks a group incomplete when any team has gamesPlayed !== 3', () => {
     const groups = mapEspnStandings(fixture);
     expect(groups.find((g) => g.group === 'B')!.complete).toBe(false);
   });

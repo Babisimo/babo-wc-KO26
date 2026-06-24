@@ -9,6 +9,8 @@
 //    the published per-slot eligibility sets, but may differ from the official table in
 //    rare combinations. Encoding the exact table is a future enhancement.
 
+import type { OfficialR32 } from '@/lib/bracket-picks';
+
 export type StandingRow = { code: string | null; rank: number; points: number; gd: number; gf: number };
 export type GroupStanding = { group: string; complete: boolean; teams: StandingRow[] };
 
@@ -57,8 +59,6 @@ export function rankThirds(groups: GroupStanding[]): string[] {
     );
   return ranked.slice(0, 8).map((x) => x.group);
 }
-
-import type { OfficialR32 } from '@/lib/bracket-picks';
 
 const THIRD_SLOT_NUMS = [2, 5, 7, 8, 9, 10, 13, 15] as const;
 

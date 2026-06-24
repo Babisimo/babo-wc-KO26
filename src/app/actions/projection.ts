@@ -7,20 +7,22 @@ import type { OfficialR32 } from '@/lib/bracket-picks';
 
 const ESPN_STANDINGS = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings';
 
-const EMPTY = { available: false, asItStands: [] as SlotView[], confirmed: [] as SlotView[] };
+function empty() {
+  return { available: false, asItStands: [] as SlotView[], confirmed: [] as SlotView[] };
+}
 
 export async function getProjectedBracket(): Promise<{ available: boolean; asItStands: SlotView[]; confirmed: SlotView[] }> {
   let json: unknown;
   try {
     const res = await fetch(ESPN_STANDINGS, { cache: 'no-store' });
-    if (!res.ok) return EMPTY;
+    if (!res.ok) return empty();
     json = await res.json();
   } catch {
-    return EMPTY;
+    return empty();
   }
 
   const groups = mapEspnStandings(json);
-  if (groups.length === 0) return EMPTY;
+  if (groups.length === 0) return empty();
 
   const { projected, confirmedSlots } = seedR32(groups);
 
