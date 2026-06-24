@@ -11,6 +11,7 @@ export default async function Nav() {
       {session?.user ? (
         <>
           <Link href="/bracket">My bracket</Link>
+          <Link href="/brackets">Brackets</Link>
           {session.user.isAdmin && <Link href="/admin">Admin</Link>}
           <form action={logout}>
             <button type="submit">Log out</button>
