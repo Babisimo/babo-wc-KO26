@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth, type AppSession } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { approveUser, rejectUser, setAdmin, removeUser } from '@/app/actions/admin';
+import { approveUser, rejectUser, setAdmin, removeUser, approveBracket, rejectBracket } from '@/app/actions/admin';
 import { ActionButton } from './UserRow';
 
 export const dynamic = 'force-dynamic';
@@ -18,6 +18,17 @@ export default async function AdminPage() {
 
   const pending = await db.user.findMany({ where: { status: 'PENDING' }, orderBy: { createdAt: 'asc' } });
   const all = await db.user.findMany({ orderBy: { createdAt: 'asc' } });
+
+  const pendingBrackets = await db.bracket.findMany({
+    where: { status: 'PENDING' },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, name: true, userId: true },
+  });
+  const bracketOwners = await db.user.findMany({
+    where: { id: { in: pendingBrackets.map((b) => b.userId) } },
+    select: { id: true, name: true, username: true },
+  });
+  const ownerById = new Map(bracketOwners.map((u) => [u.id, u]));
 
   return (
     <main className="shell">
@@ -57,6 +68,37 @@ export default async function AdminPage() {
       </section>
 
       <section className="panel reveal reveal-3" style={{ marginTop: 18 }}>
+        <div className="panel-head">
+          <h2>Bracket entries awaiting approval</h2>
+          <span className="pill">{pendingBrackets.length} waiting</span>
+        </div>
+        {pendingBrackets.length === 0 ? (
+          <p className="muted">No extra brackets waiting.</p>
+        ) : (
+          <table>
+            <thead><tr><th>Player</th><th>Bracket</th><th></th></tr></thead>
+            <tbody>
+              {pendingBrackets.map((b) => {
+                const u = ownerById.get(b.userId);
+                return (
+                  <tr key={b.id}>
+                    <td>{u?.username ?? u?.name ?? 'Unknown'}</td>
+                    <td className="muted">{b.name}</td>
+                    <td>
+                      <div className="row-actions">
+                        <ActionButton label="Approve" variant="primary" action={approveBracket.bind(null, b.id)} />
+                        <ActionButton label="Reject" action={rejectBracket.bind(null, b.id)} />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className="panel reveal reveal-4" style={{ marginTop: 18 }}>
         <div className="panel-head">
           <h2>All members</h2>
           <span className="pill">{all.length} total</span>
