@@ -74,9 +74,14 @@ export async function createBracket(name: string): Promise<{ error?: string; id?
   const userId = await requireUserId();
   if (!userId) return { error: 'Not signed in.' };
   const lock = await lockInfo();
-  if (!lock.officialReady) return { error: 'The bracket isn’t open yet.' };
+  if (!lock.officialReady) return { error: "The bracket isn't open yet." };
   if (lock.locked) return { error: 'Brackets are locked — no new entries.' };
 
+  // NOTE: count-then-create is not atomic. A rapid double-submit could create two
+  // brackets that both observe existingCount === 0 (two auto-approved "first" entries).
+  // Accepted at this pool's scale: the client guards with disabled={pending}, and an
+  // admin can reject a duplicate. Upgrade to a Serializable transaction if hard
+  // prevention is ever needed.
   const existingCount = await db.bracket.count({ where: { userId } });
   const status = statusForNewBracket(existingCount);
   const cleanName = normalizeBracketName(name, existingCount + 1);
@@ -136,7 +141,7 @@ export async function deleteBracket(id: string): Promise<{ error?: string }> {
   if (!userId) return { error: 'Not signed in.' };
   const row = await db.bracket.findUnique({ where: { id }, select: { userId: true, status: true } });
   if (!row || row.userId !== userId) return { error: 'Bracket not found.' };
-  if (row.status === 'APPROVED') return { error: 'Approved brackets can’t be deleted.' };
+  if (row.status === 'APPROVED') return { error: "Approved brackets can't be deleted." };
   await db.bracket.delete({ where: { id } });
   revalidatePath('/bracket');
   return {};
