@@ -16,9 +16,14 @@ export default async function BracketPage() {
 
   if (!view || !view.officialReady) {
     return (
-      <main style={{ maxWidth: 720, margin: '24px auto', padding: 16 }}>
+      <main className="shell">
+        <p className="eyebrow">Your picks</p>
         <h1>Your bracket</h1>
-        <p>The bracket isn&apos;t open yet — the Round-of-32 matchups haven&apos;t been set. Check back soon.</p>
+        <div className="panel" style={{ marginTop: 16 }}>
+          <p className="muted">
+            The bracket isn&apos;t open yet — the Round-of-32 matchups haven&apos;t been set. Check back soon.
+          </p>
+        </div>
       </main>
     );
   }
@@ -26,10 +31,19 @@ export default async function BracketPage() {
   const officialR32 = officialR32FromSlots(official.slots);
 
   return (
-    <main style={{ maxWidth: 720, margin: '24px auto', padding: 16 }}>
-      <h1>Your bracket</h1>
-      {view.submittedAt && !view.locked && <p style={{ opacity: 0.7 }}>Saved — you can keep editing until lock.</p>}
-      <BracketFill officialR32={officialR32} initialPicks={view.picks} locked={view.locked} />
+    <main className="shell">
+      <header className="reveal" style={{ marginBottom: 18 }}>
+        <p className="eyebrow">Your picks</p>
+        <h1>Your bracket</h1>
+        <p className="lead">
+          Click a team to advance it through every round to the Final.
+          {view.submittedAt && !view.locked && ' Saved — keep editing until lock.'}
+          {view.locked && ' Brackets are locked.'}
+        </p>
+      </header>
+      <div className="panel reveal reveal-2" style={{ padding: 14 }}>
+        <BracketFill officialR32={officialR32} initialPicks={view.picks} locked={view.locked} />
+      </div>
     </main>
   );
 }

@@ -276,6 +276,19 @@ tbody tr:last-child td { border-bottom: none; }
 .mm-team .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mm-team .tick { margin-left: auto; }
 
+/* interactive pick buttons inside an mm-match (override the global gold button) */
+.mm-match button.mm-btn {
+  display: flex; align-items: center; gap: 7px; width: 100%;
+  padding: 8px 9px; font-size: 0.86rem; font-weight: 500; text-align: left;
+  background: transparent; color: var(--line); border: none; border-radius: 0;
+  box-shadow: none; cursor: pointer; transition: background 0.12s ease;
+}
+.mm-match button.mm-btn + button.mm-btn { border-top: 1px solid var(--chalk); }
+.mm-match button.mm-btn:hover:not(:disabled) { background: rgba(255,255,255,0.07); filter: none; transform: none; }
+.mm-match button.mm-btn.sel { background: rgba(255, 210, 63, 0.2); color: var(--gold); font-weight: 800; }
+.mm-match button.mm-btn:disabled { opacity: 0.5; cursor: default; }
+.mm-match button.mm-btn .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* ---- Bracket tree (read-only view) ---- */
 .bk-tree { display: flex; gap: 16px; overflow-x: auto; padding: 4px 2px 16px; }
 .bk-round { display: flex; flex-direction: column; justify-content: space-around; gap: 12px; min-width: 176px; }
