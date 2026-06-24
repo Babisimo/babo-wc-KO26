@@ -81,7 +81,7 @@ export async function getUserBracketView(username: string): Promise<UserBracketV
   }
 
   const [bracket, winners, official] = await Promise.all([
-    db.bracket.findUnique({ where: { userId: target.id }, select: { picks: true } }),
+    db.bracket.findFirst({ where: { userId: target.id }, select: { picks: true } }),
     currentWinners(),
     getOfficialBracket(),
   ]);

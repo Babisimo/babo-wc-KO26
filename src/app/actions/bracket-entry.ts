@@ -43,7 +43,7 @@ export async function getMyBracket(): Promise<{ error?: string; view?: BracketVi
   const officialReady = officialR32IsSet(officialR32FromSlots(official.slots));
   const locked = isLocked(new Date(), official.lockTimeIso ? new Date(official.lockTimeIso) : null);
 
-  const row = await db.bracket.findUnique({ where: { userId } });
+  const row = await db.bracket.findFirst({ where: { userId } });
 
   return {
     view: {
@@ -72,11 +72,17 @@ export async function saveBracket(picks: Picks): Promise<{ error?: string }> {
   const normalized: Picks = {};
   for (let s = 1; s <= TOTAL_SLOTS; s++) normalized[s] = picks[s];
 
-  await db.bracket.upsert({
-    where: { userId },
-    update: { picks: normalized, submittedAt: new Date() },
-    create: { userId, picks: normalized, submittedAt: new Date() },
-  });
+  const existing = await db.bracket.findFirst({ where: { userId } });
+  if (existing) {
+    await db.bracket.update({
+      where: { id: existing.id },
+      data: { picks: normalized, submittedAt: new Date() },
+    });
+  } else {
+    await db.bracket.create({
+      data: { userId, picks: normalized, submittedAt: new Date() },
+    });
+  }
   revalidatePath('/bracket');
   return {};
 }
