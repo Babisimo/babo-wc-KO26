@@ -397,3 +397,11 @@ tbody tr:last-child td { border-bottom: none; }
 .reveal-2 { animation-delay: 0.07s; }
 .reveal-3 { animation-delay: 0.14s; }
 @media (prefers-reduced-motion: reduce) { .reveal, .reveal-2, .reveal-3 { animation: none; } }
+
+@media (max-width: 700px) {
+  :root { --bx-card: 132px; --bx-cw: 18px; }
+  .bx-wrap .fm-match, .fm-row, .fm-btn { font-size: 0.78rem; }
+  .fm-row, .fm-btn { padding: 6px 8px; gap: 6px; }
+  .fm-flag { width: 17px; height: 12px; }
+  .fm-labels span { font-size: 0.6rem; }
+}
