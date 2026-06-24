@@ -294,6 +294,16 @@ tbody tr:last-child td { border-bottom: none; }
 
 /* ---- Recursive tournament bracket (true two-sided tree) ---- */
 .bx-wrap { display: flex; align-items: center; justify-content: flex-start; overflow-x: auto; padding: 30px 4px 26px; }
+
+/* single-direction (FotMob) variant */
+.bx-scroll { overflow-x: auto; }
+.bx-wrap.single { width: max-content; justify-content: flex-start; }
+.fm-labels { display: flex; gap: var(--bx-cw); padding: 0 4px 8px; width: max-content; }
+.fm-labels span {
+  width: var(--bx-card); text-align: center;
+  font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.1em;
+  font-size: 0.66rem; color: var(--line-dim);
+}
 .bx { display: flex; align-items: center; }
 .bx-kids { display: flex; flex-direction: column; justify-content: center; }
 .bx-leaf, .bx-self { display: flex; align-items: center; padding: 5px 0; }

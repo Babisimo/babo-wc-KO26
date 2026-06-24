@@ -3,9 +3,8 @@ import { feedersForSlot } from '@/lib/bracket-structure';
 
 type Side = 'left' | 'right';
 
-// Recursively renders a balanced sub-bracket rooted at `slot`, where each match
-// is vertically centered between its two feeder matches (flex align-items:center).
-// Left half flows left→right (kids, then self); right half mirrors.
+// Recursively renders a balanced sub-bracket rooted at `slot`, each match
+// vertically centered between its two feeder matches.
 function Node({
   slot,
   side,
@@ -33,21 +32,44 @@ function Node({
   );
 }
 
+const ROUND_LABELS = ['Round of 32', 'Round of 16', 'Quarter-finals', 'Semi-finals', 'Final'];
+
 /**
- * Two-sided tournament bracket. The Final (slot 31) sits in the center, fed by
- * the left semifinal subtree (slot 29) and the right semifinal subtree (slot 30).
- * `render(slot)` draws a single match card (static or interactive).
+ * Tournament bracket. `variant='single'` (default) renders the whole tree one
+ * direction (R32 left → Final right) with a round-label header — the FotMob look.
+ * `variant='two-sided'` keeps the symmetric split with the Final in the center.
  */
-export default function BracketLayout({ render }: { render: (slot: number) => ReactNode }) {
-  return (
-    <div className="bx-wrap">
-      <Node slot={29} side="left" render={render} />
-      <div className="bx-final">
-        <div className="bx-final-tag">Final</div>
-        {render(31)}
-        <div className="bx-trophy">🏆</div>
+export default function BracketLayout({
+  render,
+  variant = 'single',
+}: {
+  render: (slot: number) => ReactNode;
+  variant?: 'single' | 'two-sided';
+}) {
+  if (variant === 'two-sided') {
+    return (
+      <div className="bx-wrap">
+        <Node slot={29} side="left" render={render} />
+        <div className="bx-final">
+          <div className="bx-final-tag">Final</div>
+          {render(31)}
+          <div className="bx-trophy">🏆</div>
+        </div>
+        <Node slot={30} side="right" render={render} />
       </div>
-      <Node slot={30} side="right" render={render} />
+    );
+  }
+
+  return (
+    <div className="bx-scroll">
+      <div className="fm-labels">
+        {ROUND_LABELS.map((l) => (
+          <span key={l}>{l}</span>
+        ))}
+      </div>
+      <div className="bx-wrap single">
+        <Node slot={31} side="left" render={render} />
+      </div>
     </div>
   );
 }
