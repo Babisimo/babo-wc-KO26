@@ -19,6 +19,7 @@ export default async function AdminPage() {
   return (
     <main style={{ maxWidth: 720, margin: '32px auto', padding: 16 }}>
       <h1>Admin</h1>
+      <p><a href="/admin/bracket">→ Official bracket setup</a></p>
 
       <section>
         <h2>Pending approval ({pending.length})</h2>
