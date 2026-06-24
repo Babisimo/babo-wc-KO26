@@ -7,6 +7,7 @@ import { getOfficialBracket } from '@/app/actions/bracket';
 import { officialR32FromSlots, officialR32IsSet } from '@/lib/official-r32';
 import { validateSubmission } from '@/lib/bracket-validate';
 import { isLocked } from '@/lib/lock';
+import { TOTAL_SLOTS } from '@/lib/bracket-structure';
 import type { Picks } from '@/lib/bracket-picks';
 
 export type BracketView = {
@@ -67,10 +68,14 @@ export async function saveBracket(picks: Picks): Promise<{ error?: string }> {
   const check = validateSubmission(officialR32, picks);
   if (!check.ok) return { error: check.error };
 
+  // Persist only the canonical slots 1..31 (validation guarantees each is present & legal).
+  const normalized: Picks = {};
+  for (let s = 1; s <= TOTAL_SLOTS; s++) normalized[s] = picks[s];
+
   await db.bracket.upsert({
     where: { userId },
-    update: { picks, submittedAt: new Date() },
-    create: { userId, picks, submittedAt: new Date() },
+    update: { picks: normalized, submittedAt: new Date() },
+    create: { userId, picks: normalized, submittedAt: new Date() },
   });
   revalidatePath('/bracket');
   return {};
