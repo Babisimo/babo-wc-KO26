@@ -25,7 +25,7 @@ async function requireUserId(): Promise<string | null> {
 /** Coerce a stored JSON picks blob into a numeric-keyed Picks map. */
 function coercePicks(raw: unknown): Picks {
   const out: Picks = {};
-  if (raw && typeof raw === 'object') {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
       const slot = Number(k);
       if (Number.isInteger(slot) && typeof v === 'string') out[slot] = v;
