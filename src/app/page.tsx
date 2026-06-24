@@ -16,7 +16,7 @@ export default async function Home() {
   const lockLabel = lockTimeIso ? formatLockTimePT(new Date(lockTimeIso)) : null;
 
   return (
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: 24 }}>
+    <main className="shell">
       <h1>WC26 Knockout Bracket</h1>
       {session?.user ? (
         <p>Welcome, {session.user.name}.</p>
@@ -25,7 +25,7 @@ export default async function Home() {
       )}
       <Countdown lockTimeIso={lockTimeIso} lockLabel={lockLabel} />
 
-      <section style={{ marginTop: 24 }}>
+      <section className="panel" style={{ marginTop: 24 }}>
         <h2>Leaderboard</h2>
         <p style={{ opacity: 0.7 }}>
           Pot: {dollars(board.potCents)}
