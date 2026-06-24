@@ -405,3 +405,8 @@ tbody tr:last-child td { border-bottom: none; }
   .fm-flag { width: 17px; height: 12px; }
   .fm-labels span { font-size: 0.6rem; }
 }
+
+/* As it stands / Confirmed toggle */
+.fm-toggle { display: inline-flex; margin-bottom: 14px; padding: 3px; border: 1px solid var(--chalk); border-radius: 999px; background: rgba(255,255,255,0.06); }
+.fm-toggle .seg { border: 0; background: transparent; color: var(--line-dim); font-size: 0.8rem; font-weight: 600; padding: 6px 16px; border-radius: 999px; cursor: pointer; }
+.fm-toggle .seg.active { background: var(--gold); color: var(--ink); font-weight: 800; }
