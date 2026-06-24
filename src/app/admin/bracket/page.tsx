@@ -7,12 +7,6 @@ import R32SkeletonForm from './R32SkeletonForm';
 
 export const dynamic = 'force-dynamic';
 
-function toLocalInput(iso: string | null): string {
-  if (!iso) return '';
-  // datetime-local wants "YYYY-MM-DDTHH:mm"; trim the ISO seconds/zone.
-  return iso.slice(0, 16);
-}
-
 export default async function AdminBracketPage() {
   const session = (await auth()) as AppSession | null;
   if (!session?.user?.isAdmin) redirect('/');
@@ -23,7 +17,7 @@ export default async function AdminBracketPage() {
     return {
       teamA: row?.teamA ?? '',
       teamB: row?.teamB ?? '',
-      kickoff: toLocalInput(row?.kickoff ? row.kickoff.toISOString() : null),
+      kickoffIso: row?.kickoff ? row.kickoff.toISOString() : '',
     };
   });
 

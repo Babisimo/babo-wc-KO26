@@ -22,35 +22,37 @@ export async function setR32Skeleton(entries: R32Entry[]): Promise<{ error?: str
   const check = validateR32Skeleton(entries, known);
   if (!check.ok) return { error: check.error };
 
-  // Upsert the 16 R32 matchups.
-  for (const e of entries) {
-    await db.match.upsert({
-      where: { slot: e.slot },
-      update: {
-        round: 'R32',
-        teamA: e.teamA,
-        teamB: e.teamB,
-        kickoff: e.kickoff ? new Date(e.kickoff) : null,
-      },
-      create: {
-        slot: e.slot,
-        round: 'R32',
-        teamA: e.teamA,
-        teamB: e.teamB,
-        kickoff: e.kickoff ? new Date(e.kickoff) : null,
-      },
-    });
-  }
+  await db.$transaction(async (tx) => {
+    // Upsert the 16 R32 matchups.
+    for (const e of entries) {
+      await tx.match.upsert({
+        where: { slot: e.slot },
+        update: {
+          round: 'R32',
+          teamA: e.teamA,
+          teamB: e.teamB,
+          kickoff: e.kickoff ? new Date(e.kickoff) : null,
+        },
+        create: {
+          slot: e.slot,
+          round: 'R32',
+          teamA: e.teamA,
+          teamB: e.teamB,
+          kickoff: e.kickoff ? new Date(e.kickoff) : null,
+        },
+      });
+    }
 
-  // Ensure the later-round slots (17..31) exist with the right round.
-  for (let slot = 17; slot <= TOTAL_SLOTS; slot++) {
-    const round = roundForSlot(slot);
-    await db.match.upsert({
-      where: { slot },
-      update: { round },
-      create: { slot, round },
-    });
-  }
+    // Ensure the later-round slots (17..31) exist with the right round.
+    for (let slot = 17; slot <= TOTAL_SLOTS; slot++) {
+      const round = roundForSlot(slot);
+      await tx.match.upsert({
+        where: { slot },
+        update: { round },
+        create: { slot, round },
+      });
+    }
+  });
 
   revalidatePath('/admin/bracket');
   revalidatePath('/');

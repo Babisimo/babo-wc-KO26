@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { setR32Skeleton, type R32Entry } from '@/app/actions/bracket';
+import { isoToLocalInput, localInputToIso } from '@/lib/datetime-local';
 
 type Team = { code: string; name: string };
 
@@ -12,12 +13,20 @@ export default function R32SkeletonForm({
   initial,
 }: {
   teams: Team[];
-  initial: Row[]; // length 16, slot i+1
+  initial: { teamA: string; teamB: string; kickoffIso: string }[]; // length 16, slot i+1
 }) {
-  const [rows, setRows] = useState<Row[]>(initial);
+  const [rows, setRows] = useState<Row[]>(
+    initial.map((r) => ({ teamA: r.teamA, teamB: r.teamB, kickoff: '' }))
+  );
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [pending, start] = useTransition();
+
+  useEffect(() => {
+    setRows((prev) =>
+      prev.map((r, i) => ({ ...r, kickoff: isoToLocalInput(initial[i].kickoffIso) }))
+    );
+  }, []);
 
   function update(i: number, patch: Partial<Row>) {
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
@@ -30,7 +39,7 @@ export default function R32SkeletonForm({
       slot: i + 1,
       teamA: r.teamA,
       teamB: r.teamB,
-      kickoff: r.kickoff ? new Date(r.kickoff).toISOString() : null,
+      kickoff: localInputToIso(r.kickoff),
     }));
     start(async () => {
       const res = await setR32Skeleton(entries);

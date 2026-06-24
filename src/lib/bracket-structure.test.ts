@@ -68,6 +68,12 @@ describe('ROUND_POINTS', () => {
   });
 });
 
+describe('TOTAL_SLOTS', () => {
+  it('equals 31 (16 R32 + 8 R16 + 4 QF + 2 SF + 1 FINAL)', () => {
+    expect(TOTAL_SLOTS).toBe(31);
+  });
+});
+
 describe('participantsForSlot', () => {
   it('returns stored teams for R32', () => {
     const matches = { 1: { teamA: 'ARG', teamB: 'BRA', winner: null } };
