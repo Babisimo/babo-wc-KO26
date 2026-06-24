@@ -8,10 +8,12 @@ import { saveBracket } from '@/app/actions/bracket-entry';
 import BracketLayout from '@/app/_components/BracketLayout';
 
 export default function BracketFill({
+  bracketId,
   officialR32,
   initialPicks,
   locked,
 }: {
+  bracketId: string;
   officialR32: OfficialR32;
   initialPicks: Picks;
   locked: boolean;
@@ -35,7 +37,7 @@ export default function BracketFill({
     setError(null);
     setOk(false);
     start(async () => {
-      const res = await saveBracket(picks);
+      const res = await saveBracket(bracketId, picks);
       if (res?.error) setError(res.error);
       else setOk(true);
     });

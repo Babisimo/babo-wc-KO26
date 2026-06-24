@@ -34,11 +34,16 @@ export default async function UserBracketPage({ params }: { params: Promise<{ us
 
   return (
     <main className="shell">
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-        <h1>{view.name}</h1>
-        <span className="pill">{view.total} pts{view.isOwner ? ' · your bracket' : ''}</span>
-      </div>
-      <MarchMadnessBracket slots={view.slots} />
+      <h1>{view.name}</h1>
+      {view.brackets.map((b) => (
+        <section key={b.id} style={{ marginBottom: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+            <h2 style={{ margin: 0 }}>{b.name}</h2>
+            <span className="pill">{b.total} pts{view.isOwner ? ' · your bracket' : ''}</span>
+          </div>
+          <MarchMadnessBracket slots={b.slots} />
+        </section>
+      ))}
     </main>
   );
 }
