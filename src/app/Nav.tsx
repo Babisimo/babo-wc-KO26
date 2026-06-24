@@ -10,6 +10,7 @@ export default async function Nav() {
       <span style={{ flex: 1 }} />
       {session?.user ? (
         <>
+          <Link href="/bracket">My bracket</Link>
           {session.user.isAdmin && <Link href="/admin">Admin</Link>}
           <form action={logout}>
             <button type="submit">Log out</button>
