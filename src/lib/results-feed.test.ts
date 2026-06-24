@@ -47,6 +47,7 @@ describe('resolveOfficialWinners', () => {
   const OFFICIAL: OfficialR32 = {
     1: { teamA: 'ARG', teamB: 'BRA' },
     2: { teamA: 'ESP', teamB: 'FRA' },
+    5: { teamA: 'GER', teamB: 'POR' },
   };
   it('records winners for matched R32 slots', () => {
     const feed: FeedResult[] = [{ teamA: 'ARG', teamB: 'BRA', winner: 'ARG' }];
@@ -60,25 +61,25 @@ describe('resolveOfficialWinners', () => {
   });
   it('fills a later round once its feeders are decided', () => {
     const feed: FeedResult[] = [
-      { teamA: 'ARG', teamB: 'BRA', winner: 'ARG' },
-      { teamA: 'ESP', teamB: 'FRA', winner: 'FRA' },
-      { teamA: 'ARG', teamB: 'FRA', winner: 'ARG' }, // the R16 slot-17 game
+      { teamA: 'ESP', teamB: 'FRA', winner: 'FRA' },   // slot 2 winner
+      { teamA: 'GER', teamB: 'POR', winner: 'GER' },   // slot 5 winner
+      { teamA: 'FRA', teamB: 'GER', winner: 'FRA' },   // the R16 slot-17 game
     ];
     const w = resolveOfficialWinners(OFFICIAL, feed);
-    expect(w[1]).toBe('ARG');
     expect(w[2]).toBe('FRA');
-    expect(w[17]).toBe('ARG');
+    expect(w[5]).toBe('GER');
+    expect(w[17]).toBe('FRA');
   });
   it('respects an admin-seeded upstream winner for downstream pairings', () => {
-    // Feed says ARG beat BRA, but the admin overrode slot 1 to BRA (locked).
+    // Feed says ESP beat FRA for slot 2, but admin overrode slot 2 to FRA (locked).
     const feed: FeedResult[] = [
-      { teamA: 'ARG', teamB: 'BRA', winner: 'ARG' },
-      { teamA: 'ESP', teamB: 'FRA', winner: 'FRA' },
-      { teamA: 'BRA', teamB: 'FRA', winner: 'BRA' }, // the R16 slot-17 game uses BRA (admin), not ARG
+      { teamA: 'ESP', teamB: 'FRA', winner: 'ESP' },   // feed says ESP
+      { teamA: 'GER', teamB: 'POR', winner: 'GER' },   // slot 5 winner
+      { teamA: 'FRA', teamB: 'GER', winner: 'FRA' },   // R16 slot-17 uses FRA (admin), not ESP
     ];
-    const w = resolveOfficialWinners(OFFICIAL, feed, { 1: 'BRA' }, new Set([1]));
-    expect(w[1]).toBe('BRA');        // admin winner preserved
-    expect(w[2]).toBe('FRA');        // feed-decided
-    expect(w[17]).toBe('BRA');       // derived from BRA vs FRA, NOT the feed's ARG
+    const w = resolveOfficialWinners(OFFICIAL, feed, { 2: 'FRA' }, new Set([2]));
+    expect(w[2]).toBe('FRA');        // admin winner preserved
+    expect(w[5]).toBe('GER');        // feed-decided
+    expect(w[17]).toBe('FRA');       // derived from FRA vs GER, using admin FRA
   });
 });

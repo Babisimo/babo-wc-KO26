@@ -1,28 +1,29 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { setMatchWinner, refreshResults, setPot } from '@/app/actions/results';
+import { setMatchWinner, refreshResults, setEntryPrice } from '@/app/actions/results';
+import { teamName, teamColor } from '@/lib/team-name';
 
 type SlotRow = { slot: number; round: string; teamA: string | null; teamB: string | null; winner: string | null };
 
 export default function ResultsPanel({
   slots,
-  potDollars,
+  entryDollars,
 }: {
   slots: SlotRow[];
-  potDollars: number;
+  entryDollars: number;
 }) {
   const [pending, start] = useTransition();
-  const [msg, setMsg] = useState<string | null>(null);
-  const [pot, setPotValue] = useState<string>(String(potDollars));
+  const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [entry, setEntryValue] = useState<string>(String(entryDollars));
 
   function run(action: () => Promise<{ error?: string; updated?: number }>) {
     setMsg(null);
     start(async () => {
       const res = await action();
-      if (res?.error) setMsg(res.error);
-      else if (typeof res?.updated === 'number') setMsg(`Updated ${res.updated} game(s) from feed.`);
-      else setMsg('Saved.');
+      if (res?.error) setMsg({ kind: 'error', text: res.error });
+      else if (typeof res?.updated === 'number') setMsg({ kind: 'ok', text: `Updated ${res.updated} game(s) from the feed.` });
+      else setMsg({ kind: 'ok', text: 'Saved.' });
     });
   }
 
@@ -31,61 +32,51 @@ export default function ResultsPanel({
     return (
       <button
         type="button"
+        className={`btn-ghost btn-sm${selected ? ' is-on' : ''}`}
         disabled={pending || !team}
         onClick={() => run(() => setMatchWinner(slot, team))}
-        style={{
-          minWidth: 80,
-          fontWeight: selected ? 700 : 400,
-          background: selected ? 'var(--accent)' : 'transparent',
-          color: selected ? '#06210f' : 'var(--line)',
-          border: '1px solid #ffffff33',
-          borderRadius: 6,
-          padding: '4px 8px',
-        }}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
       >
-        {team ?? '—'}
+        <span className="chip" style={{ background: teamColor(team), width: 9, height: 9 }} />
+        {teamName(team)}
       </button>
     );
   }
 
   return (
-    <section>
-      <h2>Results</h2>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+    <div>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
         <button type="button" disabled={pending} onClick={() => run(refreshResults)}>
           {pending ? 'Working…' : 'Refresh from feed'}
         </button>
-        <input
-          type="number"
-          step="0.01"
-          min="0"
-          value={pot}
-          onChange={(e) => setPotValue(e.target.value)}
-          style={{ width: 120 }}
-        />
-        <button type="button" disabled={pending} onClick={() => run(() => setPot(Number(pot)))}>
-          Set pot ($)
-        </button>
+        <span style={{ width: 1, height: 22, background: 'var(--chalk)' }} />
+        <label htmlFor="entry" style={{ margin: 0 }}>Entry ($/player)</label>
+        <input id="entry" type="number" step="1" min="0" value={entry} onChange={(e) => setEntryValue(e.target.value)} style={{ width: 100 }} />
+        <button type="button" className="btn-ghost" disabled={pending} onClick={() => run(() => setEntryPrice(Number(entry)))}>Set entry</button>
+        <span className="muted" style={{ fontSize: '0.82rem' }}>Pot = entry × players</span>
       </div>
-      {msg && <p style={{ color: 'var(--accent)' }}>{msg}</p>}
-      <div style={{ display: 'grid', gap: 6 }}>
+
+      {msg && <p className={`banner ${msg.kind === 'ok' ? 'ok' : 'error'}`} style={{ marginBottom: 12 }}>{msg.text}</p>}
+
+      <div style={{ display: 'grid', gap: 8 }}>
         {slots.map((s) => (
-          <div key={s.slot} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={{ opacity: 0.6, width: 70 }}>{s.round} #{s.slot}</span>
+          <div key={s.slot} style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span className="muted" style={{ width: 78, fontSize: '0.78rem' }}>{s.round} · {s.slot}</span>
             {winnerButton(s.slot, s.teamA, s.winner)}
-            <span style={{ opacity: 0.5 }}>vs</span>
+            <span className="faint">vs</span>
             {winnerButton(s.slot, s.teamB, s.winner)}
             <button
               type="button"
+              className="btn-ghost btn-sm"
               disabled={pending || !s.winner}
               onClick={() => run(() => setMatchWinner(s.slot, null))}
-              style={{ marginLeft: 8, opacity: 0.7 }}
+              style={{ marginLeft: 4 }}
             >
               clear
             </button>
           </div>
         ))}
       </div>
-    </section>
+    </div>
   );
 }

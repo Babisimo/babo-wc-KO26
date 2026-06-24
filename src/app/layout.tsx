@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Big_Shoulders, Hanken_Grotesk } from 'next/font/google';
 import './globals.css';
+import 'flag-icons/css/flag-icons.min.css';
 import Nav from './Nav';
 
 const display = Big_Shoulders({

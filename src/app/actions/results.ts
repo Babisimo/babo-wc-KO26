@@ -125,14 +125,15 @@ export async function refreshResults(): Promise<{ error?: string; updated?: numb
   return { updated: changes.length };
 }
 
-export async function setPot(dollars: number): Promise<{ error?: string }> {
+/** Set the per-player entry price (dollars). The pot is this times the number of players. */
+export async function setEntryPrice(dollars: number): Promise<{ error?: string }> {
   await requireAdmin();
   if (!Number.isFinite(dollars) || dollars < 0) return { error: 'Enter a valid amount.' };
-  const potCents = Math.round(dollars * 100);
+  const entryCents = Math.round(dollars * 100);
   await db.poolConfig.upsert({
     where: { id: 'default' },
-    update: { potCents },
-    create: { id: 'default', potCents },
+    update: { entryCents },
+    create: { id: 'default', entryCents },
   });
   revalidatePath('/');
   revalidatePath('/admin/bracket');

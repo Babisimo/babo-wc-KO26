@@ -6,6 +6,7 @@ import type { OfficialWinners } from './scoring';
 const OFFICIAL: OfficialR32 = {
   1: { teamA: 'ARG', teamB: 'BRA' },
   2: { teamA: 'ESP', teamB: 'FRA' },
+  5: { teamA: 'GER', teamB: 'POR' },
 };
 
 describe('applyWinner', () => {
@@ -17,12 +18,12 @@ describe('applyWinner', () => {
   });
   it('clears downstream winners when an upstream winner changes', () => {
     let w: OfficialWinners = {};
-    w = applyWinner(OFFICIAL, w, 1, 'ARG');
     w = applyWinner(OFFICIAL, w, 2, 'FRA');
-    w = applyWinner(OFFICIAL, w, 17, 'ARG'); // slot 17 feeds from 1 & 2
-    expect(w[17]).toBe('ARG');
-    w = applyWinner(OFFICIAL, w, 1, 'BRA'); // ARG no longer advances
-    expect(w[1]).toBe('BRA');
+    w = applyWinner(OFFICIAL, w, 5, 'GER');
+    w = applyWinner(OFFICIAL, w, 17, 'FRA'); // slot 17 feeds from 2 & 5
+    expect(w[17]).toBe('FRA');
+    w = applyWinner(OFFICIAL, w, 2, 'ESP'); // FRA no longer advances
+    expect(w[2]).toBe('ESP');
     expect(w[17]).toBeUndefined();
   });
   it('clears a slot (and its dependents) when winner is null', () => {

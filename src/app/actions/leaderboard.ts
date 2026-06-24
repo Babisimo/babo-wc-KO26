@@ -9,6 +9,8 @@ import type { Picks } from '@/lib/bracket-picks';
 export type LeaderboardData = {
   entries: RankedEntry[];
   potCents: number;
+  entryCents: number;
+  players: number;
   winnerKeys: string[];
   shareCents: number;
 };
@@ -45,8 +47,18 @@ export async function getLeaderboard(): Promise<LeaderboardData> {
   }));
 
   const entries = rankEntries(scored);
-  const potCents = config?.potCents ?? 0;
+  // Pot is the entry price times the number of players (one bracket = one paid entry).
+  const entryCents = config?.entryCents ?? 5000;
+  const players = brackets.length;
+  const potCents = entryCents * players;
   const { winners: winEntries, shareCents } = potSplit(entries, potCents);
 
-  return { entries, potCents, winnerKeys: winEntries.map((w) => w.key), shareCents };
+  return {
+    entries,
+    potCents,
+    entryCents,
+    players,
+    winnerKeys: winEntries.map((w) => w.key),
+    shareCents,
+  };
 }

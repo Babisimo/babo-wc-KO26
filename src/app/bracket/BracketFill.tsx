@@ -2,17 +2,10 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { applyPick, bracketComplete, contestantsForSlot, type Picks, type OfficialR32 } from '@/lib/bracket-picks';
-import { slotsForRound } from '@/lib/bracket-structure';
-import type { Round } from '@prisma/client';
+import { teamName } from '@/lib/team-name';
+import TeamFlag from '@/app/_components/TeamFlag';
 import { saveBracket } from '@/app/actions/bracket-entry';
-
-const ROUNDS: { round: Round; label: string }[] = [
-  { round: 'R32', label: 'Round of 32' },
-  { round: 'R16', label: 'Round of 16' },
-  { round: 'QF', label: 'Quarterfinals' },
-  { round: 'SF', label: 'Semifinals' },
-  { round: 'FINAL', label: 'Final' },
-];
+import BracketLayout from '@/app/_components/BracketLayout';
 
 export default function BracketFill({
   officialR32,
@@ -29,6 +22,7 @@ export default function BracketFill({
   const [pending, start] = useTransition();
 
   const complete = useMemo(() => bracketComplete(picks), [picks]);
+  const made = useMemo(() => Object.keys(picks).length, [picks]);
 
   function pick(slot: number, team: string | null) {
     if (locked || !team) return;
@@ -47,57 +41,45 @@ export default function BracketFill({
     });
   }
 
-  function teamButton(slot: number, team: string | null) {
+  function teamBtn(slot: number, team: string | null) {
     const selected = team !== null && picks[slot] === team;
     return (
       <button
         type="button"
+        className={`fm-btn${selected ? ' sel' : ''}`}
         disabled={locked || !team}
         onClick={() => pick(slot, team)}
-        style={{
-          minWidth: 90,
-          padding: '4px 8px',
-          fontWeight: selected ? 700 : 400,
-          background: selected ? 'var(--accent)' : 'transparent',
-          color: selected ? '#06210f' : 'var(--line)',
-          border: '1px solid #ffffff33',
-          borderRadius: 6,
-        }}
       >
-        {team ?? '—'}
+        <TeamFlag code={team} />
+        <span className="fm-nm">{teamName(team)}</span>
       </button>
+    );
+  }
+
+  function card(slot: number) {
+    const { teamA, teamB } = contestantsForSlot(slot, officialR32, picks);
+    return (
+      <div className="fm-match">
+        {teamBtn(slot, teamA)}
+        {teamBtn(slot, teamB)}
+      </div>
     );
   }
 
   return (
     <div>
-      {ROUNDS.map(({ round, label }) => (
-        <section key={round} style={{ marginBottom: 16 }}>
-          <h3>{label}</h3>
-          <div style={{ display: 'grid', gap: 6 }}>
-            {slotsForRound(round).map((slot) => {
-              const { teamA, teamB } = contestantsForSlot(slot, officialR32, picks);
-              return (
-                <div key={slot} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <span style={{ opacity: 0.6, width: 28 }}>#{slot}</span>
-                  {teamButton(slot, teamA)}
-                  <span style={{ opacity: 0.5 }}>vs</span>
-                  {teamButton(slot, teamB)}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ))}
+      <BracketLayout render={(slot) => card(slot)} />
 
-      {error && <p style={{ color: '#ff8080' }}>{error}</p>}
-      {ok && <p style={{ color: 'var(--accent)' }}>Bracket saved.</p>}
       {!locked && (
-        <button type="button" disabled={pending || !complete} onClick={save}>
-          {pending ? 'Saving…' : complete ? 'Save bracket' : 'Pick every game to save'}
-        </button>
+        <div className="savebar">
+          <button type="button" disabled={pending || !complete} onClick={save}>
+            {pending ? 'Saving…' : complete ? 'Save bracket' : `Pick every game (${made}/31)`}
+          </button>
+          {ok && <span className="banner ok" style={{ padding: '6px 12px' }}>Bracket saved ✓</span>}
+          {error && <span className="banner error" style={{ padding: '6px 12px' }}>{error}</span>}
+        </div>
       )}
-      {locked && <p><strong>Brackets are locked.</strong></p>}
+      {locked && <p className="banner info" style={{ marginTop: 12 }}>Brackets are locked — picks are final.</p>}
     </div>
   );
 }

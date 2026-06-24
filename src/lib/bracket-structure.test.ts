@@ -42,16 +42,24 @@ describe('feedersForSlot', () => {
     expect(feedersForSlot(1)).toBeNull();
     expect(feedersForSlot(16)).toBeNull();
   });
-  it('wires R16 from R32 pairs', () => {
-    expect(feedersForSlot(17)).toEqual([1, 2]);
-    expect(feedersForSlot(24)).toEqual([15, 16]);
+  it('wires R16 from the FIFA WC26 routing', () => {
+    expect(feedersForSlot(17)).toEqual([2, 5]);
+    expect(feedersForSlot(18)).toEqual([1, 3]);
+    expect(feedersForSlot(23)).toEqual([14, 16]);
+    expect(feedersForSlot(24)).toEqual([13, 15]);
   });
   it('wires QF, SF, FINAL', () => {
     expect(feedersForSlot(25)).toEqual([17, 18]);
+    expect(feedersForSlot(26)).toEqual([21, 22]);
+    expect(feedersForSlot(27)).toEqual([19, 20]);
     expect(feedersForSlot(28)).toEqual([23, 24]);
     expect(feedersForSlot(29)).toEqual([25, 26]);
     expect(feedersForSlot(30)).toEqual([27, 28]);
     expect(feedersForSlot(31)).toEqual([29, 30]);
+  });
+  it('every R32 slot feeds exactly one R16 slot', () => {
+    const used = [17, 18, 19, 20, 21, 22, 23, 24].flatMap((s) => feedersForSlot(s)!);
+    expect(used.sort((a, b) => a - b)).toEqual(Array.from({ length: 16 }, (_, i) => i + 1));
   });
 });
 
@@ -81,15 +89,15 @@ describe('participantsForSlot', () => {
   });
   it('derives R16 participants from feeder winners', () => {
     const matches = {
-      1: { teamA: 'ARG', teamB: 'BRA', winner: 'ARG' },
-      2: { teamA: 'ESP', teamB: 'FRA', winner: 'FRA' },
+      2: { teamA: 'ARG', teamB: 'BRA', winner: 'ARG' },
+      5: { teamA: 'ESP', teamB: 'FRA', winner: 'FRA' },
     };
     expect(participantsForSlot(17, matches)).toEqual({ teamA: 'ARG', teamB: 'FRA' });
   });
   it('returns nulls when feeders are undecided', () => {
     const matches = {
-      1: { teamA: 'ARG', teamB: 'BRA', winner: null },
-      2: { teamA: 'ESP', teamB: 'FRA', winner: 'FRA' },
+      2: { teamA: 'ARG', teamB: 'BRA', winner: null },
+      5: { teamA: 'ESP', teamB: 'FRA', winner: 'FRA' },
     };
     expect(participantsForSlot(17, matches)).toEqual({ teamA: null, teamB: 'FRA' });
   });

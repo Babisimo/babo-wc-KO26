@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth, type AppSession } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -6,51 +7,80 @@ import { ActionButton } from './UserRow';
 
 export const dynamic = 'force-dynamic';
 
+function statusBadge(status: string) {
+  const cls = status === 'APPROVED' ? 'ok' : status === 'REJECTED' ? 'bad' : 'warn';
+  return <span className={`badge ${cls}`}>{status.toLowerCase()}</span>;
+}
+
 export default async function AdminPage() {
   const session = (await auth()) as AppSession | null;
   if (!session?.user?.isAdmin) redirect('/');
 
-  const pending = await db.user.findMany({
-    where: { status: 'PENDING' },
-    orderBy: { createdAt: 'asc' },
-  });
+  const pending = await db.user.findMany({ where: { status: 'PENDING' }, orderBy: { createdAt: 'asc' } });
   const all = await db.user.findMany({ orderBy: { createdAt: 'asc' } });
 
   return (
-    <main style={{ maxWidth: 720, margin: '32px auto', padding: 16 }}>
-      <h1>Admin</h1>
-      <p><a href="/admin/bracket">→ Official bracket setup</a></p>
+    <main className="shell">
+      <header className="reveal" style={{ marginBottom: 22 }}>
+        <p className="eyebrow">Control room</p>
+        <h1>Admin</h1>
+        <p className="lead">Approve members, build the official bracket, and manage results.</p>
+        <Link href="/admin/bracket" className="btn btn-sm">Official bracket &amp; results →</Link>
+      </header>
 
-      <section>
-        <h2>Pending approval ({pending.length})</h2>
-        {pending.length === 0 && <p>No one waiting.</p>}
-        <ul>
-          {pending.map((u) => (
-            <li key={u.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span>{u.email} (@{u.username})</span>
-              <ActionButton label="Approve" action={approveUser.bind(null, u.id)} />
-              <ActionButton label="Reject" action={rejectUser.bind(null, u.id)} />
-            </li>
-          ))}
-        </ul>
+      <section className="panel reveal reveal-2">
+        <div className="panel-head">
+          <h2>Pending approval</h2>
+          <span className="pill">{pending.length} waiting</span>
+        </div>
+        {pending.length === 0 ? (
+          <p className="muted">No one waiting.</p>
+        ) : (
+          <table>
+            <thead><tr><th>Email</th><th>Username</th><th></th></tr></thead>
+            <tbody>
+              {pending.map((u) => (
+                <tr key={u.id}>
+                  <td>{u.email}</td>
+                  <td className="muted">@{u.username}</td>
+                  <td>
+                    <div className="row-actions">
+                      <ActionButton label="Approve" variant="primary" action={approveUser.bind(null, u.id)} />
+                      <ActionButton label="Reject" action={rejectUser.bind(null, u.id)} />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
 
-      <section>
-        <h2>All users ({all.length})</h2>
-        <ul>
-          {all.map((u) => (
-            <li key={u.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <span>
-                {u.email} — {u.status} {u.isAdmin ? '· admin' : ''}
-              </span>
-              <ActionButton
-                label={u.isAdmin ? 'Remove admin' : 'Make admin'}
-                action={setAdmin.bind(null, u.id, !u.isAdmin)}
-              />
-              <ActionButton label="Remove" action={removeUser.bind(null, u.id)} />
-            </li>
-          ))}
-        </ul>
+      <section className="panel reveal reveal-3" style={{ marginTop: 18 }}>
+        <div className="panel-head">
+          <h2>All members</h2>
+          <span className="pill">{all.length} total</span>
+        </div>
+        <table>
+          <thead><tr><th>Member</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {all.map((u) => (
+              <tr key={u.id}>
+                <td>
+                  <div style={{ fontWeight: 600 }}>{u.name}{u.isAdmin && <span className="badge warn" style={{ marginLeft: 8 }}>admin</span>}</div>
+                  <div className="muted" style={{ fontSize: '0.84rem' }}>{u.email}</div>
+                </td>
+                <td>{statusBadge(u.status)}</td>
+                <td>
+                  <div className="row-actions">
+                    <ActionButton label={u.isAdmin ? 'Remove admin' : 'Make admin'} action={setAdmin.bind(null, u.id, !u.isAdmin)} />
+                    <ActionButton label="Remove" action={removeUser.bind(null, u.id)} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
     </main>
   );

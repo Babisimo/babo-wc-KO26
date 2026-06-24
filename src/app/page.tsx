@@ -17,37 +17,53 @@ export default async function Home() {
 
   return (
     <main className="shell">
-      <h1>WC26 Knockout Bracket</h1>
-      {session?.user ? (
-        <p>Welcome, {session.user.name}.</p>
-      ) : (
-        <p>Request an account to join the pool.</p>
-      )}
-      <Countdown lockTimeIso={lockTimeIso} lockLabel={lockLabel} />
-
-      <section className="panel" style={{ marginTop: 24 }}>
-        <h2>Leaderboard</h2>
-        <p style={{ opacity: 0.7 }}>
-          Pot: {dollars(board.potCents)}
-          {board.winnerKeys.length > 0 && board.shareCents > 0 && (
-            <> &mdash; {board.winnerKeys.length === 1 ? 'leader takes' : `${board.winnerKeys.length} leaders split`} {dollars(board.shareCents)} each</>
-          )}
+      <header className="reveal" style={{ marginBottom: 26 }}>
+        <p className="eyebrow">World Cup 2026 · Knockout Pool</p>
+        <h1>Knockout Bracket</h1>
+        <p className="lead">
+          {session?.user
+            ? `Welcome back, ${session.user.name}. Fill your bracket before lock and climb the board.`
+            : 'Predict every knockout game from the Round of 32 to the Final. Request an account to join the pool.'}
         </p>
+        <Countdown lockTimeIso={lockTimeIso} lockLabel={lockLabel} />
+      </header>
+
+      <section className="panel reveal reveal-2">
+        <div className="panel-head">
+          <h2>Leaderboard</h2>
+          <span className="pill gold">
+            Pot {dollars(board.potCents)}
+            <span className="muted" style={{ fontWeight: 500 }}>· {board.players} × {dollars(board.entryCents)}</span>
+            {board.winnerKeys.length > 0 && board.shareCents > 0 && (
+              <> · {board.winnerKeys.length === 1 ? 'leader takes' : `${board.winnerKeys.length}-way split`} {dollars(board.shareCents)}</>
+            )}
+          </span>
+        </div>
         {board.entries.length === 0 ? (
-          <p>No brackets submitted yet.</p>
+          <p className="muted">No brackets submitted yet — be the first.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table>
             <thead>
-              <tr><th style={{ textAlign: 'left' }}>#</th><th style={{ textAlign: 'left' }}>Player</th><th style={{ textAlign: 'right' }}>Points</th></tr>
+              <tr>
+                <th style={{ width: 56 }}>Rank</th>
+                <th>Player</th>
+                <th className="num">Points</th>
+              </tr>
             </thead>
             <tbody>
-              {board.entries.map((e) => (
-                <tr key={e.key} style={{ borderTop: '1px solid #ffffff22' }}>
-                  <td>{e.rank}</td>
-                  <td>{e.name}{board.winnerKeys.includes(e.key) ? ' 🏆' : ''}</td>
-                  <td style={{ textAlign: 'right' }}>{e.total}</td>
-                </tr>
-              ))}
+              {board.entries.map((e) => {
+                const winner = board.winnerKeys.includes(e.key);
+                return (
+                  <tr key={e.key}>
+                    <td><span className={`rank${e.rank <= 3 ? ` r${e.rank}` : ''}`}>{e.rank}</span></td>
+                    <td>
+                      {e.name}
+                      {winner && <span className="pill gold btn-sm" style={{ marginLeft: 8, padding: '2px 9px' }}>🏆 leader</span>}
+                    </td>
+                    <td className="num"><span className="score">{e.total}</span></td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
