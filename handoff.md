@@ -11,10 +11,11 @@ _Last updated: 2026-06-24_
 **Where we are right now:**
 - All 5 feature plans are built, reviewed, and **merged to `master`**. The app works end-to-end.
 - The **database is provisioned** (Neon Postgres) and seeded; the app runs at **http://localhost:3000**.
-- We then did a big **UI redesign** ("Broadcast Pitch" theme + a real two-sided tournament bracket). That work lives on branch **`feat/ui-polish`** and is **NOT yet merged to `master`** (4 commits ahead).
+- The big **UI redesign** ("Broadcast Pitch" theme + `/official` page + pot = players×$50) **and the new FotMob-style bracket are now MERGED to `master`** (merge commit `361fc66`, `--no-ff`; `feat/ui-polish` deleted).
+- The bracket was reworked into the **FotMob look (Plan 1 of 2)**: FIFA WC26 **official routing** (explicit feeder map in `bracket-structure.ts`, replacing the old simplified adjacency), country **flags** (`flag-icons` + `src/lib/team-flag.ts`), **single-direction** columnar layout (`BracketLayout variant='single'`), round labels, `.fm-*` cards, mobile shrink-scroll. Verified: 137/137 vitest, tsc clean, build compiles 11 routes.
 - A **preview Round-of-32** is seeded with real WC26 teams so the bracket is viewable/testable. **It is a placeholder, not the official draw** (see below).
 
-**The single most important pending decision:** whether the new UI on `feat/ui-polish` looks right. Once approved → merge it to `master`.
+**Next up — Plan 2 of 2 (not yet written/executed):** the live **ESPN-standings projection engine** + **"As it stands" / "Confirmed" toggle** on `/official`. Decisions are locked in `docs/superpowers/specs/2026-06-24-fotmob-bracket-projections-design.md`. Data source is ESPN (public standings endpoint), NOT FotMob (no public API; signed-header gated).
 
 **To resume immediately:**
 1. Make sure the dev server is running: `cd C:\Users\Oswaldo\wc_ko_26 && npm run dev` → http://localhost:3000
