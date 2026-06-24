@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { TEAMS } from '@/lib/teams';
 import { getOfficialBracket } from '@/app/actions/bracket';
 import R32SkeletonForm from './R32SkeletonForm';
+import ResultsPanel from './ResultsPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +46,16 @@ export default async function AdminBracketPage() {
           </ul>
         )}
       </section>
+      <ResultsPanel
+        slots={slots.map((s) => ({
+          slot: s.slot,
+          round: s.round,
+          teamA: s.teamA,
+          teamB: s.teamB,
+          winner: s.winner,
+        }))}
+        potDollars={((await db.poolConfig.findUnique({ where: { id: 'default' } }))?.potCents ?? 0) / 100}
+      />
     </main>
   );
 }
