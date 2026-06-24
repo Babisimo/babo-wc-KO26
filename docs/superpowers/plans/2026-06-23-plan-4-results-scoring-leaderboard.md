@@ -78,13 +78,14 @@ git commit -m "feat: add Match.winnerSource and PoolConfig"
 - Produces from `@/lib/scoring`:
   - `type OfficialWinners = Record<number, string | null>` — slot → winning team code (or null/undecided).
   - `scoreBracket(picks: Picks, winners: OfficialWinners): number` — sum of `ROUND_POINTS[round]` over slots where the user's pick equals the (non-null) official winner.
+  - `winnersToPicks(winners: OfficialWinners): Record<number, string>` — strips nulls so an `OfficialWinners` map can be passed where a `Picks`-shaped map is expected (shared by later tasks; avoids duplicating this helper).
 
 - [ ] **Step 1: Write the failing test**
 
 `src/lib/scoring.test.ts`:
 ```ts
 import { describe, it, expect } from 'vitest';
-import { scoreBracket, type OfficialWinners } from './scoring';
+import { scoreBracket, winnersToPicks, type OfficialWinners } from './scoring';
 import type { Picks } from './bracket-picks';
 
 describe('scoreBracket', () => {
@@ -119,6 +120,12 @@ describe('scoreBracket', () => {
     expect(scoreBracket(picks, winners)).toBe(80);
   });
 });
+
+describe('winnersToPicks', () => {
+  it('drops null values and keeps coded winners', () => {
+    expect(winnersToPicks({ 1: 'ARG', 2: null, 17: 'FRA' })).toEqual({ 1: 'ARG', 17: 'FRA' });
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -145,6 +152,15 @@ export function scoreBracket(picks: Picks, winners: OfficialWinners): number {
     }
   }
   return total;
+}
+
+/** Strip nulls so an OfficialWinners map fits where a Picks (Record<number,string>) is expected. */
+export function winnersToPicks(winners: OfficialWinners): Record<number, string> {
+  const out: Record<number, string> = {};
+  for (const [k, v] of Object.entries(winners)) {
+    if (typeof v === 'string') out[Number(k)] = v;
+  }
+  return out;
 }
 ```
 
@@ -480,7 +496,7 @@ Expected: FAIL — module not found.
 ```ts
 import { TOTAL_SLOTS } from '@/lib/bracket-structure';
 import { contestantsForSlot, type OfficialR32 } from '@/lib/bracket-picks';
-import type { OfficialWinners } from '@/lib/scoring';
+import { winnersToPicks, type OfficialWinners } from '@/lib/scoring';
 
 /**
  * Clear any later-round winner that is no longer one of its slot's current
@@ -495,7 +511,7 @@ export function reconcileWinners(
   for (let s = 17; s <= TOTAL_SLOTS; s++) {
     const w = next[s];
     if (!w) continue;
-    const { teamA, teamB } = contestantsForSlot(s, officialR32, asPicks(next));
+    const { teamA, teamB } = contestantsForSlot(s, officialR32, winnersToPicks(next));
     if (w !== teamA && w !== teamB) delete next[s];
   }
   return next;
@@ -511,16 +527,6 @@ export function applyWinner(
   if (winner === null) delete next[slot];
   else next[slot] = winner;
   return reconcileWinners(officialR32, next);
-}
-
-// contestantsForSlot expects Picks (Record<number,string>); our winners map may
-// hold nulls. Strip nulls so the shapes line up.
-function asPicks(winners: OfficialWinners): Record<number, string> {
-  const out: Record<number, string> = {};
-  for (const [k, v] of Object.entries(winners)) {
-    if (typeof v === 'string') out[Number(k)] = v;
-  }
-  return out;
 }
 ```
 
@@ -642,7 +648,7 @@ import { resolveCode } from '@/lib/team-resolve';
 import { applyWinner } from '@/lib/official-winners';
 import { slotsForRound } from '@/lib/bracket-structure';
 import { contestantsForSlot, type OfficialR32 } from '@/lib/bracket-picks';
-import type { OfficialWinners } from '@/lib/scoring';
+import { winnersToPicks, type OfficialWinners } from '@/lib/scoring';
 
 export type FeedResult = { teamA: string; teamB: string; winner: string | null };
 
@@ -694,7 +700,7 @@ export function resolveOfficialWinners(officialR32: OfficialR32, feed: FeedResul
   const rounds = ['R32', 'R16', 'QF', 'SF', 'FINAL'] as const;
   for (const round of rounds) {
     for (const slot of slotsForRound(round)) {
-      const { teamA, teamB } = contestantsForSlot(slot, officialR32, asPicks(winners));
+      const { teamA, teamB } = contestantsForSlot(slot, officialR32, winnersToPicks(winners));
       if (!teamA || !teamB) continue;
       const match = byPair.get(pairKey(teamA, teamB));
       if (match && match.winner && (match.winner === teamA || match.winner === teamB)) {
@@ -703,14 +709,6 @@ export function resolveOfficialWinners(officialR32: OfficialR32, feed: FeedResul
     }
   }
   return winners;
-}
-
-function asPicks(winners: OfficialWinners): Record<number, string> {
-  const out: Record<number, string> = {};
-  for (const [k, v] of Object.entries(winners)) {
-    if (typeof v === 'string') out[Number(k)] = v;
-  }
-  return out;
 }
 ```
 
@@ -755,16 +753,10 @@ import { contestantsForSlot } from '@/lib/bracket-picks';
 import { applyWinner } from '@/lib/official-winners';
 import { mapEspnKnockout, resolveOfficialWinners } from '@/lib/results-feed';
 import { TOTAL_SLOTS } from '@/lib/bracket-structure';
-import type { OfficialWinners } from '@/lib/scoring';
+import { winnersToPicks, type OfficialWinners } from '@/lib/scoring';
 
 const ESPN_KO_URL =
   'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260628-20260720';
-
-function asPicks(winners: OfficialWinners): Record<number, string> {
-  const out: Record<number, string> = {};
-  for (const [k, v] of Object.entries(winners)) if (typeof v === 'string') out[Number(k)] = v;
-  return out;
-}
 
 /** Read Match.actualWinner rows into a slot -> code map. */
 export async function currentWinners(): Promise<OfficialWinners> {
@@ -785,7 +777,7 @@ export async function setMatchWinner(slot: number, winner: string | null): Promi
   const before = await currentWinners();
 
   if (winner !== null) {
-    const { teamA, teamB } = contestantsForSlot(slot, officialR32, asPicks(before));
+    const { teamA, teamB } = contestantsForSlot(slot, officialR32, winnersToPicks(before));
     if (winner !== teamA && winner !== teamB) {
       return { error: 'That team is not in this game yet.' };
     }
@@ -1203,7 +1195,7 @@ git commit -m "feat: add admin results panel (winners, feed refresh, pot)"
 
 **Placeholder scan:** No TBD/TODO; every code step is complete and transcribable as-is.
 
-**Type consistency:** `OfficialWinners` (`Record<number, string|null>`) defined in `scoring.ts` (Task 2) and reused by `official-winners.ts` (Task 5), `results-feed.ts` (Task 6), `results.ts` (Task 7), `leaderboard.ts` (Task 8). `Picks`/`OfficialR32` come from Plan 3. `RankedEntry`/`ScoreEntry` defined in Task 3 and used in Task 8. `FeedResult` defined in Task 6 and used in its own resolver. `currentWinners`/`scoreBracket`/`rankEntries`/`potSplit`/`applyWinner`/`mapEspnKnockout`/`resolveOfficialWinners` signatures match their callers. The `asPicks` null-stripping helper is intentionally duplicated in `official-winners.ts`, `results-feed.ts`, and `results.ts` (tiny, module-local) rather than shared — acceptable given its size; a reviewer may flag it.
+**Type consistency:** `OfficialWinners` (`Record<number, string|null>`) defined in `scoring.ts` (Task 2) and reused by `official-winners.ts` (Task 5), `results-feed.ts` (Task 6), `results.ts` (Task 7), `leaderboard.ts` (Task 8). `Picks`/`OfficialR32` come from Plan 3. `RankedEntry`/`ScoreEntry` defined in Task 3 and used in Task 8. `FeedResult` defined in Task 6 and used in its own resolver. `currentWinners`/`scoreBracket`/`rankEntries`/`potSplit`/`applyWinner`/`mapEspnKnockout`/`resolveOfficialWinners` signatures match their callers. The null-stripping helper is defined ONCE as `winnersToPicks` in `scoring.ts` (Task 2) and imported by `official-winners.ts` (Task 5), `results-feed.ts` (Task 6), and `results.ts` (Task 7) — no duplication.
 
 ---
 
