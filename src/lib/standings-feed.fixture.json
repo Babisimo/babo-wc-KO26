@@ -1,0 +1,24 @@
+{
+  "children": [
+    {
+      "name": "Group A",
+      "standings": {
+        "entries": [
+          { "team": { "displayName": "Mexico" },      "stats": [ {"name":"rank","value":1}, {"name":"points","value":7}, {"name":"pointDifferential","value":4}, {"name":"pointsFor","value":5}, {"name":"gamesPlayed","value":3} ] },
+          { "team": { "displayName": "USA" },          "stats": [ {"name":"rank","value":2}, {"name":"points","value":5}, {"name":"pointDifferential","value":2}, {"name":"pointsFor","value":4}, {"name":"gamesPlayed","value":3} ] },
+          { "team": { "displayName": "Norway" },       "stats": [ {"name":"rank","value":3}, {"name":"points","value":4}, {"name":"pointDifferential","value":0}, {"name":"pointsFor","value":3}, {"name":"gamesPlayed","value":3} ] },
+          { "team": { "displayName": "Saudi Arabia" }, "stats": [ {"name":"rank","value":4}, {"name":"points","value":0}, {"name":"pointDifferential","value":-6}, {"name":"pointsFor","value":1}, {"name":"gamesPlayed","value":3} ] }
+        ]
+      }
+    },
+    {
+      "name": "Group B",
+      "standings": {
+        "entries": [
+          { "team": { "displayName": "Canada" },  "stats": [ {"name":"rank","value":1}, {"name":"points","value":6}, {"name":"pointDifferential","value":3}, {"name":"pointsFor","value":4}, {"name":"gamesPlayed","value":2} ] },
+          { "team": { "displayName": "Croatia" }, "stats": [ {"name":"rank","value":2}, {"name":"points","value":4}, {"name":"pointDifferential","value":1}, {"name":"pointsFor","value":3}, {"name":"gamesPlayed","value":2} ] }
+        ]
+      }
+    }
+  ]
+}
