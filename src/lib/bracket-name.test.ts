@@ -9,7 +9,7 @@ describe('normalizeBracketName', () => {
     expect(normalizeBracketName('  My   Bracket  ', 1)).toBe('My Bracket');
   });
   it('strips control characters', () => {
-    expect(normalizeBracketName('Evil', 1)).toBe('Evil');
+    expect(normalizeBracketName('Ev\u0007il', 1)).toBe('Evil');
   });
   it('caps length at 32 characters', () => {
     const long = 'x'.repeat(50);
