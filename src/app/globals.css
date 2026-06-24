@@ -361,6 +361,36 @@ tbody tr:last-child td { border-bottom: none; }
 .banner.error { background: rgba(255,73,95,0.12); border-color: rgba(255,73,95,0.4); color: #ff9aa6; }
 .banner.ok { background: rgba(54,196,106,0.12); border-color: rgba(54,196,106,0.4); color: #8ff0b4; }
 
+/* FotMob-style match card */
+.bx-wrap .fm-match { width: var(--bx-card); flex: none; }
+.fm-match {
+  border: 1px solid var(--chalk); border-radius: var(--radius-sm);
+  background: rgba(8, 28, 18, 0.72); overflow: hidden;
+}
+.fm-match.correct { box-shadow: inset 3px 0 0 var(--grass); }
+.fm-match.wrong { box-shadow: inset 3px 0 0 var(--crimson); }
+.fm-row, .fm-btn {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 7px 10px; font-size: 0.85rem; text-align: left;
+}
+.fm-row + .fm-row, .fm-btn + .fm-btn { border-top: 1px solid var(--chalk); }
+.fm-row.win { color: #fff; font-weight: 700; }
+.fm-row.win .fm-tick { margin-left: auto; color: var(--gold); }
+.fm-nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fm-flag {
+  width: 20px; height: 14px; border-radius: 2px; flex: none;
+  background-size: cover; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+.fm-chip { width: 14px; height: 14px; border-radius: 3px; flex: none; background: rgba(255,255,255,0.18); }
+/* interactive pick buttons */
+.fm-btn {
+  background: transparent; color: var(--line); border: none; border-radius: 0;
+  box-shadow: none; cursor: pointer; font-weight: 500; transition: background 0.12s ease;
+}
+.fm-btn:hover:not(:disabled) { background: rgba(255,255,255,0.07); filter: none; transform: none; }
+.fm-btn.sel { background: rgba(255, 210, 63, 0.2); color: var(--gold); font-weight: 800; }
+.fm-btn:disabled { opacity: 0.5; cursor: default; }
+
 /* ---- Entrance ---- */
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .reveal { animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }

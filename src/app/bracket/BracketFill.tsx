@@ -2,7 +2,8 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { applyPick, bracketComplete, contestantsForSlot, type Picks, type OfficialR32 } from '@/lib/bracket-picks';
-import { teamName, teamColor } from '@/lib/team-name';
+import { teamName } from '@/lib/team-name';
+import TeamFlag from '@/app/_components/TeamFlag';
 import { saveBracket } from '@/app/actions/bracket-entry';
 import BracketLayout from '@/app/_components/BracketLayout';
 
@@ -45,12 +46,12 @@ export default function BracketFill({
     return (
       <button
         type="button"
-        className={`mm-btn${selected ? ' sel' : ''}`}
+        className={`fm-btn${selected ? ' sel' : ''}`}
         disabled={locked || !team}
         onClick={() => pick(slot, team)}
       >
-        <span className="chip" style={{ background: teamColor(team) }} />
-        <span className="nm">{teamName(team)}</span>
+        <TeamFlag code={team} />
+        <span className="fm-nm">{teamName(team)}</span>
       </button>
     );
   }
@@ -58,7 +59,7 @@ export default function BracketFill({
   function card(slot: number) {
     const { teamA, teamB } = contestantsForSlot(slot, officialR32, picks);
     return (
-      <div className="mm-match">
+      <div className="fm-match">
         {teamBtn(slot, teamA)}
         {teamBtn(slot, teamB)}
       </div>
