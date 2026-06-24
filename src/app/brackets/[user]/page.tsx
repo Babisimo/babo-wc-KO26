@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth, type AppSession } from '@/lib/auth';
 import { getUserBracketView } from '@/app/actions/browse';
-import BracketTree from '@/app/_components/BracketTree';
+import MarchMadnessBracket from '@/app/_components/MarchMadnessBracket';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +38,7 @@ export default async function UserBracketPage({ params }: { params: Promise<{ us
         <h1>{view.name}</h1>
         <span className="pill">{view.total} pts{view.isOwner ? ' · your bracket' : ''}</span>
       </div>
-      <BracketTree slots={view.slots} />
+      <MarchMadnessBracket slots={view.slots} />
     </main>
   );
 }

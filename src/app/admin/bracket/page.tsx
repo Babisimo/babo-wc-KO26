@@ -3,7 +3,7 @@ import { auth, type AppSession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { TEAMS } from '@/lib/teams';
 import { getOfficialBracket } from '@/app/actions/bracket';
-import BracketTree from '@/app/_components/BracketTree';
+import MarchMadnessBracket from '@/app/_components/MarchMadnessBracket';
 import type { SlotView } from '@/lib/bracket-view';
 import R32SkeletonForm from './R32SkeletonForm';
 import ResultsPanel from './ResultsPanel';
@@ -25,7 +25,7 @@ export default async function AdminBracketPage() {
   });
 
   const { slots } = await getOfficialBracket();
-  const pot = ((await db.poolConfig.findUnique({ where: { id: 'default' } }))?.potCents ?? 0) / 100;
+  const entry = ((await db.poolConfig.findUnique({ where: { id: 'default' } }))?.entryCents ?? 5000) / 100;
 
   const view: SlotView[] = slots.map((s) => ({
     slot: s.slot,
@@ -54,7 +54,7 @@ export default async function AdminBracketPage() {
         <h2 style={{ marginBottom: 14 }}>Results &amp; pot</h2>
         <ResultsPanel
           slots={slots.map((s) => ({ slot: s.slot, round: s.round, teamA: s.teamA, teamB: s.teamB, winner: s.winner }))}
-          potDollars={pot}
+          entryDollars={entry}
         />
       </section>
 
@@ -63,7 +63,7 @@ export default async function AdminBracketPage() {
         {slots.length === 0 ? (
           <p className="muted">No bracket yet — set the Round-of-32 matchups above.</p>
         ) : (
-          <BracketTree slots={view} />
+          <MarchMadnessBracket slots={view} />
         )}
       </section>
     </main>

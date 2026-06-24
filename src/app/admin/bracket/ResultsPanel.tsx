@@ -1,21 +1,21 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { setMatchWinner, refreshResults, setPot } from '@/app/actions/results';
+import { setMatchWinner, refreshResults, setEntryPrice } from '@/app/actions/results';
 import { teamName, teamColor } from '@/lib/team-name';
 
 type SlotRow = { slot: number; round: string; teamA: string | null; teamB: string | null; winner: string | null };
 
 export default function ResultsPanel({
   slots,
-  potDollars,
+  entryDollars,
 }: {
   slots: SlotRow[];
-  potDollars: number;
+  entryDollars: number;
 }) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
-  const [pot, setPotValue] = useState<string>(String(potDollars));
+  const [entry, setEntryValue] = useState<string>(String(entryDollars));
 
   function run(action: () => Promise<{ error?: string; updated?: number }>) {
     setMsg(null);
@@ -50,9 +50,10 @@ export default function ResultsPanel({
           {pending ? 'Working…' : 'Refresh from feed'}
         </button>
         <span style={{ width: 1, height: 22, background: 'var(--chalk)' }} />
-        <label htmlFor="pot" style={{ margin: 0 }}>Pot ($)</label>
-        <input id="pot" type="number" step="0.01" min="0" value={pot} onChange={(e) => setPotValue(e.target.value)} style={{ width: 110 }} />
-        <button type="button" className="btn-ghost" disabled={pending} onClick={() => run(() => setPot(Number(pot)))}>Set pot</button>
+        <label htmlFor="entry" style={{ margin: 0 }}>Entry ($/player)</label>
+        <input id="entry" type="number" step="1" min="0" value={entry} onChange={(e) => setEntryValue(e.target.value)} style={{ width: 100 }} />
+        <button type="button" className="btn-ghost" disabled={pending} onClick={() => run(() => setEntryPrice(Number(entry)))}>Set entry</button>
+        <span className="muted" style={{ fontSize: '0.82rem' }}>Pot = entry × players</span>
       </div>
 
       {msg && <p className={`banner ${msg.kind === 'ok' ? 'ok' : 'error'}`} style={{ marginBottom: 12 }}>{msg.text}</p>}

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth, type AppSession } from '@/lib/auth';
 import { getOfficialBracket } from '@/app/actions/bracket';
-import BracketTree from '@/app/_components/BracketTree';
+import MarchMadnessBracket from '@/app/_components/MarchMadnessBracket';
 import type { SlotView } from '@/lib/bracket-view';
 
 export const dynamic = 'force-dynamic';
@@ -44,7 +44,7 @@ export default async function OfficialPage() {
               <h2>Knockout tree</h2>
               <span className="pill">{decided} / {slots.length} decided</span>
             </div>
-            <BracketTree slots={view} />
+            <MarchMadnessBracket slots={view} />
           </>
         )}
       </section>

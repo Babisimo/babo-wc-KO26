@@ -80,7 +80,8 @@ model Bracket {
 }
 
 model PoolConfig {
-  id        String   @id @default("default")
-  potCents  Int      @default(0)
-  updatedAt DateTime @updatedAt
+  id         String   @id @default("default")
+  potCents   Int      @default(0)    // legacy fixed pot (unused; pot is now entry x players)
+  entryCents Int      @default(5000) // per-player entry price in cents (default $50)
+  updatedAt  DateTime @updatedAt
 }

@@ -251,6 +251,31 @@ tbody tr:last-child td { border-bottom: none; }
   background: linear-gradient(0deg, var(--pitch-900) 30%, transparent);
 }
 
+/* ---- March Madness two-sided bracket ---- */
+.mm { display: flex; gap: 8px; overflow-x: auto; padding: 6px 2px 20px; align-items: stretch; }
+.mm-col { display: flex; flex-direction: column; justify-content: space-around; gap: 8px; min-width: 150px; }
+.mm-col.r32 { min-width: 172px; }
+.mm-col > h4 {
+  font-family: var(--font-display); font-size: 0.68rem; letter-spacing: 0.1em;
+  color: var(--line-dim); text-transform: uppercase; text-align: center; margin: 0 0 4px;
+}
+.mm-final { display: flex; flex-direction: column; justify-content: center; min-width: 186px; padding: 0 6px; }
+.mm-final > h4 { color: var(--gold); }
+.mm-final .bk-match { box-shadow: 0 0 0 1px rgba(255,210,63,0.3), var(--shadow); }
+.mm-final .trophy { text-align: center; font-size: 1.4rem; margin-top: 8px; }
+.mm-match {
+  border: 1px solid var(--chalk); border-left: 3px solid var(--chalk-strong);
+  border-radius: var(--radius-sm); background: rgba(255,255,255,0.025); overflow: hidden;
+}
+.mm-match.correct { border-left-color: var(--grass); }
+.mm-match.wrong { border-left-color: var(--crimson); }
+.mm-team { display: flex; align-items: center; gap: 7px; padding: 7px 9px; font-size: 0.86rem; }
+.mm-team + .mm-team { border-top: 1px solid var(--chalk); }
+.mm-team.pick { background: rgba(255, 210, 63, 0.13); font-weight: 700; }
+.mm-team.win { color: var(--gold); font-weight: 700; }
+.mm-team .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mm-team .tick { margin-left: auto; }
+
 /* ---- Bracket tree (read-only view) ---- */
 .bk-tree { display: flex; gap: 16px; overflow-x: auto; padding: 4px 2px 16px; }
 .bk-round { display: flex; flex-direction: column; justify-content: space-around; gap: 12px; min-width: 176px; }

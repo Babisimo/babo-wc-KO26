@@ -33,6 +33,7 @@ export default async function Home() {
           <h2>Leaderboard</h2>
           <span className="pill gold">
             Pot {dollars(board.potCents)}
+            <span className="muted" style={{ fontWeight: 500 }}>· {board.players} × {dollars(board.entryCents)}</span>
             {board.winnerKeys.length > 0 && board.shareCents > 0 && (
               <> · {board.winnerKeys.length === 1 ? 'leader takes' : `${board.winnerKeys.length}-way split`} {dollars(board.shareCents)}</>
             )}
