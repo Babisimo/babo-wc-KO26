@@ -68,3 +68,12 @@ model Match {
   feedRef      String?       // external results-feed id (used in Plan 4)
   updatedAt    DateTime  @updatedAt
 }
+
+model Bracket {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  picks       Json      @default("{}")
+  submittedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
