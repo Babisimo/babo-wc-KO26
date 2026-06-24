@@ -57,3 +57,76 @@ export function rankThirds(groups: GroupStanding[]): string[] {
     );
   return ranked.slice(0, 8).map((x) => x.group);
 }
+
+import type { OfficialR32 } from '@/lib/bracket-picks';
+
+const THIRD_SLOT_NUMS = [2, 5, 7, 8, 9, 10, 13, 15] as const;
+
+/**
+ * Perfect matching of the 8 third-slots to the 8 qualifying groups, honoring
+ * THIRD_SLOTS eligibility. Deterministic backtracking: slots in ascending order, each
+ * tries eligible unused groups in alphabetical order; first complete matching wins.
+ */
+export function assignThirds(qualified: string[]): Record<number, string> {
+  const qset = new Set(qualified);
+  const slots = [...THIRD_SLOT_NUMS];
+  const used = new Set<string>();
+  const result: Record<number, string> = {};
+
+  function solve(i: number): boolean {
+    if (i === slots.length) return true;
+    const slot = slots[i];
+    const eligible = THIRD_SLOTS[slot]
+      .split('')
+      .filter((g) => qset.has(g) && !used.has(g))
+      .sort();
+    for (const g of eligible) {
+      used.add(g);
+      result[slot] = g;
+      if (solve(i + 1)) return true;
+      used.delete(g);
+      delete result[slot];
+    }
+    return false;
+  }
+
+  if (!solve(0)) throw new Error(`no valid third-place allocation for [${qualified.join(',')}]`);
+  return result;
+}
+
+function byLetter(groups: GroupStanding[]): Map<string, GroupStanding> {
+  return new Map(groups.map((g) => [g.group, g]));
+}
+function rowAtRank(g: GroupStanding | undefined, rank: number): string | null {
+  return g?.teams.find((t) => t.rank === rank)?.code ?? null;
+}
+
+/** Full R32 field from current standings, plus the set of mathematically-final slots. */
+export function seedR32(groups: GroupStanding[]): { projected: OfficialR32; confirmedSlots: Set<number> } {
+  const map = byLetter(groups);
+  const allComplete = groups.length === 12 && groups.every((g) => g.complete);
+  const qualifiedThirds = rankThirds(groups);
+  const thirdAssign = assignThirds(qualifiedThirds); // slot -> group letter
+
+  const projected: OfficialR32 = {};
+  const confirmedSlots = new Set<number>();
+
+  // Resolve one position to a team code + whether it is mathematically final.
+  // `slot` is needed only for third positions (it selects the allocated group).
+  function resolve(p: Pos, slot: number): { code: string | null; confirmed: boolean } {
+    if (p.kind === 'W') return { code: rowAtRank(map.get(p.group), 1), confirmed: map.get(p.group)?.complete ?? false };
+    if (p.kind === 'R') return { code: rowAtRank(map.get(p.group), 2), confirmed: map.get(p.group)?.complete ?? false };
+    // third: the allocated group's 3rd-place team; final only once ALL groups are complete
+    return { code: rowAtRank(map.get(thirdAssign[slot]), 3), confirmed: allComplete };
+  }
+
+  for (let slot = 1; slot <= 16; slot++) {
+    const [p1, p2] = R32_SCHEDULE[slot];
+    const r1 = resolve(p1, slot);
+    const r2 = resolve(p2, slot);
+    projected[slot] = { teamA: r1.code, teamB: r2.code };
+    if (r1.confirmed && r2.confirmed) confirmedSlots.add(slot);
+  }
+
+  return { projected, confirmedSlots };
+}
