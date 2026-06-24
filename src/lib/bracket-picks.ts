@@ -32,6 +32,10 @@ export function applyPick(
   winner: string,
 ): Picks {
   const next: Picks = { ...picks, [slot]: winner };
+  // NOTE: we mutate `next` in place during this sweep on purpose — clearing an
+  // earlier slot must be visible when we evaluate later slots in the SAME pass,
+  // which is what makes the cascade transitive in one loop. Do not refactor to
+  // build a fresh object slot-by-slot.
   // Sweep later slots in dependency order (slot numbers increase down the tree).
   // Clear any pick that is no longer one of its current two contestants.
   for (let s = slot + 1; s <= TOTAL_SLOTS; s++) {

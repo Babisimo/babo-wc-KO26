@@ -49,6 +49,25 @@ describe('applyPick', () => {
     picks = applyPick(OFFICIAL, picks, 1, 'BRA');
     expect(picks[17]).toBe('FRA');
   });
+  it('clears the entire downstream chain when an upstream winner changes', () => {
+    // Advance ARG (slot1) and FRA (slot2); pick ARG to win slot 17 (R16),
+    // then carry ARG all the way to the final via slots 25 (QF), 29 (SF), 31 (FINAL).
+    let picks: Picks = {};
+    picks = applyPick(OFFICIAL, picks, 1, 'ARG');
+    picks = applyPick(OFFICIAL, picks, 2, 'FRA');
+    picks = applyPick(OFFICIAL, picks, 17, 'ARG');
+    picks = applyPick(OFFICIAL, picks, 25, 'ARG');
+    picks = applyPick(OFFICIAL, picks, 29, 'ARG');
+    picks = applyPick(OFFICIAL, picks, 31, 'ARG');
+    expect(picks[31]).toBe('ARG');
+    // Change slot 1 to BRA: ARG never advances, so the whole chain (17,25,29,31) must clear.
+    picks = applyPick(OFFICIAL, picks, 1, 'BRA');
+    expect(picks[1]).toBe('BRA');
+    expect(picks[17]).toBeUndefined();
+    expect(picks[25]).toBeUndefined();
+    expect(picks[29]).toBeUndefined();
+    expect(picks[31]).toBeUndefined();
+  });
 });
 
 describe('bracketComplete', () => {
