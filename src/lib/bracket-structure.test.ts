@@ -51,6 +51,7 @@ describe('feedersForSlot', () => {
   it('wires QF, SF, FINAL', () => {
     expect(feedersForSlot(25)).toEqual([17, 18]);
     expect(feedersForSlot(26)).toEqual([21, 22]);
+    expect(feedersForSlot(27)).toEqual([19, 20]);
     expect(feedersForSlot(28)).toEqual([23, 24]);
     expect(feedersForSlot(29)).toEqual([25, 26]);
     expect(feedersForSlot(30)).toEqual([27, 28]);
