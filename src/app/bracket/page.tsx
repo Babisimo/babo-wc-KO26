@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth, type AppSession } from '@/lib/auth';
 import { listMyBrackets } from '@/app/actions/bracket-entry';
 import MyBrackets from './MyBrackets';
-import { NotOpen, ListHeader } from './BracketHeader';
+import { ListHeader } from './BracketHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,16 +11,19 @@ export default async function BracketPage() {
   if (!session?.user?.id) redirect('/login');
 
   const res = await listMyBrackets();
-  const lock = res.lock;
-
-  if (!lock || !lock.officialReady) {
-    return <NotOpen />;
-  }
+  const locked = res.lock?.locked ?? false;
+  const drawFinal = res.lock?.drawFinal ?? false;
 
   return (
     <main className="shell">
-      <ListHeader locked={lock.locked} />
-      <MyBrackets brackets={res.brackets ?? []} locked={lock.locked} credits={res.credits ?? 0} used={res.used ?? 0} />
+      <ListHeader locked={locked} />
+      <MyBrackets
+        brackets={res.brackets ?? []}
+        locked={locked}
+        drawFinal={drawFinal}
+        credits={res.credits ?? 0}
+        officialUsed={res.officialUsed ?? 0}
+      />
     </main>
   );
 }

@@ -531,6 +531,7 @@ tbody tr.row-link:hover { background: rgba(255, 210, 63, 0.07); }
 .bcard.final { border-color: rgba(255, 210, 63, 0.45); box-shadow: 0 0 0 1px rgba(255, 210, 63, 0.3), var(--shadow); }
 .bcard.correct { border-color: rgba(54, 196, 106, 0.5); box-shadow: inset 0 0 0 1px rgba(54, 196, 106, 0.35); }
 .bcard.wrong { border-color: rgba(255, 73, 95, 0.45); box-shadow: inset 0 0 0 1px rgba(255, 73, 95, 0.3); }
+.bcard.stale { border-color: rgba(255, 173, 51, 0.7); box-shadow: 0 0 0 1px rgba(255, 173, 51, 0.5); }
 .bcard-teams { display: flex; align-items: stretch; gap: 3px; }
 .bcard-team {
   flex: 1 1 0; min-width: 0;

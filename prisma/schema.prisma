@@ -76,6 +76,7 @@ model Bracket {
   userId      String
   name        String    @default("Bracket 1")
   picks       Json      @default("{}")
+  official    Boolean   @default(false) // designated paid entry; counts in pot/leaderboard
   submittedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

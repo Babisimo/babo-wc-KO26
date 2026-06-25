@@ -31,6 +31,7 @@ function coercePicks(raw: unknown): Picks {
 export async function getLeaderboard(): Promise<LeaderboardData> {
   const [brackets, winners, config] = await Promise.all([
     db.bracket.findMany({
+      where: { official: true }, // only designated, paid entries count in the pool
       select: { id: true, userId: true, name: true, picks: true },
     }),
     currentWinners(),

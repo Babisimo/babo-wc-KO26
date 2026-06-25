@@ -23,3 +23,22 @@ export function validateSubmission(
   }
   return { ok: true };
 }
+
+/**
+ * Draft-save validation: the bracket may be incomplete (the draw isn't final yet), but every
+ * pick that *is* present must be one of that slot's current contestants. Missing picks are fine.
+ */
+export function validateDraft(
+  officialR32: OfficialR32,
+  picks: Picks,
+): { ok: true } | { ok: false; error: string } {
+  for (let s = 1; s <= TOTAL_SLOTS; s++) {
+    const pick = picks[s];
+    if (!pick) continue;
+    const { teamA, teamB } = contestantsForSlot(s, officialR32, picks);
+    if (pick !== teamA && pick !== teamB) {
+      return { ok: false, error: `Slot ${s} has a pick that did not reach that game.` };
+    }
+  }
+  return { ok: true };
+}

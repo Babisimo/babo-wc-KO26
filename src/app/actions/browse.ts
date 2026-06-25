@@ -29,7 +29,7 @@ export async function getBracketsIndex(): Promise<BracketsIndex> {
   if (!locked) return { locked: false, entries: [] };
 
   const [brackets, winners] = await Promise.all([
-    db.bracket.findMany({ select: { userId: true, picks: true } }),
+    db.bracket.findMany({ where: { official: true }, select: { userId: true, picks: true } }),
     currentWinners(),
   ]);
   const users = await db.user.findMany({
@@ -89,7 +89,7 @@ export async function getUserBracketView(username: string): Promise<UserBracketV
 
   const [rows, winners, official] = await Promise.all([
     db.bracket.findMany({
-      where: { userId: target.id },
+      where: { userId: target.id, official: true },
       orderBy: { createdAt: 'asc' },
       select: { id: true, name: true, picks: true },
     }),
