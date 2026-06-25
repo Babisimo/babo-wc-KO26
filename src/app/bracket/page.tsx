@@ -34,7 +34,7 @@ export default async function BracketPage() {
           {lock.locked && ' Brackets are locked.'}
         </p>
       </header>
-      <MyBrackets brackets={res.brackets ?? []} locked={lock.locked} />
+      <MyBrackets brackets={res.brackets ?? []} locked={lock.locked} credits={res.credits ?? 0} used={res.used ?? 0} />
     </main>
   );
 }

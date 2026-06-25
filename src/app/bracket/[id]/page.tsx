@@ -24,7 +24,6 @@ export default async function EditBracketPage({ params }: { params: Promise<{ id
         <h1>{view.name}</h1>
         <p className="lead">
           Click a team to advance it through every round to the Final.
-          {view.status === 'PENDING' && ' This bracket is awaiting admin approval.'}
           {view.locked && ' Brackets are locked.'}
         </p>
       </header>
