@@ -253,21 +253,31 @@ select option { color: #000; }
   background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012));
 }
 .stage-head { display: flex; align-items: baseline; gap: 12px; justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px; }
-.stage-head .eyebrow { margin: 0; }
-.stage-now { font-family: var(--font-display), system-ui, sans-serif; font-size: 1.05rem; color: var(--line); }
+.stage-head .eyebrow { margin: 0; font-size: 0.82rem; }
+.stage-now { font-family: var(--font-display), system-ui, sans-serif; font-size: 1.28rem; color: var(--line); }
 .stage-steps { list-style: none; display: flex; margin: 0; padding: 0; }
-.stage-step { flex: 1 1 0; min-width: 0; position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; }
+.stage-step { flex: 1 1 0; min-width: 0; position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 /* connector from the previous step (gold once reached) */
-.stage-step::before { content: ""; position: absolute; top: 7px; left: -50%; width: 100%; height: 2px; background: var(--chalk); z-index: 0; }
+.stage-step::before { content: ""; position: absolute; top: 8px; left: -50%; width: 100%; height: 2px; background: var(--chalk); z-index: 0; }
 .stage-step:first-child::before { display: none; }
 .stage-step.done::before, .stage-step.live::before { background: var(--gold); }
-.stage-dot { width: 14px; height: 14px; border-radius: 50%; z-index: 1; background: var(--pitch-700); border: 2px solid var(--chalk-strong); }
+.stage-dot { width: 16px; height: 16px; border-radius: 50%; z-index: 1; background: var(--pitch-700); border: 2px solid var(--chalk-strong); }
 .stage-step.done .stage-dot { background: var(--gold); border-color: var(--gold); }
 .stage-step.live .stage-dot { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 0 4px rgba(255, 210, 63, 0.2); }
-.stage-name { font-family: var(--font-display), system-ui, sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--line-dim); }
+.stage-name { font-family: var(--font-display), system-ui, sans-serif; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--line-dim); }
 .stage-step.done .stage-name { color: var(--line); }
 .stage-step.live .stage-name { color: var(--gold); }
-.stage-count { font-size: 0.66rem; color: var(--line-faint); font-variant-numeric: tabular-nums; min-height: 0.8em; }
+.stage-count { font-size: 0.8rem; color: var(--line-faint); font-variant-numeric: tabular-nums; min-height: 0.8em; }
+
+/* page navigation loader — branded spinner shown while a page's data loads */
+.page-loading { display: flex; align-items: center; justify-content: center; min-height: 52vh; }
+.page-spinner {
+  width: 46px; height: 46px; border-radius: 50%;
+  border: 3px solid var(--chalk); border-top-color: var(--gold);
+  animation: page-spin 0.75s linear infinite;
+}
+@keyframes page-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .page-spinner { animation-duration: 1.6s; } }
 
 /* ---- Countdown hero ---- */
 .countdown {
@@ -521,41 +531,46 @@ tbody tr.row-link:hover { background: rgba(255, 210, 63, 0.07); }
 /* ====== Redesigned bracket board (responsive: two-sided desktop / vertical mobile) ====== */
 .brd { width: 100%; }
 
-/* ---- shared match card ---- */
+/* ---- shared match card: two teams stacked as flag+code rows ---- */
 .bcard {
-  display: flex; flex-direction: column; gap: 5px;
-  border: 1px solid var(--chalk); border-radius: 12px;
-  background: rgba(8, 28, 18, 0.66);
-  padding: 8px 7px 6px;
+  display: flex; flex-direction: column;
+  border: 1px solid var(--chalk); border-radius: 10px;
+  background: rgba(8, 28, 18, 0.7); overflow: hidden;
 }
 .bcard.final { border-color: rgba(255, 210, 63, 0.45); box-shadow: 0 0 0 1px rgba(255, 210, 63, 0.3), var(--shadow); }
-.bcard.correct { border-color: rgba(54, 196, 106, 0.5); box-shadow: inset 0 0 0 1px rgba(54, 196, 106, 0.35); }
-.bcard.wrong { border-color: rgba(255, 73, 95, 0.45); box-shadow: inset 0 0 0 1px rgba(255, 73, 95, 0.3); }
-.bcard-teams { display: flex; align-items: stretch; gap: 3px; }
+.bcard.correct { border-color: rgba(54, 196, 106, 0.5); }
+.bcard.wrong { border-color: rgba(255, 73, 95, 0.45); }
+.bcard-teams { display: flex; flex-direction: column; }
 .bcard-team {
-  flex: 1 1 0; min-width: 0;
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
-  padding: 4px 2px; border-radius: 8px;
-  background: transparent; color: var(--line); border: none; box-shadow: none;
+  display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0;
+  padding: 7px 10px; text-align: left;
+  background: transparent; color: var(--line-dim); border: none; box-shadow: none;
   font-weight: 600; cursor: default; transition: background 0.12s ease;
 }
+.bcard-team + .bcard-team { border-top: 1px solid var(--chalk); }
 button.bcard-team { font: inherit; font-weight: 600; }
 button.bcard-team:not(:disabled) { cursor: pointer; }
-button.bcard-team:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); filter: none; transform: none; box-shadow: none; }
-.bcard-team.sel { background: rgba(255, 210, 63, 0.2); color: var(--gold); }
-.bcard-team.sel .bcard-flag { box-shadow: 0 0 0 2px var(--gold); }
+button.bcard-team:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); color: var(--line); filter: none; transform: none; box-shadow: none; }
+/* advancing / picked team: highlighted row */
+.bcard-team.sel { background: rgba(255, 210, 63, 0.16); color: var(--gold); }
+.bcard-team.sel .bcard-code { font-weight: 800; }
 .fi.bcard-flag {
-  width: 27px; height: 27px; border-radius: 50%;
+  width: 36px; height: 36px; border-radius: 50%;
   background-size: cover; background-position: center;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.1);
-  flex: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4); flex: none;
 }
 .bcard-flag-tbd {
-  width: 27px; height: 27px; border-radius: 50%; flex: none;
-  background: rgba(255, 255, 255, 0.13); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+  width: 36px; height: 36px; border-radius: 50%; flex: none;
+  background: rgba(255, 255, 255, 0.12); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
 }
-.bcard-code { font-family: var(--font-display); font-size: 0.82rem; letter-spacing: 0.02em; line-height: 1; }
-.bcard-date { text-align: center; font-size: 0.66rem; color: var(--line-dim); letter-spacing: 0.02em; }
+.bcard-code {
+  flex: 1; min-width: 0; font-family: var(--font-display); font-size: 0.94rem; letter-spacing: 0.02em;
+  line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bcard-date {
+  padding: 4px 10px 5px; font-size: 0.62rem; color: var(--line-dim);
+  border-top: 1px solid var(--chalk); text-align: center; font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
+}
 
 /* ---- centerpiece (trophy + final) ---- */
 .brd-final-card { position: relative; display: flex; flex-direction: column; align-items: center; }
@@ -572,7 +587,7 @@ button.bcard-team:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); 
 }
 
 /* map-style pan & zoom: a fixed-size viewport with a transformed camera layer inside */
-.brd-zoombar { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 6px; }
+.brd-zoombar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 6px; }
 .brd-zpct { font-size: 0.8rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--line-dim); min-width: 40px; text-align: right; }
 .brd-zfit {
   height: 30px; padding: 0 14px; font-size: 0.82rem; font-weight: 700; box-shadow: none; cursor: pointer;
@@ -591,80 +606,55 @@ button.bcard-team:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); 
 
 /* ---- desktop: symmetric two-sided tree ---- */
 .brd-desktop-inner {
-  --bx-card: 124px; --bx-cw: 20px;
+  --bx-card: 176px; --bx-cw: 24px;
   width: max-content;
   display: flex; align-items: center;
   padding: 44px 4px 34px;
 }
-.brd-desktop .bcard { width: var(--bx-card); flex: none; }
+.brd-desktop-inner .bcard { width: var(--bx-card); flex: none; }
+.brd-desktop-inner .bcard-team { padding: 9px 12px; gap: 10px; }
 .brd-final { display: flex; align-items: center; margin: 0 var(--bx-cw); }
-.brd-final .brd-final-card .bcard { width: 168px; }
+.brd-final .brd-final-card .bcard { width: 196px; }
 /* connectors from the final card to the two semifinal cards */
 .brd-final-card::before, .brd-final-card::after { content: ""; position: absolute; top: 50%; width: var(--bx-cw); height: 2px; background: var(--bx-line); }
 .brd-final-card::before { right: 100%; }
 .brd-final-card::after { left: 100%; }
 
-/* ---- mobile container ---- */
-.brd-mobile { display: none; }
+/* Same on every screen: Rounds (swipe/tap between rounds) by default, Full = pan/zoom tree. */
+.brd-zoom, .brd-tabs-wrap { display: none; }
+.brd-view-switch { display: flex; justify-content: center; margin-bottom: 12px; }
+.brd-view-tabs .brd-tabs-wrap { display: block; }
+.brd-view-full .brd-zoom { display: block; }
+.bcard-name { display: none; }            /* compact 3-letter codes by default (dense tree) */
 
-/* mobile: vertical connected tree converging to the centered Final */
-.brd-vert-inner {
-  --vx-card: 52px; --vx-ch: 16px;
-  width: max-content;
-  display: flex; flex-direction: column; align-items: center;
-  padding: 12px 2px 18px;
+/* segmented view control (Rounds | Full) */
+.brd-viewseg { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--chalk); border-radius: 999px; background: rgba(255, 255, 255, 0.05); }
+.brd-viewbtn {
+  border: 0; border-radius: 999px; box-shadow: none; cursor: pointer; padding: 7px 18px;
+  background: transparent; color: var(--line-dim);
+  font-family: var(--font-display); font-weight: 700; font-size: 0.78rem; letter-spacing: 0.02em;
 }
-/* compact stacked cells (two team rows; no date) so 8 fit across */
-.brd-vert .bcard { width: var(--vx-card); padding: 4px 3px; gap: 2px; }
-.brd-vert .bcard-teams { flex-direction: column; gap: 2px; }
-.brd-vert .bcard-team { flex-direction: row; justify-content: center; gap: 4px; padding: 2px 1px; }
-.brd-vert .fi.bcard-flag, .brd-vert .bcard-flag-tbd { width: 15px; height: 15px; }
-.brd-vert .bcard-code { font-size: 0.66rem; }
-.brd-vert .bcard-date { display: none; }
+.brd-viewbtn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); color: var(--line); filter: none; transform: none; }
+.brd-viewbtn.active { background: var(--gold); color: var(--ink); }
 
-.vx { display: flex; flex-direction: column; align-items: center; }
-.vx-kids { display: flex; flex-direction: row; justify-content: center; }
-.vx-leaf, .vx-self { display: flex; justify-content: center; padding: 0 3px; }
+/* round change — cards stagger in (fade-up on load, slide from the swipe direction) */
+@keyframes brd-card-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes brd-card-r { from { opacity: 0; transform: translateX(34px); } to { opacity: 1; transform: none; } }
+@keyframes brd-card-l { from { opacity: 0; transform: translateX(-34px); } to { opacity: 1; transform: none; } }
+.brd-tab-list > * { animation: brd-card-in 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.brd-tab-list.slide-next > * { animation-name: brd-card-r; }
+.brd-tab-list.slide-prev > * { animation-name: brd-card-l; }
+.brd-tab-list > *:nth-child(2) { animation-delay: 0.04s; }
+.brd-tab-list > *:nth-child(3) { animation-delay: 0.08s; }
+.brd-tab-list > *:nth-child(4) { animation-delay: 0.12s; }
+.brd-tab-list > *:nth-child(5) { animation-delay: 0.16s; }
+.brd-tab-list > *:nth-child(6) { animation-delay: 0.20s; }
+.brd-tab-list > *:nth-child(7) { animation-delay: 0.24s; }
+.brd-tab-list > *:nth-child(n+8) { animation-delay: 0.28s; }
+@media (prefers-reduced-motion: reduce) { .brd-tab-list > * { animation: none; } }
 
-/* top half — feeders above, self below; vertical connectors drop downward */
-.vx.down > .vx-self { margin-top: var(--vx-ch); position: relative; }
-.vx.down > .vx-self::before { content: ""; position: absolute; bottom: 100%; left: calc(50% - 1px); height: calc(var(--vx-ch) / 2); width: 2px; background: var(--bx-line); }
-.vx.down > .vx-kids > * { position: relative; }
-.vx.down > .vx-kids > *::after { content: ""; position: absolute; top: 100%; height: calc(var(--vx-ch) / 2); width: 50%; }
-.vx.down > .vx-kids > *:first-child::after { left: calc(50% - 1px); border-left: 2px solid var(--bx-line); border-bottom: 2px solid var(--bx-line); }
-.vx.down > .vx-kids > *:last-child::after { right: calc(50% - 1px); border-right: 2px solid var(--bx-line); border-bottom: 2px solid var(--bx-line); }
-
-/* bottom half — self above, feeders below; connectors rise upward */
-.vx.up > .vx-self { margin-bottom: var(--vx-ch); position: relative; }
-.vx.up > .vx-self::after { content: ""; position: absolute; top: 100%; left: calc(50% - 1px); height: calc(var(--vx-ch) / 2); width: 2px; background: var(--bx-line); }
-.vx.up > .vx-kids > * { position: relative; }
-.vx.up > .vx-kids > *::before { content: ""; position: absolute; bottom: 100%; height: calc(var(--vx-ch) / 2); width: 50%; }
-.vx.up > .vx-kids > *:first-child::before { left: calc(50% - 1px); border-left: 2px solid var(--bx-line); border-top: 2px solid var(--bx-line); }
-.vx.up > .vx-kids > *:last-child::before { right: calc(50% - 1px); border-right: 2px solid var(--bx-line); border-top: 2px solid var(--bx-line); }
-
-/* center: Final card + trophy, with connectors up to SF(29) and down to SF(30) */
-.brd-vert-final { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; margin: var(--vx-ch) 0; }
-.brd-vert-final-card { display: flex; }
-.brd-vert-final .bcard { width: 86px; }
-.brd-vert-champ { font-size: 1.5rem; line-height: 1; filter: drop-shadow(0 3px 8px rgba(0,0,0,0.5)); }
-.brd-vert-final .brd-final-tag { position: static; transform: none; }
-.brd-vert-final::before { content: ""; position: absolute; bottom: 100%; left: calc(50% - 1px); height: var(--vx-ch); width: 2px; background: var(--bx-line); }
-.brd-vert-final::after { content: ""; position: absolute; top: 100%; left: calc(50% - 1px); height: var(--vx-ch); width: 2px; background: var(--bx-line); }
-
-/* mobile: single-direction connected bracket (R32 -> Final, with connector lines) */
-.brd-single {
-  --bx-card: 112px; --bx-cw: 16px;
-  display: flex; align-items: center; justify-content: flex-start;
-  overflow-x: auto; padding: 12px 2px 18px;
-}
-.brd-single .bcard { width: var(--bx-card); flex: none; padding: 7px 6px 6px; gap: 4px; }
-.brd-single .fi.bcard-flag, .brd-single .bcard-flag-tbd { width: 22px; height: 22px; }
-.brd-single .bcard-code { font-size: 0.76rem; }
-.brd-single .bcard-date { font-size: 0.62rem; }
-.brd-single .bcard-team { gap: 4px; padding: 3px 2px; }
-
-/* mobile: round-selector tabs (one round at a time, no horizontal scroll) */
-.brd-tabs-wrap { padding: 4px 0 8px; }
+/* round-selector tabs (one round at a time) — centered column, same width on phone or desktop */
+.brd-tabs-wrap { padding: 4px 0 8px; max-width: 520px; margin: 0 auto; }
 .brd-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 16px; border: 1px solid var(--chalk); border-radius: 999px; background: rgba(255, 255, 255, 0.05); }
 .brd-tab {
   flex: 1 1 0; min-width: 0; border: 0; border-radius: 999px; box-shadow: none; cursor: pointer;
@@ -673,30 +663,26 @@ button.bcard-team:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); 
 }
 .brd-tab:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); color: var(--line); filter: none; transform: none; }
 .brd-tab.active { background: var(--gold); color: var(--ink); }
-.brd-tab-list { display: flex; flex-direction: column; gap: 10px; }
-.brd-tab-card .bcard { width: 100%; padding: 13px 16px; gap: 9px; }
+.brd-tab-list { display: flex; flex-direction: column; gap: 18px; }
+.brd-tab-card .bcard { width: 100%; }
+.brd-tab-card .bcard-team { padding: 12px 16px; gap: 13px; }
 .brd-tab-card .fi.bcard-flag, .brd-tab-card .bcard-flag-tbd { width: 34px; height: 34px; }
-.brd-tab-card .bcard-code { font-size: 1rem; }
 .brd-tab-card .bcard-date { font-size: 0.74rem; }
+/* big readable cards: show full team names instead of 3-letter codes */
+.brd-tab-card .bcard-code { display: none; }
+.brd-tab-card .bcard-name { display: block; font-size: 1rem; font-weight: 700; line-height: 1.15; }
 
-/* mobile: vertical fan (backup — enable via MOBILE_LAYOUT in BracketLayout.tsx) */
-.brd-fan { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 8px 0 22px; }
-.brd-row { display: flex; gap: 8px; overflow-x: auto; padding: 0 6px 2px; width: 100%; scrollbar-width: thin; }
-.brd-row::before, .brd-row::after { content: ""; margin: auto; }
-.brd-row::-webkit-scrollbar { height: 5px; }
-.brd-cell { flex: 0 0 auto; }
-.brd-fan .bcard { width: 116px; }
-.brd-final-m { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 16px 0; }
-.brd-final-m .brd-final-card { gap: 10px; }
-.brd-final-m .brd-final-card .bcard { width: 150px; }
-.brd-final-m .brd-trophy { position: static; transform: none; bottom: auto; left: auto; }
-.brd-final-m .brd-trophy-cup { font-size: 2rem; }
-.brd-final-m .brd-final-tag { position: static; transform: none; top: auto; left: auto; margin-top: 2px; }
-.brd-final-m .brd-final-card::before, .brd-final-m .brd-final-card::after { display: none; }
-
-@media (max-width: 760px) {
-  .brd-desktop { display: none; }
-  .brd-mobile { display: block; }
+/* the two games that feed one next-round game, bracketed by a connector line */
+.brd-tab-pair { position: relative; display: flex; flex-direction: column; gap: 10px; padding-right: 24px; }
+.brd-tab-pair > .brd-tab-card { position: relative; }
+.brd-tab-pair > .brd-tab-card::after {        /* stub from each card to the joining bar */
+  content: ""; position: absolute; left: 100%; top: 50%; width: 16px; height: 2px; background: var(--bx-line);
+}
+.brd-tab-pair::before {                        /* vertical bar joining the two stubs */
+  content: ""; position: absolute; right: 8px; top: 25%; bottom: 25%; width: 2px; background: var(--bx-line);
+}
+.brd-tab-pair::after {                         /* short stub pointing toward the next round */
+  content: ""; position: absolute; right: 0; top: 50%; width: 8px; height: 2px; background: var(--bx-line);
 }
 
 /* ---- bracket selector (browse, multiple brackets) ---- */

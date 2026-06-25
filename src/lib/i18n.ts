@@ -91,6 +91,8 @@ const en = {
   'bracket.pickEvery': 'Pick every game ({made}/31)',
   'bracket.saved': 'Bracket saved ✓',
   'bracket.lockedFinal': 'Brackets are locked — picks are final.',
+  'bracket.viewRounds': 'Rounds',
+  'bracket.viewFull': 'Full',
   // countdown
   'countdown.statusLabel': 'Bracket status',
   'countdown.notOpen': 'Not open yet',
@@ -291,6 +293,8 @@ const es: Record<StringKey, string> = {
   'bracket.pickEvery': 'Escoge todos los partidos ({made}/31)',
   'bracket.saved': 'Bracket guardado ✓',
   'bracket.lockedFinal': 'Las brackets ya cerraron — los picks son finales.',
+  'bracket.viewRounds': 'Rondas',
+  'bracket.viewFull': 'Completo',
   // countdown
   'countdown.statusLabel': 'Estado del bracket',
   'countdown.notOpen': 'Todavía no abre',

@@ -1,22 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState, type PointerEvent as RPointerEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as RPointerEvent, type TouchEvent as RTouchEvent, type ReactNode } from 'react';
 import type { Round } from '@prisma/client';
-import { feedersForSlot, roundForSlot, slotsForRound } from '@/lib/bracket-structure';
+import { feedersForSlot, slotsForRound } from '@/lib/bracket-structure';
 import { useT } from '@/app/_components/LangProvider';
 import type { StringKey } from '@/lib/i18n';
-
-// Mobile layout:
-//   'vert' = connected tree converging top+bottom to the centered Final;
-//   'tree' = single-direction connected bracket (R32 → Final);
-//   'tabs' = one round at a time; 'fan' = the older flat vertical fan.
-// Flip this one line to switch.
-const MOBILE_LAYOUT: 'vert' | 'tree' | 'tabs' | 'fan' = 'vert';
 
 type Side = 'left' | 'right';
 
 // Recursively renders a balanced sub-bracket rooted at `slot`, each match
-// vertically centered between its two feeder matches (desktop tree).
+// vertically centered between its two feeder matches (the two-sided desktop tree).
 function Node({
   slot,
   side,
@@ -57,137 +50,99 @@ function Centerpiece({ render }: { render: (slot: number) => ReactNode }) {
   );
 }
 
-// ---- mobile: vertical connected tree converging to the centered Final ----
-// 'down' = feeders above, self below (top half: R32 at the very top → SF near center).
-// 'up'   = self above, feeders below (bottom half: SF near center → R32 at the very bottom).
-type VDir = 'down' | 'up';
-
-function VNode({ slot, dir, render }: { slot: number; dir: VDir; render: (slot: number) => ReactNode }) {
-  const feeders = feedersForSlot(slot);
-  if (!feeders) return <div className="vx-leaf">{render(slot)}</div>;
-
-  const kids = (
-    <div className="vx-kids">
-      <VNode slot={feeders[0]} dir={dir} render={render} />
-      <VNode slot={feeders[1]} dir={dir} render={render} />
-    </div>
-  );
-  const self = <div className="vx-self">{render(slot)}</div>;
-
-  return (
-    <div className={`vx ${dir}`}>
-      {dir === 'down' ? (<>{kids}{self}</>) : (<>{self}{kids}</>)}
-    </div>
-  );
-}
-
-function MobileVertical({ render }: { render: (slot: number) => ReactNode }) {
-  return (
-    <div className="brd-vert">
-      <div className="brd-vert-inner">
-        <VNode slot={29} dir="down" render={render} />
-        <div className="brd-vert-final">
-          <span className="brd-vert-champ" aria-hidden>🏆</span>
-          <div className="brd-vert-final-card">{render(31)}</div>
-          <span className="brd-final-tag">Final</span>
-        </div>
-        <VNode slot={30} dir="up" render={render} />
-      </div>
-    </div>
-  );
-}
-
-// ---- mobile: single-direction connected bracket (R32 -> Final, with connector lines) ----
-function MobileTree({ render }: { render: (slot: number) => ReactNode }) {
-  return (
-    <div className="brd-single">
-      <Node slot={31} side="left" render={render} />
-    </div>
-  );
-}
-
-// ---- mobile: round selector tabs (one round at a time) ----
+// ---- mobile: round-by-round tabs (one round at a time, big readable cards) ----
 const TAB_ROUNDS: Round[] = ['R32', 'R16', 'QF', 'SF', 'FINAL'];
 const ROUND_TAB_KEY: Record<Round, StringKey> = {
   R32: 'round.r32Short', R16: 'round.r16Short', QF: 'round.qfShort', SF: 'round.sfShort', FINAL: 'round.finalShort',
 };
+const NEXT_ROUND: Partial<Record<Round, Round>> = { R32: 'R16', R16: 'QF', QF: 'SF', SF: 'FINAL' };
 
-function MobileTabs({ render }: { render: (slot: number) => ReactNode }) {
+// The two games in `round` that feed each game of the next round, so we can bracket
+// them with a connector line. The Final has no pairing (it's the last game).
+function roundPairs(round: Round): number[][] {
+  const next = NEXT_ROUND[round];
+  if (!next) return [];
+  return slotsForRound(next).map((parent) => feedersForSlot(parent) ?? []);
+}
+
+// One round's games — the Final as a single card, every other round as bracketed pairs.
+function RoundBlock({ round, render }: { round: Round; render: (slot: number) => ReactNode }) {
+  if (round === 'FINAL') return <div className="brd-tab-card">{render(31)}</div>;
+  return (
+    <>
+      {roundPairs(round).map((pair, i) => (
+        <div key={i} className="brd-tab-pair">
+          {pair.map((s) => <div key={s} className="brd-tab-card">{render(s)}</div>)}
+        </div>
+      ))}
+    </>
+  );
+}
+
+// Mobile round-by-round — swipe left/right (or tap a tab) to move between rounds.
+const SWIPE_MIN = 45; // px of horizontal travel to count as a swipe
+
+function BracketTabs({ render }: { render: (slot: number) => ReactNode }) {
   const t = useT();
   const [round, setRound] = useState<Round>('R32');
+  const [dir, setDir] = useState(0); // -1 prev, +1 next — drives the slide-in animation
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const idx = TAB_ROUNDS.indexOf(round);
+
+  function goTo(next: Round) {
+    const ni = TAB_ROUNDS.indexOf(next);
+    if (ni === idx) return;
+    setDir(ni > idx ? 1 : -1);
+    setRound(next);
+  }
+  function step(delta: number) {
+    const ni = idx + delta;
+    if (ni >= 0 && ni < TAB_ROUNDS.length) goTo(TAB_ROUNDS[ni]);
+  }
+
+  function onTouchStart(e: RTouchEvent) {
+    const tp = e.touches[0];
+    touch.current = { x: tp.clientX, y: tp.clientY };
+  }
+  function onTouchEnd(e: RTouchEvent) {
+    if (!touch.current) return;
+    const tp = e.changedTouches[0];
+    const dx = tp.clientX - touch.current.x, dy = tp.clientY - touch.current.y;
+    touch.current = null;
+    // horizontal swipe only — vertical drags stay as normal scrolling
+    if (Math.abs(dx) > SWIPE_MIN && Math.abs(dx) > Math.abs(dy) * 1.5) step(dx < 0 ? 1 : -1);
+  }
+
   return (
     <div className="brd-tabs-wrap">
       <div className="brd-tabs" role="tablist" aria-label="Round">
         {TAB_ROUNDS.map((r) => (
-          <button
-            key={r}
-            type="button"
-            role="tab"
-            aria-selected={round === r}
-            className={`brd-tab${round === r ? ' active' : ''}`}
-            onClick={() => setRound(r)}
-          >
+          <button key={r} type="button" role="tab" aria-selected={round === r}
+            className={`brd-tab${round === r ? ' active' : ''}`} onClick={() => goTo(r)}>
             {t(ROUND_TAB_KEY[r])}
           </button>
         ))}
       </div>
-      <div className="brd-tab-list">
-        {slotsForRound(round).map((s) => <div key={s} className="brd-tab-card">{render(s)}</div>)}
+      <div
+        key={round}
+        className={`brd-tab-list${dir > 0 ? ' slide-next' : dir < 0 ? ' slide-prev' : ''}`}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        <RoundBlock round={round} render={render} />
       </div>
     </div>
   );
 }
 
-// ---- mobile: vertical fan (kept as a backup; enable via MOBILE_LAYOUT) ----
-const ROUND_ORDER: Round[] = ['R32', 'R16', 'QF', 'SF'];
-
-function collectHalf(root: number): Record<Round, number[]> {
-  const byRound: Record<string, number[]> = { R32: [], R16: [], QF: [], SF: [], FINAL: [] };
-  (function walk(slot: number) {
-    byRound[roundForSlot(slot)].push(slot);
-    const f = feedersForSlot(slot);
-    if (f) { walk(f[0]); walk(f[1]); }
-  })(root);
-  for (const k of Object.keys(byRound)) byRound[k].sort((a, b) => a - b);
-  return byRound as Record<Round, number[]>;
-}
-
-function Row({ slots, render }: { slots: number[]; render: (s: number) => ReactNode }) {
-  return (
-    <div className="brd-row">
-      {slots.map((s) => <div key={s} className="brd-cell">{render(s)}</div>)}
-    </div>
-  );
-}
-
-function MobileFan({ render }: { render: (slot: number) => ReactNode }) {
-  const top = collectHalf(29);
-  const bottom = collectHalf(30);
-  return (
-    <div className="brd-fan">
-      {ROUND_ORDER.map((r) => <Row key={`t-${r}`} slots={top[r]} render={render} />)}
-      <div className="brd-final-m"><Centerpiece render={render} /></div>
-      {[...ROUND_ORDER].reverse().map((r) => <Row key={`b-${r}`} slots={bottom[r]} render={render} />)}
-    </div>
-  );
-}
-
-/**
- * Responsive tournament bracket. Desktop renders a symmetric two-sided tree with
- * the Final centered; mobile uses round-selector tabs (or the vertical fan backup).
- * CSS picks the desktop tree or the mobile view per viewport width.
- */
+// ---- desktop (and mobile "Full bracket"): map-style pan/zoom of the two-sided tree ----
 const ZOOM_MIN = 0.2;
 const ZOOM_MAX = 4;
 const clampZoom = (v: number) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, v));
 
 type Cam = { scale: number; tx: number; ty: number };
 
-export default function BracketLayout({
-  render,
-}: {
-  render: (slot: number) => ReactNode;
-}) {
+function BracketZoom({ render, revealKey }: { render: (slot: number) => ReactNode; revealKey: string }) {
   // Camera over a fixed-size viewport: translate (tx,ty) then scale. Drag pans,
   // pinch / wheel zoom; the viewport never changes size, so there's no scrolling.
   const [cam, setCam] = useState<Cam>({ scale: 1, tx: 0, ty: 0 });
@@ -202,9 +157,8 @@ export default function BracketLayout({
   function measure() {
     const vp = vpRef.current, pan = panRef.current;
     if (!vp || !pan) return null;
-    const inners = Array.from(pan.querySelectorAll<HTMLElement>('.brd-desktop-inner, .brd-vert-inner'));
-    const inner = inners.find((el) => el.offsetParent !== null); // the one not display:none
-    if (!inner) return null;
+    const inner = pan.querySelector<HTMLElement>('.brd-desktop-inner');
+    if (!inner || inner.offsetParent === null) return null; // null while hidden (display:none)
     return { vpW: vp.clientWidth, vpH: vp.clientHeight, natW: inner.offsetWidth, natH: inner.offsetHeight };
   }
 
@@ -226,6 +180,14 @@ export default function BracketLayout({
     if (!m || !m.natW || !m.natH) return;
     const scale = clampZoom(Math.min(m.vpW / m.natW, m.vpH / m.natH) * 0.96);
     setCam({ scale, tx: (m.vpW - m.natW * scale) / 2, ty: (m.vpH - m.natH * scale) / 2 });
+  }
+
+  // Open at a comfortable, readable scale (cards at full size, centered) — pan to explore.
+  function resetView() {
+    const m = measure();
+    if (!m || !m.natW || !m.natH) return;
+    const scale = 1;
+    setCam(clampCam({ scale, tx: (m.vpW - m.natW * scale) / 2, ty: (m.vpH - m.natH * scale) / 2 }));
   }
 
   function point(e: RPointerEvent) {
@@ -316,15 +278,16 @@ export default function BracketLayout({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Frame the whole bracket on first paint.
+  // Recenter when first shown (desktop: once on mount; mobile: when "Full bracket" opens,
+  // i.e. revealKey changes — so we measure AFTER the viewport becomes visible, not while hidden).
   useEffect(() => {
-    const id = requestAnimationFrame(fitToView);
+    const id = requestAnimationFrame(resetView);
     return () => cancelAnimationFrame(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [revealKey]);
 
   return (
-    <div className="brd">
+    <div className="brd-zoom">
       <div className="brd-zoombar">
         <span className="brd-zpct" aria-live="polite">{Math.round(cam.scale * 100)}%</span>
         <button type="button" className="brd-zfit" onClick={fitToView}>Fit</button>
@@ -343,22 +306,53 @@ export default function BracketLayout({
           ref={panRef}
           style={{ transform: `translate(${cam.tx}px, ${cam.ty}px) scale(${cam.scale})` }}
         >
-          <div className="brd-desktop">
-            <div className="brd-desktop-inner">
-              <Node slot={29} side="left" render={render} />
-              <div className="brd-final"><Centerpiece render={render} /></div>
-              <Node slot={30} side="right" render={render} />
-            </div>
-          </div>
-
-          <div className="brd-mobile">
-            {MOBILE_LAYOUT === 'vert' ? <MobileVertical render={render} />
-              : MOBILE_LAYOUT === 'tree' ? <MobileTree render={render} />
-              : MOBILE_LAYOUT === 'tabs' ? <MobileTabs render={render} />
-              : <MobileFan render={render} />}
+          <div className="brd-desktop-inner">
+            <Node slot={29} side="left" render={render} />
+            <div className="brd-final"><Centerpiece render={render} /></div>
+            <Node slot={30} side="right" render={render} />
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+type BracketView = 'tabs' | 'full';
+const VIEW_KEY: Record<BracketView, StringKey> = {
+  tabs: 'bracket.viewRounds', full: 'bracket.viewFull',
+};
+
+/**
+ * Tournament bracket — same on every screen size: round-by-round by default (swipe or tap
+ * between rounds, with slide-in animation), and a "Full" toggle to the zoomable two-sided tree.
+ */
+export default function BracketLayout({
+  render,
+}: {
+  render: (slot: number) => ReactNode;
+}) {
+  const t = useT();
+  const [view, setView] = useState<BracketView>('tabs');
+
+  return (
+    <div className={`brd brd-view-${view}`}>
+      <div className="brd-view-switch">
+        <div className="brd-viewseg" role="group" aria-label="Bracket view">
+          {(['tabs', 'full'] as BracketView[]).map((v) => (
+            <button
+              key={v}
+              type="button"
+              className={`brd-viewbtn${view === v ? ' active' : ''}`}
+              onClick={() => setView(v)}
+            >
+              {t(VIEW_KEY[v])}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <BracketZoom render={render} revealKey={view} />
+      <BracketTabs render={render} />
     </div>
   );
 }

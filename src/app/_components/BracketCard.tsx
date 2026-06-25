@@ -41,7 +41,9 @@ export default function BracketCard({
     const body = (
       <>
         <Flag code={code} />
+        {/* compact code in the dense tree; CSS swaps to the full name in the big mobile tab cards */}
         <span className="bcard-code">{code ?? 'TBD'}</span>
+        <span className="bcard-name">{code ? teamName(code) : 'TBD'}</span>
       </>
     );
     if (interactive) {
