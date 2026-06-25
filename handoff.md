@@ -1,129 +1,149 @@
 # WC26 Knockout Bracket — Handoff
 
-_Last updated: 2026-06-24_
-
----
-
-## ⭐ LATEST (2026-06-24, end of session) — read `memory/wc-ko-26-next-steps.md` for the authoritative state
-
-Five features were built (brainstorm → spec → plan → subagent-driven execution → review), all **merged to `master`** (tip `d93157d`) and **pushed to GitHub** (`origin` = https://github.com/Babisimo/babo-wc-KO26.git):
-1. **FotMob bracket UI** (FIFA WC26 real routing, country flags, single-direction columnar layout, round labels, mobile).
-2. **Live ESPN-standings projections** + **As-it-stands / Confirmed** toggle on `/official`.
-3. **Bracket credits** — replaced per-bracket approval with a credit allowance (1 credit = 1 bracket = $50, **no refunds/deletion**; admin grants +1/−1; pot = $50 × all brackets). See `docs/superpowers/specs/2026-06-24-bracket-credits-design.md`.
-4. **Member display** — `username (firstName)` public; admin members table shows all four fields + credits.
-5. **EN/ES i18n** — full casual-Sonoran Spanish translation + nav toggle (default English). Spanish strings live in the `es` block of `src/lib/i18n.ts`. Admin stays English.
-
-Verified: tsc clean, 160/160 vitest, build compiles. Sections below predate features 3–5 (credits replaced the bracket-approval model described in #2 of "What's on feat/ui-polish" etc.) — trust the memory file + the spec docs in `docs/superpowers/specs/` over older prose here.
-
-**Top follow-ups:** live logged-in EN↔ES + credits sweep; rotate the leaked Neon DB password; swap the preview R32 for the official field (~June 27). Dev gotcha: stale `.next` after branch churn → 404 CSS chunk (unstyled pages); fix with `rm -rf .next` + restart.
+_Last updated: 2026-06-25_
 
 ---
 
 ## 🟢 START HERE
 
-**What this is:** `wc_ko_26` — a March Madness–style bracket pool for the **FIFA World Cup 2026 knockout stage**. Members fill one bracket (R32 → Final), scored by round, on a live leaderboard. Built as a Next.js 15 App Router app with its own Neon Postgres DB. **It is feature-complete and running locally.**
+**What this is:** `wc_ko_26` — a March Madness–style bracket pool for the **FIFA World Cup
+2026 knockout stage**. Members enter one or more brackets (R32 → Final), scored by round,
+on a live leaderboard with a pot. Stock **Next.js 15.5 App Router** app with its own **Neon
+Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
-**Where we are right now:**
-- All 5 feature plans are built, reviewed, and **merged to `master`**. The app works end-to-end.
-- The **database is provisioned** (Neon Postgres) and seeded; the app runs at **http://localhost:3000**.
-- The big **UI redesign** ("Broadcast Pitch" theme + `/official` page + pot = players×$50) **and the new FotMob-style bracket are now MERGED to `master`** (merge commit `361fc66`, `--no-ff`; `feat/ui-polish` deleted).
-- The bracket was reworked into the **FotMob look (Plan 1 of 2)**: FIFA WC26 **official routing** (explicit feeder map in `bracket-structure.ts`, replacing the old simplified adjacency), country **flags** (`flag-icons` + `src/lib/team-flag.ts`), **single-direction** columnar layout (`BracketLayout variant='single'`), round labels, `.fm-*` cards, mobile shrink-scroll. Verified: 137/137 vitest, tsc clean, build compiles 11 routes.
-- A **preview Round-of-32** is seeded with real WC26 teams so the bracket is viewable/testable. **It is a placeholder, not the official draw** (see below).
+**Current state (all merged to `master`, tip `48cb821`, and pushed):**
+- Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`.
+- Verified at last check: **`npx tsc --noEmit` clean · `npx vitest run` 160/160 (29 files) · `npx next build` compiles 12 routes.**
+- DB is live on Neon (us-west-2), seeded with 48 teams + a **preview Round-of-32** (real teams, placeholder — not the official draw; the group stage ends ~June 27).
 
-**Plan 2 of 2 is also DONE and MERGED** (merge commit `61cb3ab`): live **ESPN-standings projection engine** (`wc26-seeding.ts` + `standings-feed.ts` + `getProjectedBracket`) and the **"As it stands" / "Confirmed" toggle** on `/official`. Data source is ESPN (public standings endpoint), NOT FotMob (no public API; signed-header gated). `/official` keeps its DB-official-results path when the real R32 is set; projections are the group-stage fallback. **Follow-ups (non-blocking):** add a `resolveCode` alias when a live ESPN team name fails to resolve (shows TBD); optionally encode FIFA's exact 495-row third-place table (current = deterministic eligibility-matching); live e2e smoke test; swap the preview R32 for the official field once groups finish (~June 27).
-
-**To resume immediately:**
-1. Make sure the dev server is running: `cd C:\Users\Oswaldo\wc_ko_26 && npm run dev` → http://localhost:3000
-2. Log in as admin: **gondaniel852@gmail.com** (this is the `ADMIN_EMAIL`; it auto-approved + is admin).
-3. Look at `/bracket` (interactive bracket) and `/official` (official bracket). The bracket was just rebuilt into a recursive two-sided tournament tree with connector lines — **the connector-line precision likely needs visual tweaking** (see Pending #2).
-
-**Top pending items (details in "Pending Work" below):**
-1. Review the new UI → **merge `feat/ui-polish` into `master`** when happy.
-2. **Refine the tournament-bracket connector lines / centering** (structure is correct; the elbow/line cosmetics may need nudging — built without visual verification).
-3. **Replace the preview R32 with the official field** once the group stage ends (~June 27, 2026). Only ~4 teams were locked as of June 23.
-4. Decide pot/entry, mobile nav, round labels (smaller items).
+**To resume:**
+1. `cd C:\Users\Oswaldo\wc_ko_26 && npm run dev` → http://localhost:3000
+2. Log in as admin: **gondaniel852@gmail.com** (the `ADMIN_EMAIL`; auto-approved + admin + auto-granted 1 credit).
+3. Public pages: `/` (leaderboard), `/official` (real/projected bracket + EN/ES toggle in nav), `/bracket` (your brackets), `/brackets` (browse, post-lock). Admin: `/admin`, `/admin/bracket`.
 
 ---
 
-## How to run it
+## The five features shipped (each: brainstorm → spec → plan → subagent-driven build → review → merge)
+
+Design docs live in `docs/superpowers/specs/`, plans in `docs/superpowers/plans/` (dated `2026-06-24`).
+
+1. **FotMob bracket UI.** FIFA WC26 **real routing** — `src/lib/bracket-structure.ts` uses an
+   explicit `FEEDERS` map (not the old simplified adjacency). Country **flags** via
+   `flag-icons` + `src/lib/team-flag.ts` (FIFA→ISO map). **Single-direction columnar** layout
+   (`BracketLayout` `variant='single'`, default), round labels (`_components/RoundLabels.tsx`),
+   FotMob `.fm-*` cards, mobile shrink-scroll. Used by `MarchMadnessBracket` (read-only) +
+   `bracket/BracketFill.tsx` (interactive).
+
+2. **Live ESPN-standings projections.** `src/lib/wc26-seeding.ts` (pure: R32 position
+   schedule + `rankThirds` best-8 + `assignThirds` deterministic eligibility-matching +
+   `seedR32`) ← `src/lib/standings-feed.ts` (ESPN standings adapter) ← `src/app/actions/projection.ts`
+   (`getProjectedBracket`). The **As-it-stands / Confirmed** toggle is
+   `src/app/official/OfficialBracketView.tsx`. **Data source = ESPN only** (FotMob has no public
+   API; it's gated behind a signed header). v1 approximations are documented in `wc26-seeding.ts`.
+
+3. **Bracket credits** (replaced the old per-bracket approval model). `User.credits` is a hard
+   allowance: a user may create a bracket only while `bracketCount < credits` (`src/lib/bracket-credits.ts`
+   `canCreateBracket`). **1 credit = 1 bracket = $50; no refunds, no user deletion** (decisions are
+   final). Approving a signup grants **1 credit**; admin grants more via **+1 / −1** on the members
+   table (`grantCredits`). Pot = `$50 × total brackets`. `Bracket.status`/`approvedAt`/`approvedBy`
+   + the `BracketStatus` enum and the bracket-approval queue were **removed**. Migration:
+   `prisma/backfill-credits.ts` set approved users `credits = max(bracketCount, 1)`.
+   Rules memory: see the project's `wc-ko-26-credits-rules` memory.
+
+4. **Member display.** Public surfaces (leaderboard, browse) show **`username (firstName)`**.
+   The admin **All members** table shows username · first · last · email · **credits** (+ grant).
+
+5. **EN/ES i18n.** `src/lib/i18n.ts` — typed `en`/`es` dictionary with a `Record<StringKey,string>`
+   **drift guard** (a missing/extra Spanish key is a compile error) + `translate(lang,key,vars?)`.
+   `src/app/_components/LangProvider.tsx` (React context, **default English**, reads
+   `localStorage['lang']` post-mount → hydration-safe, `useT()`/`useLang()`). Nav **EN/ES toggle**;
+   `t()` across **all public UI** in casual **northern-Mexican (Sonoran) Spanish** (tú/ustedes,
+   "ocupar"=need, keep loanwords like "picks", team names untranslated). **Admin screens stay
+   English.** **Tweak Spanish wording in the `es` block of `src/lib/i18n.ts`.**
+
+The original foundation (5 earlier plans) still underpins it: NextAuth v5 + admin-approval gate;
+`Team`/`Match` (31-slot) official-bracket model + `/admin/bracket`; user bracket fill + server lock;
+penalty-safe **ESPN results feed** + round-weighted scoring + leaderboard/pot; post-lock visibility.
+
+---
+
+## How to run / verify
 
 ```bash
 cd C:\Users\Oswaldo\wc_ko_26
-npm run dev          # http://localhost:3000, loads .env
+npm run dev          # http://localhost:3000 (loads .env)
+npx tsc --noEmit     # types
+npx vitest run       # 160 tests
+npx next build       # production build
 ```
 
-- **`.env`** exists (gitignored) with: `DATABASE_URL` (Neon pooled host), `DIRECT_URL` (Neon direct host), `AUTH_SECRET`, `ADMIN_EMAIL=gondaniel852@gmail.com`, `APP_URL`.
-- **DB is live** (Neon, us-west-2). 48 teams seeded; a preview R32 seeded; no users until you sign up.
-- **First login:** sign up at `/signup` with `gondaniel852@gmail.com` → auto-approved admin. Any other email signs up as `PENDING` and must be approved at `/admin`.
+- **`.env`** (gitignored; only `.env.example` placeholders are committed) holds `DATABASE_URL`,
+  `DIRECT_URL`, `AUTH_SECRET`, `ADMIN_EMAIL=gondaniel852@gmail.com`, `APP_URL`, optional
+  `GMAIL_*`.
+- **Stock Next.js 15.5.19** — the `AGENTS.md` note about reading `node_modules/next/dist/docs/`
+  came from the sibling `wc26` fork and does **not** apply here (those docs aren't shipped; use
+  standard App Router patterns).
 
 ### ⚠️ Windows / Prisma gotcha
-The Next dev server holds a lock on Prisma's `query_engine-windows.dll.node`. Any `prisma generate` / `prisma db push` will fail with **EPERM** while the dev server runs. **Stop the dev server first** (kill the `node` process whose command line matches `wc_ko_26`, or via PowerShell `Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where {$_.CommandLine -match 'wc_ko_26'} | Stop-Process -Force`), run the prisma command, then restart `npm run dev`.
+The dev server locks Prisma's `query_engine-windows.dll.node`. **Stop the dev server before any
+`prisma generate` / `db push`** (kill node processes whose command line matches `wc_ko_26`), then
+restart. `db push` writes the live Neon DB — that's the project's migration mechanism.
 
-### Verify commands (no DB/visual needed)
-`npx tsc --noEmit` · `npx vitest run` (132 tests) · `npx next build`
-
----
-
-## Git state
-
-- **`master`** — all 5 plans merged. Tip: `e99a72c Merge Plan 5`.
-- **`feat/ui-polish`** — current branch, the UI redesign + pot change + preview seed + tournament bracket. **4 commits ahead of master, unmerged:**
-  - `3cc4f94` refine theme, add Official Bracket page, polish admin pages
-  - `6ba9c62` pot = players × entry price; preview R32 seed; March Madness bracket layout
-  - `6ef15cb` interactive March Madness bracket on the fill page
-  - `69a9cde` recursive two-sided tournament bracket with connectors
-- Working tree clean. To merge when approved: `git checkout master && git merge --no-ff feat/ui-polish`.
-
-Plans/specs live in `docs/superpowers/`. A per-task execution ledger is at `.superpowers/sdd/progress.md` (gitignored scratch).
+### ⚠️ Dev "styling doesn't transfer" gotcha (recurring this session)
+After many branch switches / dev-server restarts, the running `next dev` can serve a **404 for the
+CSS chunk** (`/_next/static/css/app/layout.css`) → pages render unstyled. It's a stale `.next`
+cache, **not a code bug** (production builds are fine). Fix: stop the dev server → `rm -rf .next`
+→ `npm run dev`, then hard-refresh (Ctrl+Shift+R).
 
 ---
 
-## What's built (the 5 merged plans)
+## Pending work (none blocking)
 
-1. **Auth + admin-approval gate** — NextAuth v5 (JWT) + bcrypt + Prisma. New signups are `PENDING` and can't log in until an admin approves; `ADMIN_EMAIL` auto-approves. Pages: `/login`, `/signup`, `/admin` (approval queue + user mgmt).
-2. **Official bracket model & admin** — `Team` + `Match` (31 slots) models, 48-team seed, admin sets the R32 skeleton + kickoffs at `/admin/bracket`, global lock = (earliest R32 kickoff − 1h) with a PST countdown.
-3. **User bracket fill & lock** — one `Bracket` per user (`picks` JSON), NCAA advancement cascade, server-enforced lock, `/bracket` page.
-4. **Results, scoring & leaderboard** — penalty-safe ESPN feed (`Refresh from feed`) + admin winner override (`winnerSource`), round-weighted scoring (perfect = 80), home leaderboard with shared ranks + pot split.
-5. **Post-lock visibility & WC2026 theme** — others' brackets viewable only after lock (`/brackets`, `/brackets/[user]`), bracket-tree rendering, the base theme.
-
-## What's on `feat/ui-polish` (unmerged)
-
-- **"Broadcast Pitch" theme refresh** in `src/app/globals.css` (pitch-green stadium look, gold accent, Big Shoulders + Hanken Grotesk fonts, cards, rank medals, banners, sticky frosted nav). Kept `--accent`/`--line` var names so legacy pages restyle for free.
-- **Restyled:** nav, home (hero countdown + medal leaderboard), login/signup (auth cards), `/admin` + `/admin/bracket` (tables, badges, results panel), bracket fill.
-- **New `/official` page** ("Official" nav link) — the real bracket with live results.
-- **Pot = players × entry price.** `PoolConfig.entryCents` (default $50, set at `/admin/bracket`); pot computed in `getLeaderboard` as `entryCents × bracketCount`. (Legacy `setPot`/`potCents` replaced by `setEntryPrice`/`entryCents`.)
-- **Two-sided tournament bracket** — `src/app/_components/BracketLayout.tsx` (recursive tree, render-prop) used by `MarchMadnessBracket.tsx` (read-only: Official, per-user, admin preview) and `BracketFill.tsx` (interactive). Each match is centered between its two feeders; left/right halves meet at the Final. CSS classes `.bx-*` + `.mm-match/.mm-team/.mm-btn` in globals.css.
-- **Preview R32 seed:** `prisma/seed-preview.ts` (run via `npx tsx --env-file=.env prisma/seed-preview.ts`). Fills slots 1–16 with 32 real teams (ARG–KOR, BRA–MAR, …), kickoffs starting 2026-06-28 (so the countdown reads a few days). **Not the official draw.**
-
----
-
-## Pending Work (prioritized)
-
-1. **Review + merge the UI.** Look at every page logged in as admin; if good, `git merge --no-ff feat/ui-polish` into `master`. If not, iterate on `feat/ui-polish`.
-2. **Refine the tournament-bracket visuals.** The recursive structure (`BracketLayout.tsx` + `.bx-*` CSS) centers matches correctly, but the connector lines were written **without visual verification**. Likely needs: elbow alignment, the line into the center Final being level with the semifinal cards, spacing/tightness, and optional **round labels across the top** (R32/R16/QF/SF). This is the most likely thing to look "off."
-3. **Official R32 field.** As of ~June 23–24 the WC26 group stage isn't finished (ends ~June 27), so the real R32 is mostly TBD placeholders ("Group A Winner", "3rd place …") — only a few teams locked (Germany, Mexico, USA, Argentina). When groups finish: overwrite the preview at `/admin/bracket` (or pull via "Refresh from feed"). The ESPN feed already publishes the bracket structure; note its real R16 feeder pairings (e.g. "R32 game 1 winner vs R32 game 3 winner") differ from this app's internal adjacent-pair wiring — fine for the pick game (internally consistent + results matched by team pair), but relevant if you ever want the displayed bracket to mirror FIFA's exact feeder layout.
-4. **Live smoke test of the full flow** with real users: signup → approve → fill → lock → record results / refresh feed → leaderboard → post-lock browse.
-5. **Smaller UI calls:** the nav has 5 links + logout (cramped on mobile — consider a mobile menu); apply the eyebrow/lead header treatment consistently; `BracketTree.tsx` is now unused dead code (can delete).
-6. **Security:** the Neon DB password was pasted into an earlier chat. Rotate it in Neon (Roles → reset password) before any real/production use, then update the two URLs in `.env`.
-
-### Deferred minor cleanups (logged during plan reviews; none blocking)
-- Auth: forward `image` / add `pages.error`; move the unset-`ADMIN_EMAIL` `console.warn` to module scope; try/catch admin Prisma calls for friendly errors.
-- `getOfficialBracket` uses `rows.find` in a 31-iteration loop (could use the `bySlot` map).
-- `getUserBracketView` calls `getOfficialBracket()` twice (redundant fetch).
-- Two pre-existing inline `coercePicks` copies (`leaderboard.ts`, `bracket-entry.ts`) could adopt the shared `@/lib/picks-json`.
-- Prisma `package.json#prisma` deprecation warning → migrate to `prisma.config.ts` eventually.
+1. **Live logged-in EN↔ES + credits sweep.** The language toggle flips client-side (post-mount),
+   so it can't be screenshotted from SSR — walk the public pages logged in: confirm Spanish renders
+   and persists across refresh, `/admin` stays English, and the credits flow works (approve →
+   1 credit → create → at-cap message → admin +1 → second bracket → both count in the pot).
+2. **Rotate the Neon DB password** — it was pasted into an earlier chat. Reset in Neon
+   (Roles → reset password) and update both URLs in `.env`. (Security item.)
+3. **Official R32 field.** Replace the preview seed once the group stage ends (~June 27): set it at
+   `/admin/bracket` or via "Refresh from feed". The live projection engine fills "As it stands"
+   meanwhile. `resolveCode` alias gap: a live ESPN run showed one team name not resolving (→ "TBD"
+   in projections) — add the alias in `src/lib/team-resolve.ts`/`teams.ts` once the specific name
+   is captured (it shifts until standings finalize).
+4. **Live end-to-end smoke test** with real users (signup → approve → fill → lock → results/feed →
+   leaderboard → post-lock browse).
+5. **Deferred minors** (logged in `.superpowers/sdd/progress.md`): add a `.gitattributes`
+   (`* text=auto eol=lf`) to stop CRLF/LF drift; the unused `BracketLayout variant='two-sided'` is
+   dead code; LangProvider's redundant `typeof window` guard; signup field errorKeys are generic;
+   `backfill-credits.ts` uses a raw `'APPROVED'` string.
 
 ---
 
 ## Architecture / key files
 
-- **Pure libs (`src/lib/`, all unit-tested):** `bracket-structure.ts` (31-slot geometry, feeders, `ROUND_POINTS`), `bracket-picks.ts` (advancement cascade, `contestantsForSlot`), `bracket-view.ts` (`buildBracketView` → SlotView), `scoring.ts`, `leaderboard-rank.ts`, `lock.ts`, `official-winners.ts`, `results-feed.ts` (ESPN mapper), `team-resolve.ts` / `team-name.ts`, `bracket-visibility.ts`, `picks-json.ts`, `official-r32.ts`, `auth*.ts`, `teams.ts` (48 teams).
-- **Server actions (`src/app/actions/`):** `auth.ts`, `admin.ts`, `bracket.ts` (official R32 + `getOfficialBracket`), `bracket-entry.ts` (user save/get + lock), `results.ts` (winners, feed refresh, `setEntryPrice`), `leaderboard.ts`, `browse.ts` (gated others' brackets).
-- **Pages (`src/app/`):** `page.tsx` (home leaderboard), `official/`, `bracket/`, `brackets/` + `brackets/[user]/`, `admin/` + `admin/bracket/`, `login/`, `signup/`.
-- **Bracket UI:** `_components/BracketLayout.tsx` (recursive tree), `MarchMadnessBracket.tsx` (read-only), `bracket/BracketFill.tsx` (interactive), `_components/Countdown.tsx`. `_components/BracketTree.tsx` is now unused.
-- **DB:** `prisma/schema.prisma` (User, PasswordResetToken, Team, Match, Bracket, PoolConfig + enums). Seeds: `prisma/seed.ts` (teams), `prisma/seed-preview.ts` (preview R32).
-- **Stack:** Next.js 15.5 (App Router, stock — NOT the wc26 fork), React 19, NextAuth v5 beta, Prisma 6 + Neon Postgres, Tailwind v4 + hand-written CSS, Vitest 4.
+- **Pure libs (`src/lib/`, unit-tested):** `bracket-structure.ts` (31-slot geometry + FIFA `FEEDERS`
+  map + `ROUND_POINTS`), `bracket-picks.ts` (advancement cascade), `bracket-view.ts`, `scoring.ts`,
+  `leaderboard-rank.ts`, `lock.ts`, `official-winners.ts`, `results-feed.ts` (ESPN results mapper),
+  `team-resolve.ts`/`team-name.ts`/`team-flag.ts`, `bracket-visibility.ts`, `picks-json.ts`,
+  `official-r32.ts`, `bracket-name.ts` (`normalizeBracketName`), `bracket-credits.ts`
+  (`canCreateBracket`), `wc26-seeding.ts` (projections), `standings-feed.ts` (ESPN standings),
+  `i18n.ts` (`translate` + dictionary), `teams.ts` (48 teams), `auth*.ts`, `profile.ts`,
+  `username-filter.ts`.
+- **Server actions (`src/app/actions/`):** `auth.ts` (signup grants admin 1 credit; returns error
+  KEYS), `admin.ts` (`approveUser` grants 1 credit; `grantCredits`; no bracket-approval actions),
+  `bracket.ts` (official R32), `bracket-entry.ts` (per-bracket: `listMyBrackets`/`createBracket`
+  credit-gated/`getBracket`/`saveBracket`; returns error KEYS; no `deleteBracket`), `results.ts`,
+  `leaderboard.ts` (counts all brackets), `browse.ts` (post-lock, per-user), `projection.ts`.
+- **Pages (`src/app/`):** `page.tsx`+`HomeContent.tsx` (home), `official/`, `bracket/`+`bracket/[id]/`,
+  `brackets/`+`brackets/[user]/`, `admin/`+`admin/bracket/`, `login/`, `signup/`.
+- **Components (`src/app/_components/`):** `LangProvider.tsx`, `BracketLayout.tsx`, `RoundLabels.tsx`,
+  `MarchMadnessBracket.tsx`, `TeamFlag.tsx`, `Countdown.tsx`. Plus `Nav.tsx` (client; EN/ES toggle).
+- **DB:** `prisma/schema.prisma` (`User` w/ `credits`; `Team`, `Match`, `Bracket` w/ `name`,
+  `PoolConfig`). Seeds: `prisma/seed.ts`, `prisma/seed-preview.ts`; migration `prisma/backfill-credits.ts`.
+- **Stack:** Next.js 15.5 (App Router, stock), React 19, NextAuth v5 beta, Prisma 6 + Neon,
+  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, Vitest 4 (160 tests).
+- **Scratch:** `.superpowers/sdd/progress.md` (gitignored ledger of every task/review this build).
 
 ## Sibling apps (context)
-- `C:\Users\Oswaldo\nfl26` — the auth system was ported from here (Next 15 + NextAuth v5 + Prisma); this app added the approval gate it lacked.
-- `C:\Users\Oswaldo\wc26` — the ESPN results-feed pattern + theme conventions came from here (it's a different, group-stage pool app on a custom Next fork).
+`C:\Users\Oswaldo\nfl26` (auth system ported from there) · `C:\Users\Oswaldo\wc26` (ESPN feed +
+theme conventions; a different group-stage pool on a custom Next fork).
