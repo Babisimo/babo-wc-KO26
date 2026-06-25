@@ -63,6 +63,7 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
       isAdmin: isBootstrapAdmin,
       status: isBootstrapAdmin ? 'APPROVED' : 'PENDING',
       approvedAt: isBootstrapAdmin ? new Date() : null,
+      credits: isBootstrapAdmin ? 1 : 0,
     },
   });
   return undefined; // success; UI redirects to /login?registered=1
