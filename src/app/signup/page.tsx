@@ -39,11 +39,15 @@ export default function SignupPage() {
           </div>
           <div>
             <label htmlFor="username">{t('auth.username')}</label>
-            <input id="username" name="username" placeholder="pele_10" autoComplete="username" required />
+            {/* autoComplete="off": this is a NEW display name, not the login id.
+                Tagging it "username" makes Google autofill paste the saved email here. */}
+            <input id="username" name="username" placeholder="pele_10" autoComplete="off" required />
           </div>
           <div>
             <label htmlFor="email">{t('auth.email')}</label>
-            <input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required />
+            {/* "username" (not "email") so the password manager fills the login id
+                here and saves email+new password as one credential. */}
+            <input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="username" required />
           </div>
           <div>
             <label htmlFor="password">{t('auth.password')}</label>

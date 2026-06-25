@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { signOut, auth, type AppSession } from '@/lib/auth';
 import { sendNewSignupNotice } from '@/lib/email';
 import { hashPassword, verifyPassword } from '@/lib/auth-helpers';
+import { loginIssue } from '@/lib/auth-status';
 import { validateUsername, validateName, MAX_USERNAME_CHANGES } from '@/lib/profile';
 import { checkUsernameAllowed } from '@/lib/username-filter';
 import type { StringKey } from '@/lib/i18n';
@@ -32,8 +33,11 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
     return { errorKey: field === 'password' ? 'auth.err.password' : 'auth.err.email' };
   }
 
-  const uname = validateUsername(String(formData.get('username') ?? ''));
-  if (!uname.ok) return { errorKey: 'auth.err.username' };
+  const rawUsername = String(formData.get('username') ?? '');
+  const uname = validateUsername(rawUsername);
+  // Browser/Google autofill often drops the saved login email into a field tagged
+  // autocomplete="username". Give a pointed message instead of the generic rule.
+  if (!uname.ok) return { errorKey: rawUsername.includes('@') ? 'auth.err.usernameEmail' : 'auth.err.username' };
   const allowed = checkUsernameAllowed(uname.value);
   if (!allowed.ok) return { errorKey: 'auth.err.usernameBlocked' };
   const first = validateName(String(formData.get('firstName') ?? ''), 'First name');
@@ -90,6 +94,27 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
     }
   }
   return undefined; // success; UI redirects to /login?registered=1
+}
+
+/**
+ * After a failed sign-in, work out a specific message to show. Re-checks the
+ * password so we only reveal "pending"/"rejected" to someone who owns the
+ * account; everyone else gets the generic "invalid" message.
+ */
+export async function diagnoseLoginIssue(
+  email: string,
+  password: string,
+): Promise<'auth.invalid' | 'auth.pending' | 'auth.rejected'> {
+  const user = await db.user.findUnique({ where: { email: email.toLowerCase() } });
+  const passwordOk = !!user && (await verifyPassword(password, user.passwordHash));
+  switch (loginIssue(user, passwordOk)) {
+    case 'pending':
+      return 'auth.pending';
+    case 'rejected':
+      return 'auth.rejected';
+    default:
+      return 'auth.invalid';
+  }
 }
 
 export type ChangeUsernameState = { ok?: boolean; errorKey?: StringKey } | undefined;

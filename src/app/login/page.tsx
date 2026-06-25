@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useT } from '@/app/_components/LangProvider';
+import { diagnoseLoginIssue } from '@/app/actions/auth';
 import type { StringKey } from '@/lib/i18n';
 
 function LoginForm() {
@@ -20,16 +21,17 @@ function LoginForm() {
     setPending(true);
     setError(null);
     const fd = new FormData(e.currentTarget);
-    const res = await signIn('credentials', {
-      email: String(fd.get('email') ?? ''),
-      password: String(fd.get('password') ?? ''),
-      redirect: false,
-    });
-    setPending(false);
+    const email = String(fd.get('email') ?? '');
+    const password = String(fd.get('password') ?? '');
+    const res = await signIn('credentials', { email, password, redirect: false });
     if (res?.error) {
-      setError('auth.invalid');
+      // signIn hides why it failed; ask the server for a specific reason
+      // (awaiting approval / not approved / genuinely invalid).
+      setError(await diagnoseLoginIssue(email, password));
+      setPending(false);
       return;
     }
+    setPending(false);
     router.push('/');
     router.refresh();
   }
