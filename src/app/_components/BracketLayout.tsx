@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { feedersForSlot } from '@/lib/bracket-structure';
+import RoundLabels from './RoundLabels';
 
 type Side = 'left' | 'right';
 
@@ -32,8 +33,6 @@ function Node({
   );
 }
 
-const ROUND_LABELS = ['Round of 32', 'Round of 16', 'Quarter-finals', 'Semi-finals', 'Final'];
-
 /**
  * Tournament bracket. `variant='single'` (default) renders the whole tree one
  * direction (R32 left → Final right) with a round-label header — the FotMob look.
@@ -62,11 +61,7 @@ export default function BracketLayout({
 
   return (
     <div className="bx-scroll">
-      <div className="fm-labels">
-        {ROUND_LABELS.map((l) => (
-          <span key={l}>{l}</span>
-        ))}
-      </div>
+      <RoundLabels />
       <div className="bx-wrap single">
         <Node slot={31} side="left" render={render} />
       </div>
