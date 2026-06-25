@@ -72,6 +72,9 @@ export async function createBracket(name: string): Promise<{ error?: string; id?
   if (!lock.officialReady) return { error: "The bracket isn't open yet." };
   if (lock.locked) return { error: 'Brackets are locked — no new entries.' };
 
+  // NOTE: count-then-create is not atomic — a rapid double-submit could read used==N
+  // twice and create two brackets at the cap. Accepted at this pool's scale (client
+  // guards with disabled={pending}); upgrade to a Serializable tx if hard enforcement matters.
   const [used, user] = await Promise.all([
     db.bracket.count({ where: { userId } }),
     db.user.findUnique({ where: { id: userId }, select: { credits: true } }),

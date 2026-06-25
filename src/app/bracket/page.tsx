@@ -30,7 +30,7 @@ export default async function BracketPage() {
         <p className="eyebrow">Your picks</p>
         <h1>Your brackets</h1>
         <p className="lead">
-          Your first bracket counts right away; each extra one needs an admin OK before it joins the pool.
+          Each bracket uses one credit ($50) and counts as soon as you create it. Need another? Ask the admin to add a credit.
           {lock.locked && ' Brackets are locked.'}
         </p>
       </header>

@@ -36,7 +36,7 @@ export default function MyBrackets({
   return (
     <div className="panel reveal reveal-2">
       <div className="panel-head">
-        <h2>Your brackets</h2>
+        <h2>Your entries</h2>
         <span className="pill">{used} of {credits} brackets</span>
       </div>
 
