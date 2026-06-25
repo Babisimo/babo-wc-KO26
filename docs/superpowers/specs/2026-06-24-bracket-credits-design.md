@@ -167,9 +167,9 @@ client gating is UX only. Admin grant/approve are admin-gated. No deletion path 
   → admin +1 credit → create a 2nd → both count in the pot; confirm leaderboard shows
   `username (First)`; confirm admin members shows all four fields + credits.
 
-## Open questions for spec review
+## Resolved decisions (spec review, 2026-06-24)
 
-- Credit grant control granularity: just **+1 / −1** buttons (recommended, simplest), or a
-  numeric "set credits to N" input?
-- The at-cap copy — "buy another to add one" vs "ask the admin for another credit": which
-  wording? (Recommend "buy another to add one.")
+- **Grant control:** per-member **+1 / −1** buttons (`grantCredits(id, ±1)`,
+  `credits = max(0, credits ± 1)`).
+- **At-cap copy:** "You've used all your brackets — buy another to add one." (same string
+  server-side in `createBracket` and client-side in `MyBrackets`).
