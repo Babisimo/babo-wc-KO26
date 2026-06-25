@@ -5,6 +5,8 @@ import { getProjectedBracket } from '@/app/actions/projection';
 import { officialR32FromSlots, officialR32IsSet } from '@/lib/official-r32';
 import MarchMadnessBracket from '@/app/_components/MarchMadnessBracket';
 import OfficialBracketView from './OfficialBracketView';
+import OfficialHeader from './OfficialHeader';
+import { OfficialPanelHead, OfficialNotAvailable } from './OfficialPanelHead';
 import type { SlotView } from '@/lib/bracket-view';
 
 export const dynamic = 'force-dynamic';
@@ -25,12 +27,9 @@ export default async function OfficialPage() {
     }));
     return (
       <main className="shell">
-        <header className="reveal" style={{ marginBottom: 22 }}>
-          <p className="eyebrow">The real thing</p><h1>Official Bracket</h1>
-          <p className="lead">The actual Round-of-32 draw and results as they come in. Teams that advance are marked in gold.</p>
-        </header>
+        <OfficialHeader variant="real" />
         <section className="panel reveal reveal-2">
-          <div className="panel-head"><h2>Knockout tree</h2><span className="pill">{decided} / {official.slots.length} decided</span></div>
+          <OfficialPanelHead decided={decided} total={official.slots.length} />
           <MarchMadnessBracket slots={view} />
         </section>
       </main>
@@ -41,17 +40,12 @@ export default async function OfficialPage() {
   const projection = await getProjectedBracket();
   return (
     <main className="shell">
-      <header className="reveal" style={{ marginBottom: 22 }}>
-        <p className="eyebrow">The road to the final</p><h1>Official Bracket</h1>
-        <p className="lead">
-          Projected from the live group standings. Switch to <strong>Confirmed</strong> to see only matchups that are mathematically locked.
-        </p>
-      </header>
+      <OfficialHeader variant="projected" />
       <section className="panel reveal reveal-2">
         {projection.available ? (
           <OfficialBracketView asItStands={projection.asItStands} confirmed={projection.confirmed} />
         ) : (
-          <p className="muted">The bracket isn&apos;t available yet — check back once group-stage results are in.</p>
+          <OfficialNotAvailable />
         )}
       </section>
     </main>

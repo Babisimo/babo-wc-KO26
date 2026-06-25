@@ -3,6 +3,8 @@ import { Big_Shoulders, Hanken_Grotesk } from 'next/font/google';
 import './globals.css';
 import 'flag-icons/css/flag-icons.min.css';
 import Nav from './Nav';
+import LangProvider from './_components/LangProvider';
+import { auth, type AppSession } from '@/lib/auth';
 
 const display = Big_Shoulders({
   subsets: ['latin'],
@@ -17,12 +19,15 @@ export const metadata: Metadata = {
   description: 'World Cup 2026 knockout-stage bracket pool',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = (await auth()) as AppSession | null;
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
       <body>
-        <Nav />
-        {children}
+        <LangProvider>
+          <Nav signedIn={!!session?.user?.id} isAdmin={!!session?.user?.isAdmin} />
+          {children}
+        </LangProvider>
       </body>
     </html>
   );

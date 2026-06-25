@@ -11,6 +11,7 @@ import { TOTAL_SLOTS } from '@/lib/bracket-structure';
 import { normalizeBracketName } from '@/lib/bracket-name';
 import { canCreateBracket } from '@/lib/bracket-credits';
 import type { Picks } from '@/lib/bracket-picks';
+import type { StringKey } from '@/lib/i18n';
 
 export type MyBracketRow = { id: string; name: string; submittedAt: string | null };
 export type LockInfo = { locked: boolean; lockTimeIso: string | null; officialReady: boolean };
@@ -65,12 +66,12 @@ export async function listMyBrackets(): Promise<{ error?: string; brackets?: MyB
   };
 }
 
-export async function createBracket(name: string): Promise<{ error?: string; id?: string }> {
+export async function createBracket(name: string): Promise<{ errorKey?: StringKey; id?: string }> {
   const userId = await requireUserId();
-  if (!userId) return { error: 'Not signed in.' };
+  if (!userId) return { errorKey: 'bracket.err.notSignedIn' };
   const lock = await lockInfo();
-  if (!lock.officialReady) return { error: "The bracket isn't open yet." };
-  if (lock.locked) return { error: 'Brackets are locked — no new entries.' };
+  if (!lock.officialReady) return { errorKey: 'bracket.err.notOpen' };
+  if (lock.locked) return { errorKey: 'bracket.err.lockedNew' };
 
   // NOTE: count-then-create is not atomic — a rapid double-submit could read used==N
   // twice and create two brackets at the cap. Accepted at this pool's scale (client
@@ -80,7 +81,7 @@ export async function createBracket(name: string): Promise<{ error?: string; id?
     db.user.findUnique({ where: { id: userId }, select: { credits: true } }),
   ]);
   if (!canCreateBracket(used, user?.credits ?? 0)) {
-    return { error: "You've used all your brackets — buy another to add one." };
+    return { errorKey: 'bracket.atCap' };
   }
   const cleanName = normalizeBracketName(name, used + 1);
   const created = await db.bracket.create({ data: { userId, name: cleanName, picks: {} }, select: { id: true } });
@@ -107,19 +108,19 @@ export async function getBracket(id: string): Promise<{ error?: string; view?: B
   };
 }
 
-export async function saveBracket(id: string, picks: Picks): Promise<{ error?: string }> {
+export async function saveBracket(id: string, picks: Picks): Promise<{ errorKey?: StringKey }> {
   const userId = await requireUserId();
-  if (!userId) return { error: 'Not signed in.' };
+  if (!userId) return { errorKey: 'bracket.err.notSignedIn' };
   const row = await db.bracket.findUnique({ where: { id }, select: { userId: true } });
-  if (!row || row.userId !== userId) return { error: 'Bracket not found.' };
+  if (!row || row.userId !== userId) return { errorKey: 'bracket.err.notFound' };
 
   const official = await getOfficialBracket();
   const locked = isLocked(new Date(), official.lockTimeIso ? new Date(official.lockTimeIso) : null);
-  if (locked) return { error: 'Brackets are locked — no more edits.' };
+  if (locked) return { errorKey: 'bracket.err.lockedEdit' };
 
   const officialR32 = officialR32FromSlots(official.slots);
   const check = validateSubmission(officialR32, picks);
-  if (!check.ok) return { error: check.error };
+  if (!check.ok) return { errorKey: 'bracket.err.invalid' };
 
   const normalized: Picks = {};
   for (let s = 1; s <= TOTAL_SLOTS; s++) normalized[s] = picks[s];
