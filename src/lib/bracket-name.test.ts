@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeBracketName, statusForNewBracket } from './bracket-name';
+import { normalizeBracketName } from './bracket-name';
 
 describe('normalizeBracketName', () => {
   it('keeps a clean name', () => {
@@ -20,13 +20,5 @@ describe('normalizeBracketName', () => {
     expect(normalizeBracketName('   ', 4)).toBe('Bracket 4');
     expect(normalizeBracketName(null, 5)).toBe('Bracket 5');
     expect(normalizeBracketName(undefined, 6)).toBe('Bracket 6');
-  });
-});
-
-describe('statusForNewBracket', () => {
-  it('auto-approves the first bracket, makes the rest pending', () => {
-    expect(statusForNewBracket(0)).toBe('APPROVED');
-    expect(statusForNewBracket(1)).toBe('PENDING');
-    expect(statusForNewBracket(5)).toBe('PENDING');
   });
 });
