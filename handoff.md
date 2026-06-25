@@ -11,13 +11,12 @@ _Last updated: 2026-06-25_
 on a live leaderboard with a pot. Stock **Next.js 15.5 App Router** app with its own **Neon
 Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
-**Current state (all merged to `master`, tip `309b0e9`, and pushed):**
+**Current state (all merged to `master`, tip `7459233`, and pushed):**
 - Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there).
-- Verified at last check: **`npx tsc --noEmit` clean · `npx vitest run` 170/170 (31 files) · 14 route pages.**
-  - ⚠️ Plain `npx vitest run` reports **64 files / 354** because a **stale git worktree** at `.claude/worktrees/drafts-official-brackets/` duplicates every test. The real count is 31/170 (`npx vitest run --exclude '**/.claude/**'`). **Cleanup item:** `git worktree remove .claude/worktrees/drafts-official-brackets`.
-- DB is live on Neon (us-west-2). Last reset to a **clean slate**: admin only, 0 brackets/results, official R32 cleared → the app runs in ESPN **As-it-stands / Confirmed** projection mode off the live group-stage feed.
+- Verified at last check: **`npx tsc --noEmit` clean · `npx vitest run` 184/184 (33 files) · `npx next build` 16 route pages.**
+- DB is live on Neon (us-west-2), schema includes **`Bracket.official`** (migration applied). Last reset to a **clean slate**: admin only, 0 brackets/results, official R32 cleared → the app runs in ESPN **As-it-stands / Confirmed** projection mode off the live group-stage feed.
 
-> Three sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
+> Four sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
 
 **To resume:**
 1. `cd C:\Users\Oswaldo\wc_ko_26 && npm run dev` → http://localhost:3000
@@ -28,9 +27,36 @@ Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
 ## What changed since the original handoff (sessions through 2026-06-25)
 
-Three commits on top of the original 5-feature base. Newest first.
+Four entries on top of the original 5-feature base. Newest first.
 
-### `309b0e9` — Bracket UX rework + page loader + bigger stage meter (latest session)
+### `7459233` / `2a8e4d4` — Early drafts + designate-official brackets (latest session)
+**The credits model changed.** Creating a bracket is now **free and unlimited** before lock; a
+**credit is spent only when a bracket is marked _Official_** (the paid entry). A user may mark up
+to `credits` brackets official and **switch which are official freely until lock**. Only official
+brackets count in the pot / leaderboard / browse / compare.
+- **Start before the draw is final.** The fill page resolves an **effective R32** = the official
+  draw where set, else the live **as-it-stands** projection, else `TBD`
+  (`src/lib/effective-r32.ts` `mergeEffectiveR32`; `actions/projection.ts` `getProjectedR32`).
+  **Partial saves** allowed (`src/lib/bracket-validate.ts` `validateDraft`).
+- **Change flagging.** When real results later change a slot's teams the saved pick goes stale —
+  `src/lib/bracket-changes.ts` `stalePicks` recomputes live; affected games get a highlight ring
+  (`.bcard.stale`) + a "matches changed — review" banner, and the list shows a `⚠ N changed` badge.
+  Confirmed slots never go stale.
+- **Gate** `src/lib/bracket-credits.ts` `canMarkOfficial(officialCount, credits)`.
+  `actions/bracket-entry.ts`: `createBracket` (free, no credit/draw gate), **`setBracketOfficial(id, bool)`**
+  (new), `saveBracket` (partial via `validateDraft`), `listMyBrackets`/`getBracket` return `official`
+  + stale/complete info. Counting → **official-only** in `leaderboard.ts`, `browse.ts`, `compare.ts`.
+- **UI.** `/bracket` is always open (old "not open yet" gate removed) with an **Official X/credits**
+  pill, per-row **Make official / Unmark** + **Complete/Partial** + **⚠ changed** badges, and a
+  draw-pending banner. Fill page renders **TBD** placeholders, allows partial save, shows the changes
+  warning + an "official (paid)" indicator.
+- **Schema/migration:** added `Bracket.official Boolean @default(false)`; `prisma/backfill-official.ts`
+  marks pre-existing brackets official (run against an empty table → 0). Spec:
+  `docs/superpowers/specs/2026-06-25-drafts-and-official-brackets-design.md`.
+- New tested pure libs `effective-r32` + `bracket-changes`; extended `bracket-credits`,
+  `bracket-validate`. EN/ES i18n keys added (drift-guard enforced).
+
+### `309b0e9` — Bracket UX rework + page loader + bigger stage meter
 The app was considered "perfect all but the brackets." This unified the bracket experience:
 - **One bracket view on every screen size.** Default is **round-by-round** (`R32 → R16 → QF → SF → Final` tabs, one round at a time, big readable cards with full team names + pair-connector lines). A **`Rounds | Full`** segmented toggle flips to **"Full"** = the map-style **pan/zoom two-sided tree**. Replaces the old desktop-only-zoom default and a short-lived separate mobile "Scroll" mode.
 - **Swipe + tap navigation.** Swipe left/right (touch) or click a tab to change rounds; vertical drags still scroll the page. Cards **stagger-slide in** from the move direction (CSS keyframes `brd-card-in/-r/-l`, honors `prefers-reduced-motion`). Round column is centered at **max 520px** so wide desktops read like the phone.
@@ -75,9 +101,10 @@ Design docs live in `docs/superpowers/specs/`, plans in `docs/superpowers/plans/
    API; it's gated behind a signed header). v1 approximations are documented in `wc26-seeding.ts`.
 
 3. **Bracket credits** (replaced the old per-bracket approval model). `User.credits` is a hard
-   allowance: a user may create a bracket only while `bracketCount < credits` (`src/lib/bracket-credits.ts`
-   `canCreateBracket`). **1 credit = 1 bracket = $50; no refunds, no user deletion** (decisions are
-   final). Approving a signup grants **1 credit**; admin grants more via **+1 / −1** on the members
+   allowance. **⚠ Updated by `7459233` (see above): creating is now free; a credit is spent when a
+   bracket is marked _Official_, and only official brackets count.** (Originally: create gated by
+   `bracketCount < credits` via `canCreateBracket`.) **1 credit = 1 official bracket = $50; no
+   refunds, no user deletion** (decisions are final). Approving a signup grants **1 credit**; admin grants more via **+1 / −1** on the members
    table (`grantCredits`). Pot = `$50 × total brackets`. `Bracket.status`/`approvedAt`/`approvedBy`
    + the `BracketStatus` enum and the bracket-approval queue were **removed**. Migration:
    `prisma/backfill-credits.ts` set approved users `credits = max(bracketCount, 1)`.
@@ -106,7 +133,7 @@ penalty-safe **ESPN results feed** + round-weighted scoring + leaderboard/pot; p
 cd C:\Users\Oswaldo\wc_ko_26
 npm run dev          # http://localhost:3000 (loads .env)
 npx tsc --noEmit     # types
-npx vitest run --exclude '**/.claude/**'   # 170 tests (exclude the stale worktree dup)
+npx vitest run     # 184 tests
 npx next build       # production build
 ```
 
@@ -143,8 +170,9 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
    Confirmed" meanwhile. `resolveCode` alias gap: names shift until standings finalize — if a team
    shows "TBD" in projections, add its alias in `src/lib/team-resolve.ts`/`teams.ts` (BIH/Bosnia
    already handled in `98e01f2`).
-6. **Remove the stale worktree** `git worktree remove .claude/worktrees/drafts-official-brackets`
-   (it duplicates the test suite → inflated `vitest run` counts).
+6. **Sim seeds need `official: true`.** `prisma/seed-sim-players.ts` (untracked) creates brackets;
+   under the new model they default to drafts, so set `official: true` on them or they won't appear
+   on the leaderboard/pot.
 4. **Live end-to-end smoke test** with real users (signup → approve → fill → lock → results/feed →
    leaderboard → post-lock browse).
 5. **Deferred minors** (logged in `.superpowers/sdd/progress.md`): add a `.gitattributes`
@@ -161,24 +189,28 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   `leaderboard-rank.ts`, `lock.ts`, `official-winners.ts`, `results-feed.ts` (ESPN results mapper),
   `team-resolve.ts`/`team-name.ts`/`team-flag.ts`, `bracket-visibility.ts`, `picks-json.ts`,
   `official-r32.ts`, `bracket-name.ts` (`normalizeBracketName`), `bracket-credits.ts`
-  (`canCreateBracket`), `wc26-seeding.ts` (projections), `standings-feed.ts` (ESPN standings),
+  (`canCreateBracket` + `canMarkOfficial`), `effective-r32.ts` (`mergeEffectiveR32`),
+  `bracket-changes.ts` (`stalePicks`), `bracket-validate.ts` (`validateSubmission` + `validateDraft`),
+  `wc26-seeding.ts` (projections), `standings-feed.ts` (ESPN standings),
   `i18n.ts` (`translate` + dictionary), `teams.ts` (48 teams), `auth*.ts`, `profile.ts`,
   `username-filter.ts`.
 - **Server actions (`src/app/actions/`):** `auth.ts` (signup grants admin 1 credit; returns error
   KEYS), `admin.ts` (`approveUser` grants 1 credit; `grantCredits`; no bracket-approval actions),
-  `bracket.ts` (official R32), `bracket-entry.ts` (per-bracket: `listMyBrackets`/`createBracket`
-  credit-gated/`getBracket`/`saveBracket`; returns error KEYS; no `deleteBracket`), `results.ts`,
-  `leaderboard.ts` (counts all brackets), `browse.ts` (post-lock, per-user), `projection.ts`.
+  `bracket.ts` (official R32), `bracket-entry.ts` (`listMyBrackets`/`createBracket` (free)/`getBracket`/
+  `saveBracket` (partial)/`setBracketOfficial`; returns error KEYS; no `deleteBracket`), `results.ts`,
+  `leaderboard.ts` (counts **official** brackets only), `browse.ts`/`compare.ts` (post-lock, official
+  only), `projection.ts` (`getProjectedBracket` + `getProjectedR32`).
 - **Pages (`src/app/`, 14):** `page.tsx`+`HomeContent.tsx` (home), `official/`, `bracket/`+`bracket/[id]/`,
   `brackets/`+`brackets/[user]/`, `compare/`, `account/`, `forgot-password/`, `reset-password/`,
   `admin/`+`admin/bracket/`, `login/`, `signup/`. Root `loading.tsx` = navigation spinner.
 - **Components (`src/app/_components/`):** `LangProvider.tsx`, `BracketLayout.tsx` (round-tabs+swipe /
   pan-zoom tree), `BracketCard.tsx`, `RoundLabels.tsx`, `MarchMadnessBracket.tsx`, `StageTracker.tsx`
   (Knockout Stage meter), `TeamFlag.tsx`, `Countdown.tsx`. Plus `Nav.tsx` (client; hamburger + EN/ES toggle).
-- **DB:** `prisma/schema.prisma` (`User` w/ `credits`; `Team`, `Match`, `Bracket` w/ `name`,
-  `PoolConfig`). Seeds: `prisma/seed.ts`, `prisma/seed-preview.ts`; migration `prisma/backfill-credits.ts`.
+- **DB:** `prisma/schema.prisma` (`User` w/ `credits`; `Team`, `Match`, `Bracket` w/ `name` +
+  **`official`**, `PoolConfig`). Seeds: `prisma/seed.ts`, `prisma/seed-preview.ts`; migrations
+  `prisma/backfill-credits.ts`, `prisma/backfill-official.ts`.
 - **Stack:** Next.js 15.5 (App Router, stock), React 19, NextAuth v5 beta, Prisma 6 + Neon,
-  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, Vitest 4 (170 tests).
+  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, Vitest 4 (184 tests).
 - **Scratch:** `.superpowers/sdd/progress.md` (gitignored ledger of every task/review this build).
 
 ## Sibling apps (context)
