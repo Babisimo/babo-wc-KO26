@@ -11,15 +11,48 @@ _Last updated: 2026-06-25_
 on a live leaderboard with a pot. Stock **Next.js 15.5 App Router** app with its own **Neon
 Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
-**Current state (all merged to `master`, tip `48cb821`, and pushed):**
-- Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`.
-- Verified at last check: **`npx tsc --noEmit` clean · `npx vitest run` 160/160 (29 files) · `npx next build` compiles 12 routes.**
-- DB is live on Neon (us-west-2), seeded with 48 teams + a **preview Round-of-32** (real teams, placeholder — not the official draw; the group stage ends ~June 27).
+**Current state (all merged to `master`, tip `309b0e9`, and pushed):**
+- Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there).
+- Verified at last check: **`npx tsc --noEmit` clean · `npx vitest run` 170/170 (31 files) · 14 route pages.**
+  - ⚠️ Plain `npx vitest run` reports **64 files / 354** because a **stale git worktree** at `.claude/worktrees/drafts-official-brackets/` duplicates every test. The real count is 31/170 (`npx vitest run --exclude '**/.claude/**'`). **Cleanup item:** `git worktree remove .claude/worktrees/drafts-official-brackets`.
+- DB is live on Neon (us-west-2). Last reset to a **clean slate**: admin only, 0 brackets/results, official R32 cleared → the app runs in ESPN **As-it-stands / Confirmed** projection mode off the live group-stage feed.
+
+> Three sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
 
 **To resume:**
 1. `cd C:\Users\Oswaldo\wc_ko_26 && npm run dev` → http://localhost:3000
 2. Log in as admin: **gondaniel852@gmail.com** (the `ADMIN_EMAIL`; auto-approved + admin + auto-granted 1 credit).
 3. Public pages: `/` (leaderboard), `/official` (real/projected bracket + EN/ES toggle in nav), `/bracket` (your brackets), `/brackets` (browse, post-lock). Admin: `/admin`, `/admin/bracket`.
+
+---
+
+## What changed since the original handoff (sessions through 2026-06-25)
+
+Three commits on top of the original 5-feature base. Newest first.
+
+### `309b0e9` — Bracket UX rework + page loader + bigger stage meter (latest session)
+The app was considered "perfect all but the brackets." This unified the bracket experience:
+- **One bracket view on every screen size.** Default is **round-by-round** (`R32 → R16 → QF → SF → Final` tabs, one round at a time, big readable cards with full team names + pair-connector lines). A **`Rounds | Full`** segmented toggle flips to **"Full"** = the map-style **pan/zoom two-sided tree**. Replaces the old desktop-only-zoom default and a short-lived separate mobile "Scroll" mode.
+- **Swipe + tap navigation.** Swipe left/right (touch) or click a tab to change rounds; vertical drags still scroll the page. Cards **stagger-slide in** from the move direction (CSS keyframes `brd-card-in/-r/-l`, honors `prefers-reduced-motion`). Round column is centered at **max 520px** so wide desktops read like the phone.
+- **Key files:** `src/app/_components/BracketLayout.tsx` (core — `Node`/`Centerpiece` two-sided tree, `BracketTabs` swipeable round view, `BracketZoom` camera, default export 2-way `view` state), `BracketCard.tsx` (emits both `.bcard-code` short + `.bcard-name` full spans), `globals.css` (`.brd-view-*` width-agnostic rules, swipe animation, `.brd-tab-*` connectors), `i18n.ts` (`bracket.viewRounds`/`bracket.viewFull`).
+- **Page navigation loader.** New `src/app/loading.tsx` — App Router Suspense fallback shown in the content area (Nav persists, lives in root layout) while any page's data loads. Branded gold spinner (`.page-loading`/`.page-spinner` in `globals.css`).
+- **Knockout Stage meter text enlarged** (`StageTracker.tsx` styles in `globals.css`): headline `1.05→1.28rem`, round names `0.72→0.88rem`, counts `0.66→0.8rem`, eyebrow `0.82rem`, dots `14→16px`.
+
+### `98e01f2` — Official bracket fixes
+- **Per-position Confirmed view.** `src/lib/wc26-seeding.ts` `seedR32` now returns `{ projected, confirmed }`; each R32 position confirms **independently** as soon as its group is decided (no longer waits for both teams of a match). `OfficialBracketView` + `actions/projection.ts` consume it.
+- **Bosnia-Herzegovina (BIH) resolution.** Added aliases (`bosnia herzegovina`, `bosnia and herzegovina`, `bosnia`) in `src/lib/team-resolve.ts` — it was dropping to "TBD" in projections.
+- Renamed the nav link **"Official" → "Official Bracket"**.
+
+### `cd15ce2` — Compare, stage tracker, account, password reset, pan/zoom, polish
+- **Compare** (`/compare`) — head-to-head **per-bracket** comparison.
+- **Stage tracker** (`_components/StageTracker.tsx` + `src/lib/tournament-stage.ts`) — the Knockout Stage progress meter on home/official.
+- **Account page** (`/account`) — username change, **max 2 changes**, ported from the `nfl26` sibling.
+- **Forgot/Reset password** (`/forgot-password`, `/reset-password`) — email flow over **Gmail SMTP** (`GMAIL_USER`/`GMAIL_PASSWORD`, shared with `nfl26`). **Do not rotate these credentials.**
+- **Long-lived sessions** (NextAuth JWT, 10-year maxAge) + password-manager autofill friendliness.
+- **Logged-out landing** — recognizes auth state; shows a **log in / request account** CTA + bracket countdown (no leaderboard when logged out).
+- **Leaderboard rows link** to the bracket; **hamburger header** (EN/ES + Official Bracket link always visible); admin-page mobile cleanup; pan/zoom brackets.
+
+**Untracked on purpose** (local-only, not committed): `prisma/seed-sim-*.ts` (player/result/lock/partial simulation seeds), `docs/inspo-bracket/` (FotMob reference HTML/CSS), `.claude/` (worktrees, plans, memory).
 
 ---
 
@@ -73,7 +106,7 @@ penalty-safe **ESPN results feed** + round-weighted scoring + leaderboard/pot; p
 cd C:\Users\Oswaldo\wc_ko_26
 npm run dev          # http://localhost:3000 (loads .env)
 npx tsc --noEmit     # types
-npx vitest run       # 160 tests
+npx vitest run --exclude '**/.claude/**'   # 170 tests (exclude the stale worktree dup)
 npx next build       # production build
 ```
 
@@ -105,11 +138,13 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
    1 credit → create → at-cap message → admin +1 → second bracket → both count in the pot).
 2. **Rotate the Neon DB password** — it was pasted into an earlier chat. Reset in Neon
    (Roles → reset password) and update both URLs in `.env`. (Security item.)
-3. **Official R32 field.** Replace the preview seed once the group stage ends (~June 27): set it at
-   `/admin/bracket` or via "Refresh from feed". The live projection engine fills "As it stands"
-   meanwhile. `resolveCode` alias gap: a live ESPN run showed one team name not resolving (→ "TBD"
-   in projections) — add the alias in `src/lib/team-resolve.ts`/`teams.ts` once the specific name
-   is captured (it shifts until standings finalize).
+3. **Official R32 field.** Set the real field once the group stage ends (~June 27): at
+   `/admin/bracket` or via "Refresh from feed". The live projection engine fills "As it stands /
+   Confirmed" meanwhile. `resolveCode` alias gap: names shift until standings finalize — if a team
+   shows "TBD" in projections, add its alias in `src/lib/team-resolve.ts`/`teams.ts` (BIH/Bosnia
+   already handled in `98e01f2`).
+6. **Remove the stale worktree** `git worktree remove .claude/worktrees/drafts-official-brackets`
+   (it duplicates the test suite → inflated `vitest run` counts).
 4. **Live end-to-end smoke test** with real users (signup → approve → fill → lock → results/feed →
    leaderboard → post-lock browse).
 5. **Deferred minors** (logged in `.superpowers/sdd/progress.md`): add a `.gitattributes`
@@ -134,14 +169,16 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   `bracket.ts` (official R32), `bracket-entry.ts` (per-bracket: `listMyBrackets`/`createBracket`
   credit-gated/`getBracket`/`saveBracket`; returns error KEYS; no `deleteBracket`), `results.ts`,
   `leaderboard.ts` (counts all brackets), `browse.ts` (post-lock, per-user), `projection.ts`.
-- **Pages (`src/app/`):** `page.tsx`+`HomeContent.tsx` (home), `official/`, `bracket/`+`bracket/[id]/`,
-  `brackets/`+`brackets/[user]/`, `admin/`+`admin/bracket/`, `login/`, `signup/`.
-- **Components (`src/app/_components/`):** `LangProvider.tsx`, `BracketLayout.tsx`, `RoundLabels.tsx`,
-  `MarchMadnessBracket.tsx`, `TeamFlag.tsx`, `Countdown.tsx`. Plus `Nav.tsx` (client; EN/ES toggle).
+- **Pages (`src/app/`, 14):** `page.tsx`+`HomeContent.tsx` (home), `official/`, `bracket/`+`bracket/[id]/`,
+  `brackets/`+`brackets/[user]/`, `compare/`, `account/`, `forgot-password/`, `reset-password/`,
+  `admin/`+`admin/bracket/`, `login/`, `signup/`. Root `loading.tsx` = navigation spinner.
+- **Components (`src/app/_components/`):** `LangProvider.tsx`, `BracketLayout.tsx` (round-tabs+swipe /
+  pan-zoom tree), `BracketCard.tsx`, `RoundLabels.tsx`, `MarchMadnessBracket.tsx`, `StageTracker.tsx`
+  (Knockout Stage meter), `TeamFlag.tsx`, `Countdown.tsx`. Plus `Nav.tsx` (client; hamburger + EN/ES toggle).
 - **DB:** `prisma/schema.prisma` (`User` w/ `credits`; `Team`, `Match`, `Bracket` w/ `name`,
   `PoolConfig`). Seeds: `prisma/seed.ts`, `prisma/seed-preview.ts`; migration `prisma/backfill-credits.ts`.
 - **Stack:** Next.js 15.5 (App Router, stock), React 19, NextAuth v5 beta, Prisma 6 + Neon,
-  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, Vitest 4 (160 tests).
+  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, Vitest 4 (170 tests).
 - **Scratch:** `.superpowers/sdd/progress.md` (gitignored ledger of every task/review this build).
 
 ## Sibling apps (context)
