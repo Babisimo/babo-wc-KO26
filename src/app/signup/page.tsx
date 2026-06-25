@@ -4,8 +4,10 @@ import { useActionState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signup, type SignupState } from '@/app/actions/auth';
+import { useT } from '@/app/_components/LangProvider';
 
 export default function SignupPage() {
+  const t = useT();
   const router = useRouter();
   const [state, formAction, pending] = useActionState(
     async (prev: SignupState, fd: FormData) => {
@@ -19,39 +21,39 @@ export default function SignupPage() {
   return (
     <main className="auth-card reveal">
       <div className="panel">
-        <p className="eyebrow">WC26 Knockout</p>
-        <h1 style={{ fontSize: '2rem' }}>Request an account</h1>
+        <p className="eyebrow">{t('auth.eyebrow')}</p>
+        <h1 style={{ fontSize: '2rem' }}>{t('auth.requestTitle')}</h1>
         <p className="muted" style={{ fontSize: '0.92rem' }}>
-          This is an invite-quality pool — new accounts need admin approval before you can log in.
+          {t('auth.requestBlurb')}
         </p>
         <form action={formAction} className="field-list" style={{ marginTop: 16 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label htmlFor="firstName">First name</label>
+              <label htmlFor="firstName">{t('auth.firstName')}</label>
               <input id="firstName" name="firstName" placeholder="Lionel" required />
             </div>
             <div>
-              <label htmlFor="lastName">Last name</label>
+              <label htmlFor="lastName">{t('auth.lastName')}</label>
               <input id="lastName" name="lastName" placeholder="Messi" required />
             </div>
           </div>
           <div>
-            <label htmlFor="username">Username</label>
+            <label htmlFor="username">{t('auth.username')}</label>
             <input id="username" name="username" placeholder="pele_10" required />
           </div>
           <div>
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">{t('auth.email')}</label>
             <input id="email" name="email" type="email" placeholder="you@example.com" required />
           </div>
           <div>
-            <label htmlFor="password">Password</label>
-            <input id="password" name="password" type="password" placeholder="At least 8 characters" required />
+            <label htmlFor="password">{t('auth.password')}</label>
+            <input id="password" name="password" type="password" placeholder={t('auth.passwordHint')} required />
           </div>
-          {state?.error && <p className="banner error">{state.error}</p>}
-          <button disabled={pending} type="submit" className="btn-block">{pending ? 'Submitting…' : 'Request account'}</button>
+          {state?.errorKey && <p className="banner error">{t(state.errorKey)}</p>}
+          <button disabled={pending} type="submit" className="btn-block">{pending ? t('auth.submitting') : t('auth.requestAccount')}</button>
         </form>
         <p className="muted" style={{ marginTop: 16, fontSize: '0.9rem' }}>
-          Already have an account? <Link href="/login">Log in</Link>
+          {t('auth.haveAccount')} <Link href="/login">{t('auth.login')}</Link>
         </p>
       </div>
     </main>
