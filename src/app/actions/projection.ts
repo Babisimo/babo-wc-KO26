@@ -3,7 +3,6 @@
 import { mapEspnStandings } from '@/lib/standings-feed';
 import { seedR32 } from '@/lib/wc26-seeding';
 import { buildBracketView, type SlotView } from '@/lib/bracket-view';
-import type { OfficialR32 } from '@/lib/bracket-picks';
 
 const ESPN_STANDINGS = 'https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings';
 
@@ -24,19 +23,12 @@ export async function getProjectedBracket(): Promise<{ available: boolean; asItS
   const groups = mapEspnStandings(json);
   if (groups.length === 0) return empty();
 
-  const { projected, confirmedSlots } = seedR32(groups);
-
-  // confirmed view: same field, but null out any slot not yet mathematically final
-  const confirmedR32: OfficialR32 = {};
-  for (let s = 1; s <= 16; s++) {
-    confirmedR32[s] = confirmedSlots.has(s)
-      ? projected[s]
-      : { teamA: null, teamB: null };
-  }
+  const { projected, confirmed } = seedR32(groups);
 
   return {
     available: true,
     asItStands: buildBracketView(projected, {}, {}),
-    confirmed: buildBracketView(confirmedR32, {}, {}),
+    // each confirmed team appears in its slot, even if the opponent isn't decided yet
+    confirmed: buildBracketView(confirmed, {}, {}),
   };
 }

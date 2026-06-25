@@ -8,7 +8,7 @@ const en = {
   'common.locked': 'Brackets are locked.',
   // nav
   'nav.leaderboard': 'Leaderboard',
-  'nav.official': 'Official',
+  'nav.official': 'Official Bracket',
   'nav.myBracket': 'My brackets',
   'nav.brackets': 'Brackets',
   'nav.compare': 'Compare',
@@ -209,7 +209,7 @@ const es: Record<StringKey, string> = {
   'common.loading': 'Cargando…',
   'common.locked': 'Las brackets ya están cerradas.',
   'nav.leaderboard': 'Tabla',
-  'nav.official': 'Oficial',
+  'nav.official': 'Bracket Oficial',
   'nav.myBracket': 'Tus brackets',
   'nav.brackets': 'Brackets',
   'nav.compare': 'Comparar',

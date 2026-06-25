@@ -26,6 +26,9 @@ const ALIASES: Record<string, string> = {
   'czech republic': 'CZE',
   'ir iran': 'IRN',
   'cabo verde': 'CPV',
+  'bosnia herzegovina': 'BIH',     // ESPN sends "Bosnia-Herzegovina"
+  'bosnia and herzegovina': 'BIH',
+  'bosnia': 'BIH',
 };
 
 const CODE_BY_NORM = new Map<string, string>();

@@ -86,20 +86,27 @@ describe('seedR32', () => {
     expect(projected[3]).toEqual({ teamA: 'F1', teamB: 'C2' });
   });
 
-  it('marks every slot confirmed when all 12 groups are complete', () => {
-    const { confirmedSlots } = seedR32(fullGroups());
-    expect(confirmedSlots.size).toBe(16);
+  it('confirms every position when all 12 groups are complete', () => {
+    const { confirmed } = seedR32(fullGroups());
+    for (let s = 1; s <= 16; s++) {
+      expect(confirmed[s].teamA).not.toBeNull();
+      expect(confirmed[s].teamB).not.toBeNull();
+    }
   });
 
-  it('leaves third-slots unconfirmed while any group is still in progress', () => {
+  it('confirms each decided position independently while a group is still in progress', () => {
     const groups = fullGroups();
     groups[11] = grp('L', { points: 3, gd: 0, gf: 0 }, false); // group L not complete
-    const { confirmedSlots } = seedR32(groups);
-    // a non-third slot whose two groups are both complete stays confirmed (e.g. slot 1: A,B)
-    expect(confirmedSlots.has(1)).toBe(true);
-    // every third-slot is unconfirmed because best-8 needs all 12 complete
-    for (const s of [2,5,7,8,9,10,13,15]) expect(confirmedSlots.has(s)).toBe(false);
-    // slot 11 (R-K vs R-L) references incomplete group L -> unconfirmed
-    expect(confirmedSlots.has(11)).toBe(false);
+    const { confirmed } = seedR32(groups);
+    // slot 1 (R-A vs R-B): both groups complete -> both positions confirmed
+    expect(confirmed[1].teamA).not.toBeNull();
+    expect(confirmed[1].teamB).not.toBeNull();
+    // third positions (the teamB of these slots) stay unconfirmed until all 12 complete
+    for (const s of [2, 5, 7, 8, 9, 10, 13, 15]) expect(confirmed[s].teamB).toBeNull();
+    // but a confirmed winner shows even though its (third) opponent isn't decided: slot 2 = W-E vs 3rd
+    expect(confirmed[2].teamA).not.toBeNull();
+    // slot 11 = R-K vs R-L: L incomplete -> teamB null, but K is confirmed
+    expect(confirmed[11].teamA).not.toBeNull();
+    expect(confirmed[11].teamB).toBeNull();
   });
 });

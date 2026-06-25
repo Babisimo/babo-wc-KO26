@@ -101,15 +101,22 @@ function rowAtRank(g: GroupStanding | undefined, rank: number): string | null {
   return g?.teams.find((t) => t.rank === rank)?.code ?? null;
 }
 
-/** Full R32 field from current standings, plus the set of mathematically-final slots. */
-export function seedR32(groups: GroupStanding[]): { projected: OfficialR32; confirmedSlots: Set<number> } {
+/**
+ * R32 field from current standings, in two views:
+ *  - `projected`: the full as-it-stands field (every position filled).
+ *  - `confirmed`: each position kept ONLY if that team is mathematically final in
+ *    that exact slot (a group winner/runner-up of a completed group, or a third
+ *    once all groups are done). Positions confirm independently — a confirmed team
+ *    shows even if its opponent isn't decided yet.
+ */
+export function seedR32(groups: GroupStanding[]): { projected: OfficialR32; confirmed: OfficialR32 } {
   const map = byLetter(groups);
   const allComplete = groups.length === 12 && groups.every((g) => g.complete);
   const qualifiedThirds = rankThirds(groups);
   const thirdAssign = assignThirds(qualifiedThirds); // slot -> group letter
 
   const projected: OfficialR32 = {};
-  const confirmedSlots = new Set<number>();
+  const confirmed: OfficialR32 = {};
 
   // Resolve one position to a team code + whether it is mathematically final.
   // `slot` is needed only for third positions (it selects the allocated group).
@@ -125,8 +132,11 @@ export function seedR32(groups: GroupStanding[]): { projected: OfficialR32; conf
     const r1 = resolve(p1, slot);
     const r2 = resolve(p2, slot);
     projected[slot] = { teamA: r1.code, teamB: r2.code };
-    if (r1.confirmed && r2.confirmed) confirmedSlots.add(slot);
+    confirmed[slot] = {
+      teamA: r1.confirmed ? r1.code : null,
+      teamB: r2.confirmed ? r2.code : null,
+    };
   }
 
-  return { projected, confirmedSlots };
+  return { projected, confirmed };
 }
