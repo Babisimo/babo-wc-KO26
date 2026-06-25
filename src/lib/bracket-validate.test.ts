@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateSubmission } from './bracket-validate';
+import { validateSubmission, validateDraft } from './bracket-validate';
 import { applyPick, contestantsForSlot, type OfficialR32, type Picks } from './bracket-picks';
 
 // Full official R32: 16 slots, each a distinct pair. Teams T1..T32.
@@ -49,5 +49,24 @@ describe('validateSubmission', () => {
     const picks = fullValidPicks(o);
     picks[1] = 'NOPE'; // not T1/T2
     expect(validateSubmission(o, picks).ok).toBe(false);
+  });
+});
+
+describe('validateDraft', () => {
+  it('accepts an empty draft (nothing picked yet)', () => {
+    expect(validateDraft(fullOfficial(), {})).toEqual({ ok: true });
+  });
+  it('accepts a partial draft where present picks are valid', () => {
+    const o = fullOfficial();
+    expect(validateDraft(o, { 1: 'T1', 2: 'T4' })).toEqual({ ok: true });
+  });
+  it('does not require the official R32 to be fully set', () => {
+    const o = fullOfficial();
+    delete o[16];
+    expect(validateDraft(o, { 1: 'T1' })).toEqual({ ok: true });
+  });
+  it('rejects a present pick that is not one of the slot contestants', () => {
+    const o = fullOfficial();
+    expect(validateDraft(o, { 1: 'NOPE' }).ok).toBe(false);
   });
 });

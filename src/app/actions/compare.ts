@@ -29,7 +29,7 @@ export async function getCompareData(): Promise<CompareData> {
   if (!locked) return { locked: false, winners: {}, brackets: [] };
 
   const [rows, winners] = await Promise.all([
-    db.bracket.findMany({ select: { id: true, name: true, userId: true, picks: true } }),
+    db.bracket.findMany({ where: { official: true }, select: { id: true, name: true, userId: true, picks: true } }),
     currentWinners(),
   ]);
   const users = await db.user.findMany({

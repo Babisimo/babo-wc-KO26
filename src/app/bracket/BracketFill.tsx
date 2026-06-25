@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { applyPick, bracketComplete, contestantsForSlot, type Picks, type OfficialR32 } from '@/lib/bracket-picks';
+import { stalePicks } from '@/lib/bracket-changes';
 import { formatMatchDate } from '@/lib/match-date';
 import { saveBracket } from '@/app/actions/bracket-entry';
 import BracketLayout from '@/app/_components/BracketLayout';
@@ -13,12 +14,14 @@ export default function BracketFill({
   bracketId,
   officialR32,
   initialPicks,
+  official,
   locked,
   dates,
 }: {
   bracketId: string;
   officialR32: OfficialR32;
   initialPicks: Picks;
+  official?: boolean;
   locked: boolean;
   dates?: Record<number, string | null>;
 }) {
@@ -30,6 +33,7 @@ export default function BracketFill({
 
   const complete = useMemo(() => bracketComplete(picks), [picks]);
   const made = useMemo(() => Object.keys(picks).length, [picks]);
+  const stale = useMemo(() => new Set(stalePicks(officialR32, picks)), [officialR32, picks]);
 
   function pick(slot: number, team: string | null) {
     if (locked || !team) return;
@@ -55,6 +59,7 @@ export default function BracketFill({
         teamA={teamA}
         teamB={teamB}
         highlight={picks[slot] ?? null}
+        stale={stale.has(slot)}
         dateLabel={formatMatchDate(dates?.[slot])}
         isFinal={slot === 31}
         disabled={locked}
@@ -65,13 +70,19 @@ export default function BracketFill({
 
   return (
     <div>
+      {official && <p className="banner info" style={{ marginBottom: 12 }}>{t('bracket.officialThis')}</p>}
+      {stale.size > 0 && (
+        <p className="banner error" style={{ marginBottom: 12 }}>{t('bracket.changesWarn', { n: stale.size })}</p>
+      )}
+
       <BracketLayout render={(slot) => card(slot)} />
 
       {!locked && (
         <div className="savebar">
-          <button type="button" disabled={pending || !complete} onClick={save}>
-            {pending ? t('bracket.saving') : complete ? t('bracket.save') : t('bracket.pickEvery', { made })}
+          <button type="button" disabled={pending} onClick={save}>
+            {pending ? t('bracket.saving') : complete ? t('bracket.save') : t('bracket.savePartial')}
           </button>
+          {!complete && <span className="muted">{t('bracket.pickEvery', { made })}</span>}
           {ok && <span className="banner ok" style={{ padding: '6px 12px' }}>{t('bracket.saved')}</span>}
           {error && <span className="banner error" style={{ padding: '6px 12px' }}>{t(error)}</span>}
         </div>

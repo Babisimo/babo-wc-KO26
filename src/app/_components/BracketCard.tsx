@@ -16,6 +16,8 @@ export type BracketCardProps = {
   highlight?: string | null;
   /** Ring color for read-only scored views. */
   status?: 'correct' | 'wrong' | 'pending';
+  /** Flag a card whose saved pick no longer matches its current matchup — needs review. */
+  stale?: boolean;
   dateLabel?: string | null;
   isFinal?: boolean;
   disabled?: boolean;
@@ -28,6 +30,7 @@ export default function BracketCard({
   teamB,
   highlight,
   status,
+  stale,
   dateLabel,
   isFinal,
   disabled,
@@ -63,7 +66,7 @@ export default function BracketCard({
 
   const statusCls = status === 'correct' ? ' correct' : status === 'wrong' ? ' wrong' : '';
   return (
-    <div className={`bcard${isFinal ? ' final' : ''}${statusCls}`}>
+    <div className={`bcard${isFinal ? ' final' : ''}${statusCls}${stale ? ' stale' : ''}`}>
       <div className="bcard-teams">
         {side(teamA)}
         {side(teamB)}
