@@ -11,12 +11,12 @@ _Last updated: 2026-06-25_
 on a live leaderboard with a pot. Stock **Next.js 15.5 App Router** app with its own **Neon
 Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
-**Current state (all merged to `master`, tip `5f04819`, and pushed):**
+**Current state (all merged to `master`, tip `c321d95`, and pushed):**
 - Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there).
-- Verified this session: **`npx tsc --noEmit` clean · `npx vitest run` 189/189 (35 files) · `next lint` clean.** (`next build` not re-run this session; last full build was 16 route pages.)
+- Verified this session: **`npx tsc --noEmit` clean · `npx vitest run` 194/194 (35 files) · `next lint` clean · `next build` 17 routes (incl. `/api/admin/notifications`).**
 - DB is live on Neon (us-west-2), schema includes **`Bracket.official`** (migration applied). Last reset to a **clean slate**: admin only, 0 brackets/results, official R32 cleared → the app runs in ESPN **As-it-stands / Confirmed** projection mode off the live group-stage feed.
 
-> Five sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
+> Six sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
 
 **To resume:**
 1. `cd C:\Users\Oswaldo\wc_ko_26 && npm run dev` → http://localhost:3000
@@ -27,9 +27,25 @@ Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
 ## What changed since the original handoff (sessions through 2026-06-25)
 
-Five entries on top of the original 5-feature base. Newest first.
+Six entries on top of the original 5-feature base. Newest first.
 
-### `5f04819` — Admin pending-approval notifications (latest session)
+### `c321d95` — Signup autofill bugfix + clearer login/signup errors (latest session)
+**Real bug found after the notifications shipped:** a tester signed up with **Google autofill** and no
+account was created (so no admin email, no badge — the notifications were correctly reporting 0). **Root
+cause:** the signup **username** field was tagged `autoComplete="username"`, so the browser pasted the
+saved **login email** into it; an email fails `validateUsername` (`/^[A-Za-z0-9_]{3,20}$/`), signup was
+rejected, and a later login showed the generic "wrong email/password".
+- **Fix (root cause):** `signup/page.tsx` — username field → `autoComplete="off"`; the **email** field now
+  takes the `"username"` autofill slot (matches `login/page.tsx`) so the password manager fills email there.
+- **Backstop:** `actions/auth.ts` `signup` returns a pointed **`auth.err.usernameEmail`** ("that looks like
+  an email…") when an `@` still lands in the username field.
+- **Login messages (requested):** `login/page.tsx` now calls a new **`diagnoseLoginIssue(email,password)`**
+  server action → distinct **awaiting-approval / not-approved / invalid** messages. Backed by pure
+  `loginIssue(user, passwordOk)` in `auth-status.ts` (tested) — only reveals pending/rejected when the
+  password is correct (no account enumeration). New i18n: `auth.pending`, `auth.rejected`,
+  `auth.err.usernameEmail` (EN+ES); `auth.invalid` no longer lumps in the approval case.
+
+### `5f04819` — Admin pending-approval notifications
 Admins now get a live, visible signal when someone requests an account (signs up → `User.status = PENDING`),
 instead of having to open `/admin` and check.
 - **Nav badge.** Red count bubble on the **hamburger button** and the **Admin** nav link, shown only
@@ -153,7 +169,7 @@ penalty-safe **ESPN results feed** + round-weighted scoring + leaderboard/pot; p
 cd C:\Users\Oswaldo\wc_ko_26
 npm run dev          # http://localhost:3000 (loads .env)
 npx tsc --noEmit     # types
-npx vitest run     # 189 tests
+npx vitest run     # 194 tests
 npx next build       # production build
 ```
 
@@ -217,7 +233,8 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   `i18n.ts` (`translate` + dictionary), `teams.ts` (48 teams), `auth*.ts`, `profile.ts`,
   `username-filter.ts`.
 - **Server actions (`src/app/actions/`):** `auth.ts` (signup grants admin 1 credit; emails admins a
-  best-effort new-signup notice; returns error KEYS), `admin.ts` (`approveUser` grants 1 credit;
+  best-effort new-signup notice; `diagnoseLoginIssue` for specific login-failure messages; returns error
+  KEYS), `admin.ts` (`approveUser` grants 1 credit;
   `grantCredits`; no bracket-approval actions),
   `bracket.ts` (official R32), `bracket-entry.ts` (`listMyBrackets`/`createBracket` (free)/`getBracket`/
   `saveBracket` (partial)/`setBracketOfficial`; returns error KEYS; no `deleteBracket`), `results.ts`,
@@ -234,7 +251,7 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   **`official`**, `PoolConfig`). Seeds: `prisma/seed.ts`, `prisma/seed-preview.ts`; migrations
   `prisma/backfill-credits.ts`, `prisma/backfill-official.ts`.
 - **Stack:** Next.js 15.5 (App Router, stock), React 19, NextAuth v5 beta, Prisma 6 + Neon,
-  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, Vitest 4 (189 tests).
+  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, Vitest 4 (194 tests).
 - **Scratch:** `.superpowers/sdd/progress.md` (gitignored ledger of every task/review this build).
 
 ## Sibling apps (context)
