@@ -43,8 +43,10 @@ We want:
   are logged and never block signup.
 - **Bubble style:** numeric count on **both** the hamburger button and the Admin
   link.
-- **Refresh:** server-side per page load (no polling/websockets). Updates when the
-  admin navigates or refreshes.
+- **Refresh:** server-rendered initial count, then **client polling** every 15s via
+  an admin-guarded API route, so the badge updates without navigation. Polling does
+  not pause when the tab is hidden. (Revised from the original "no polling"
+  decision at the user's request.)
 
 ## Components
 
@@ -96,6 +98,15 @@ const adminNotifications = isAdmin ? await getAdminNotificationCount() : 0
 - Accessibility: bubble has an `aria-label` from i18n, e.g.
   `nav.pendingApprovals` → "{n} pending approvals" / "{n} aprobaciones pendientes".
   Numbers over a cap (e.g. 99) render as `99+`.
+- Polling: the count is local state seeded from the `adminNotifications` prop
+  (re-synced when the prop changes on navigation). When `isAdmin`, a 15s interval
+  fetches `/api/admin/notifications` and updates the count. Transient fetch errors
+  keep the last known count. Interval is cleared on unmount.
+
+### 4b. `src/app/api/admin/notifications/route.ts` (new)
+
+`GET` handler, `dynamic = 'force-dynamic'`. Reads the session; non-admins get
+`{ count: 0 }` with 403. Admins get `{ count: getAdminNotificationCount() }`.
 
 ### 4. `src/app/globals.css` (edit)
 

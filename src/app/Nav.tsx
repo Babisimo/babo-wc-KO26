@@ -1,15 +1,51 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { logout } from '@/app/actions/auth';
 import { useT, useLang } from '@/app/_components/LangProvider';
 
-export default function Nav({ signedIn, isAdmin }: { signedIn: boolean; isAdmin: boolean }) {
+export default function Nav({
+  signedIn,
+  isAdmin,
+  adminNotifications = 0,
+}: {
+  signedIn: boolean;
+  isAdmin: boolean;
+  adminNotifications?: number;
+}) {
   const t = useT();
   const { lang, setLang } = useLang();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
+
+  // Seed from the server-rendered count, then poll so admins see new requests
+  // without navigating. Re-sync if the server prop changes on navigation.
+  const [count, setCount] = useState(adminNotifications);
+  useEffect(() => setCount(adminNotifications), [adminNotifications]);
+  useEffect(() => {
+    if (!isAdmin) return;
+    let active = true;
+    const tick = async () => {
+      try {
+        const res = await fetch('/api/admin/notifications', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (active && typeof data.count === 'number') setCount(data.count);
+      } catch {
+        /* transient network error — keep the last known count */
+      }
+    };
+    const id = setInterval(tick, 15_000);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [isAdmin]);
+
+  const showBubble = isAdmin && count > 0;
+  const bubbleLabel = t('nav.pendingApprovals', { n: count });
+  const bubbleText = count > 99 ? '99+' : String(count);
 
   return (
     <nav className="topnav">
@@ -28,7 +64,14 @@ export default function Nav({ signedIn, isAdmin }: { signedIn: boolean; isAdmin:
             <Link href="/brackets" className="navlink" onClick={close}>{t('nav.brackets')}</Link>
             <Link href="/compare" className="navlink" onClick={close}>{t('nav.compare')}</Link>
             <Link href="/account" className="navlink" onClick={close}>{t('nav.account')}</Link>
-            {isAdmin && <Link href="/admin" className="navlink" onClick={close}>{t('nav.admin')}</Link>}
+            {isAdmin && (
+              <Link href="/admin" className="navlink" onClick={close}>
+                {t('nav.admin')}
+                {showBubble && (
+                  <span className="nav-bubble" aria-label={bubbleLabel}>{bubbleText}</span>
+                )}
+              </Link>
+            )}
             <form action={logout}>
               <button type="submit" className="btn-ghost btn-sm btn-block">{t('nav.logout')}</button>
             </form>
@@ -55,6 +98,9 @@ export default function Nav({ signedIn, isAdmin }: { signedIn: boolean; isAdmin:
         onClick={() => setOpen((v) => !v)}
       >
         <span /><span /><span />
+        {showBubble && (
+          <span className="nav-bubble nav-bubble-corner" aria-label={bubbleLabel}>{bubbleText}</span>
+        )}
       </button>
     </nav>
   );

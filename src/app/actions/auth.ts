@@ -1,8 +1,10 @@
 'use server';
 
 import { z } from 'zod';
+import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { signOut, auth, type AppSession } from '@/lib/auth';
+import { sendNewSignupNotice } from '@/lib/email';
 import { hashPassword, verifyPassword } from '@/lib/auth-helpers';
 import { validateUsername, validateName, MAX_USERNAME_CHANGES } from '@/lib/profile';
 import { checkUsernameAllowed } from '@/lib/username-filter';
@@ -55,9 +57,10 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
     console.warn('[signup] ADMIN_EMAIL not set — no user will be auto-approved as admin.');
   }
 
+  const name = `${first.value} ${last.value}`;
   await db.user.create({
     data: {
-      name: `${first.value} ${last.value}`,
+      name,
       username: uname.value,
       usernameLower: uname.value.toLowerCase(),
       firstName: first.value,
@@ -70,6 +73,22 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
       credits: isBootstrapAdmin ? 1 : 0,
     },
   });
+
+  // Best-effort: tell admins someone is waiting for approval. The bootstrap admin
+  // approves itself, so it never needs a notice. Never let email failure (or a
+  // missing SMTP config) block a successful signup.
+  if (!isBootstrapAdmin) {
+    try {
+      const h = await headers();
+      const host = h.get('host') ?? '';
+      const base =
+        process.env.APP_URL?.replace(/\/+$/, '') ??
+        `${host.startsWith('localhost') ? 'http' : 'https'}://${host}`;
+      await sendNewSignupNotice({ name, email }, `${base}/admin`);
+    } catch (err) {
+      console.error('[signup] failed to send admin notice:', err);
+    }
+  }
   return undefined; // success; UI redirects to /login?registered=1
 }
 

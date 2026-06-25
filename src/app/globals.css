@@ -217,10 +217,23 @@ select option { color: #000; }
 .nav-links .navlink::after { content: none; }
 .nav-links form { margin-top: 4px; }
 .nav-burger {
+  position: relative;
   display: inline-flex; width: 40px; height: 34px; padding: 0;
   flex-direction: column; align-items: center; justify-content: center; gap: 4px;
   background: rgba(255, 255, 255, 0.05); border: 1px solid var(--chalk-strong);
   border-radius: 9px; box-shadow: none; cursor: pointer;
+}
+
+/* Admin "pending approvals" count bubble (nav link + burger corner) */
+.nav-bubble {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; margin-left: 6px; padding: 0 5px;
+  border-radius: 999px; font-size: 0.68rem; font-weight: 800; line-height: 1;
+  background: rgba(255,73,95,0.95); color: #fff; border: 1px solid rgba(255,73,95,0.6);
+}
+.nav-bubble-corner {
+  position: absolute; top: -7px; right: -7px; margin-left: 0;
+  box-shadow: 0 0 0 2px rgb(8, 26, 16);
 }
 .nav-burger:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); filter: none; transform: none; }
 .nav-burger span { display: block; width: 18px; height: 2px; border-radius: 2px; background: var(--line); transition: transform 0.2s ease, opacity 0.2s ease; }
