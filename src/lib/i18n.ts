@@ -78,6 +78,18 @@ const en = {
   'countdown.lockedWhen': 'Picks are final — results decide the rest.',
   'countdown.lockIn': 'Brackets lock in',
   'countdown.locksAt': 'Locks {when}',
+  // browse
+  'browse.title': 'Brackets',
+  'browse.private': 'Everyone\'s brackets stay private until they lock (one hour before the first Round-of-32 kickoff). Check back after lock to see how everyone picked.',
+  'browse.none': 'No brackets were submitted.',
+  'browse.player': 'Player',
+  'browse.count': 'Brackets',
+  'browse.best': 'Best',
+  'browse.noSuch': 'No such player.',
+  'browse.privateOne': 'This bracket is private until brackets lock (one hour before the first Round-of-32 kickoff).',
+  'browse.noApproved': 'No brackets.',
+  'browse.pts': '{n} pts',
+  'browse.ptsYours': '{n} pts · yours',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -156,6 +168,18 @@ const es: Record<StringKey, string> = {
   'countdown.lockedWhen': 'Los picks son finales — lo demás lo deciden los resultados.',
   'countdown.lockIn': 'Las brackets cierran en',
   'countdown.locksAt': 'Cierra {when}',
+  // browse
+  'browse.title': 'Brackets',
+  'browse.private': 'Las brackets de todos quedan privadas hasta que cierran (una hora antes del primer partido de Dieciseisavos). Vuelve después del cierre para ver cómo le picó cada quien.',
+  'browse.none': 'Nadie mandó bracket.',
+  'browse.player': 'Jugador',
+  'browse.count': 'Brackets',
+  'browse.best': 'Mejor',
+  'browse.noSuch': 'No existe ese jugador.',
+  'browse.privateOne': 'Este bracket queda privado hasta que cierran las brackets (una hora antes del primer partido de Dieciseisavos).',
+  'browse.noApproved': 'Sin brackets.',
+  'browse.pts': '{n} pts',
+  'browse.ptsYours': '{n} pts · el tuyo',
 };
 
 export const STRINGS = { en, es } as const;
