@@ -4,6 +4,21 @@ _Last updated: 2026-06-24_
 
 ---
 
+## ⭐ LATEST (2026-06-24, end of session) — read `memory/wc-ko-26-next-steps.md` for the authoritative state
+
+Five features were built (brainstorm → spec → plan → subagent-driven execution → review), all **merged to `master`** (tip `d93157d`) and **pushed to GitHub** (`origin` = https://github.com/Babisimo/babo-wc-KO26.git):
+1. **FotMob bracket UI** (FIFA WC26 real routing, country flags, single-direction columnar layout, round labels, mobile).
+2. **Live ESPN-standings projections** + **As-it-stands / Confirmed** toggle on `/official`.
+3. **Bracket credits** — replaced per-bracket approval with a credit allowance (1 credit = 1 bracket = $50, **no refunds/deletion**; admin grants +1/−1; pot = $50 × all brackets). See `docs/superpowers/specs/2026-06-24-bracket-credits-design.md`.
+4. **Member display** — `username (firstName)` public; admin members table shows all four fields + credits.
+5. **EN/ES i18n** — full casual-Sonoran Spanish translation + nav toggle (default English). Spanish strings live in the `es` block of `src/lib/i18n.ts`. Admin stays English.
+
+Verified: tsc clean, 160/160 vitest, build compiles. Sections below predate features 3–5 (credits replaced the bracket-approval model described in #2 of "What's on feat/ui-polish" etc.) — trust the memory file + the spec docs in `docs/superpowers/specs/` over older prose here.
+
+**Top follow-ups:** live logged-in EN↔ES + credits sweep; rotate the leaked Neon DB password; swap the preview R32 for the official field (~June 27). Dev gotcha: stale `.next` after branch churn → 404 CSS chunk (unstyled pages); fix with `rm -rf .next` + restart.
+
+---
+
 ## 🟢 START HERE
 
 **What this is:** `wc_ko_26` — a March Madness–style bracket pool for the **FIFA World Cup 2026 knockout stage**. Members fill one bracket (R32 → Final), scored by round, on a live leaderboard. Built as a Next.js 15 App Router app with its own Neon Postgres DB. **It is feature-complete and running locally.**
