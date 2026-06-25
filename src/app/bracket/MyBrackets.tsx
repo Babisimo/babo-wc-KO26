@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBracket, type MyBracketRow } from '@/app/actions/bracket-entry';
 import { useT } from '@/app/_components/LangProvider';
+import type { StringKey } from '@/lib/i18n';
 
 export default function MyBrackets({
   brackets,
@@ -20,7 +21,7 @@ export default function MyBrackets({
   const router = useRouter();
   const t = useT();
   const [name, setName] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<StringKey | null>(null);
   const [pending, start] = useTransition();
   const atCap = used >= credits;
 
@@ -28,7 +29,7 @@ export default function MyBrackets({
     setError(null);
     start(async () => {
       const res = await createBracket(name);
-      if (res?.error) { setError(res.error); return; }
+      if (res?.errorKey) { setError(res.errorKey); return; }
       setName('');
       if (res.id) router.push(`/bracket/${res.id}`);
       else router.refresh();
@@ -67,7 +68,7 @@ export default function MyBrackets({
       {!locked && atCap && (
         <p className="muted" style={{ marginTop: 14 }}>{t('bracket.atCap')}</p>
       )}
-      {error && <p className="banner error" style={{ marginTop: 12 }}>{error}</p>}
+      {error && <p className="banner error" style={{ marginTop: 12 }}>{t(error)}</p>}
     </div>
   );
 }

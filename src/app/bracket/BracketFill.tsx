@@ -7,6 +7,7 @@ import TeamFlag from '@/app/_components/TeamFlag';
 import { saveBracket } from '@/app/actions/bracket-entry';
 import BracketLayout from '@/app/_components/BracketLayout';
 import { useT } from '@/app/_components/LangProvider';
+import type { StringKey } from '@/lib/i18n';
 
 export default function BracketFill({
   bracketId,
@@ -21,7 +22,7 @@ export default function BracketFill({
 }) {
   const t = useT();
   const [picks, setPicks] = useState<Picks>(initialPicks);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<StringKey | null>(null);
   const [ok, setOk] = useState(false);
   const [pending, start] = useTransition();
 
@@ -40,7 +41,7 @@ export default function BracketFill({
     setOk(false);
     start(async () => {
       const res = await saveBracket(bracketId, picks);
-      if (res?.error) setError(res.error);
+      if (res?.errorKey) setError(res.errorKey);
       else setOk(true);
     });
   }
@@ -80,7 +81,7 @@ export default function BracketFill({
             {pending ? t('bracket.saving') : complete ? t('bracket.save') : t('bracket.pickEvery', { made })}
           </button>
           {ok && <span className="banner ok" style={{ padding: '6px 12px' }}>{t('bracket.saved')}</span>}
-          {error && <span className="banner error" style={{ padding: '6px 12px' }}>{error}</span>}
+          {error && <span className="banner error" style={{ padding: '6px 12px' }}>{t(error)}</span>}
         </div>
       )}
       {locked && <p className="banner info" style={{ marginTop: 12 }}>{t('bracket.lockedFinal')}</p>}

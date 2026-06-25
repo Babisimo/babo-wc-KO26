@@ -11,11 +11,6 @@ export function OfficialPanelHead({ decided, total }: { decided: number; total: 
   );
 }
 
-export function OfficialNotReady() {
-  const t = useT();
-  return <p className="muted">{t('official.notReady')}</p>;
-}
-
 export function OfficialNotAvailable() {
   const t = useT();
   return <p className="muted">{t('official.notAvailable')}</p>;
