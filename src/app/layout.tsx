@@ -3,6 +3,7 @@ import { Big_Shoulders, Hanken_Grotesk } from 'next/font/google';
 import './globals.css';
 import 'flag-icons/css/flag-icons.min.css';
 import Nav from './Nav';
+import LangProvider from './_components/LangProvider';
 
 const display = Big_Shoulders({
   subsets: ['latin'],
@@ -21,8 +22,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
       <body>
-        <Nav />
-        {children}
+        <LangProvider>
+          <Nav />
+          {children}
+        </LangProvider>
       </body>
     </html>
   );
