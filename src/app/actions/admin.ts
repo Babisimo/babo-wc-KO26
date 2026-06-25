@@ -20,8 +20,18 @@ export async function approveUser(targetUserId: string): Promise<{ error?: strin
   const session = await requireAdmin();
   await db.user.update({
     where: { id: targetUserId },
-    data: { status: 'APPROVED', approvedAt: new Date(), approvedBy: session.user.id },
+    data: { status: 'APPROVED', approvedAt: new Date(), approvedBy: session.user.id, credits: 1 },
   });
+  revalidatePath('/admin');
+  return {};
+}
+
+export async function grantCredits(targetUserId: string, delta: number): Promise<{ error?: string }> {
+  await requireAdmin();
+  const user = await db.user.findUnique({ where: { id: targetUserId }, select: { credits: true } });
+  if (!user) return { error: 'User not found.' };
+  const next = Math.max(0, user.credits + delta);
+  await db.user.update({ where: { id: targetUserId }, data: { credits: next } });
   revalidatePath('/admin');
   return {};
 }
@@ -47,23 +57,6 @@ export async function removeUser(targetUserId: string): Promise<{ error?: string
   const guard = canRemoveUser(session.user.id, targetUserId, await adminIds());
   if (!guard.ok) return { error: guard.error };
   await db.user.delete({ where: { id: targetUserId } });
-  revalidatePath('/admin');
-  return {};
-}
-
-export async function approveBracket(bracketId: string): Promise<{ error?: string }> {
-  const session = await requireAdmin();
-  await db.bracket.update({
-    where: { id: bracketId },
-    data: { status: 'APPROVED', approvedAt: new Date(), approvedBy: session.user.id },
-  });
-  revalidatePath('/admin');
-  return {};
-}
-
-export async function rejectBracket(bracketId: string): Promise<{ error?: string }> {
-  await requireAdmin();
-  await db.bracket.update({ where: { id: bracketId }, data: { status: 'REJECTED' } });
   revalidatePath('/admin');
   return {};
 }

@@ -9,8 +9,3 @@ export function normalizeBracketName(raw: string | null | undefined, fallbackInd
     .slice(0, MAX_LEN);
   return cleaned.length > 0 ? cleaned : `Bracket ${fallbackIndex}`;
 }
-
-/** A user's first bracket is auto-approved; every later one needs admin approval. */
-export function statusForNewBracket(existingCount: number): 'APPROVED' | 'PENDING' {
-  return existingCount === 0 ? 'APPROVED' : 'PENDING';
-}

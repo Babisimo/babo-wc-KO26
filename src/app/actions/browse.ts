@@ -29,25 +29,27 @@ export async function getBracketsIndex(): Promise<BracketsIndex> {
   if (!locked) return { locked: false, entries: [] };
 
   const [brackets, winners] = await Promise.all([
-    db.bracket.findMany({ where: { status: 'APPROVED' }, select: { userId: true, picks: true } }),
+    db.bracket.findMany({ select: { userId: true, picks: true } }),
     currentWinners(),
   ]);
   const users = await db.user.findMany({
     where: { id: { in: brackets.map((b) => b.userId) } },
-    select: { id: true, name: true, username: true },
+    select: { id: true, name: true, username: true, firstName: true },
   });
   const byId = new Map(users.map((u) => [u.id, u]));
 
-  // Group approved brackets by user: best score + how many.
+  // Group all brackets by user: best score + how many.
   const perUser = new Map<string, { username: string; name: string; total: number; count: number }>();
   for (const b of brackets) {
     const u = byId.get(b.userId);
     const username = u?.username ?? '';
     if (!username) continue;
     const total = scoreBracket(coercePicks(b.picks), winners);
+    const handle = u?.username ?? u?.name ?? 'Unknown';
+    const display = u?.firstName ? `${handle} (${u.firstName})` : handle;
     const cur = perUser.get(b.userId);
     if (!cur) {
-      perUser.set(b.userId, { username, name: u?.username ?? u?.name ?? 'Unknown', total, count: 1 });
+      perUser.set(b.userId, { username, name: display, total, count: 1 });
     } else {
       cur.total = Math.max(cur.total, total);
       cur.count += 1;
@@ -73,7 +75,7 @@ export async function getUserBracketView(username: string): Promise<UserBracketV
 
   const target = await db.user.findFirst({
     where: { username: { equals: username, mode: 'insensitive' } },
-    select: { id: true, name: true, username: true },
+    select: { id: true, name: true, username: true, firstName: true },
   });
   if (!target) {
     return { visible: false, locked, isOwner: false, name: null, brackets: [] };
@@ -86,7 +88,7 @@ export async function getUserBracketView(username: string): Promise<UserBracketV
 
   const [rows, winners, official] = await Promise.all([
     db.bracket.findMany({
-      where: { userId: target.id, status: 'APPROVED' },
+      where: { userId: target.id },
       orderBy: { createdAt: 'asc' },
       select: { id: true, name: true, picks: true },
     }),
@@ -95,11 +97,14 @@ export async function getUserBracketView(username: string): Promise<UserBracketV
   ]);
   const officialR32 = officialR32FromSlots(official.slots);
 
+  const targetHandle = target.username ?? target.name;
+  const targetDisplay = target.firstName ? `${targetHandle} (${target.firstName})` : targetHandle;
+
   return {
     visible: true,
     locked,
     isOwner,
-    name: target.username ?? target.name,
+    name: targetDisplay,
     brackets: rows.map((r) => {
       const picks = coercePicks(r.picks);
       return { id: r.id, name: r.name, total: scoreBracket(picks, winners), slots: buildBracketView(officialR32, picks, winners) };

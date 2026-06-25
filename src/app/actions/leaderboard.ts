@@ -29,7 +29,6 @@ function coercePicks(raw: unknown): Picks {
 export async function getLeaderboard(): Promise<LeaderboardData> {
   const [brackets, winners, config] = await Promise.all([
     db.bracket.findMany({
-      where: { status: 'APPROVED' },
       select: { id: true, userId: true, name: true, picks: true },
     }),
     currentWinners(),
@@ -39,20 +38,23 @@ export async function getLeaderboard(): Promise<LeaderboardData> {
   const userIds = brackets.map((b) => b.userId);
   const users = await db.user.findMany({
     where: { id: { in: userIds } },
-    select: { id: true, name: true, username: true },
+    select: { id: true, name: true, username: true, firstName: true },
   });
-  const nameById = new Map(users.map((u) => [u.id, u.username ?? u.name]));
+  const handleById = new Map(users.map((u) => {
+    const handle = u.username ?? u.name;
+    return [u.id, u.firstName ? `${handle} (${u.firstName})` : handle];
+  }));
 
-  // One leaderboard row per approved bracket, keyed by bracket id.
+  // One leaderboard row per bracket, keyed by bracket id.
   const scored = brackets.map((b) => ({
     key: b.id,
-    name: `${nameById.get(b.userId) ?? 'Unknown'} — ${b.name}`,
+    name: `${handleById.get(b.userId) ?? 'Unknown'} — ${b.name}`,
     total: scoreBracket(coercePicks(b.picks), winners),
   }));
 
   const entries = rankEntries(scored);
   const entryCents = config?.entryCents ?? 5000;
-  const players = brackets.length; // approved brackets = paid entries
+  const players = brackets.length; // all brackets = paid entries
   const potCents = entryCents * players;
   const { winners: winEntries, shareCents } = potSplit(entries, potCents);
 
