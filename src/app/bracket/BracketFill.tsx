@@ -2,10 +2,10 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { applyPick, bracketComplete, contestantsForSlot, type Picks, type OfficialR32 } from '@/lib/bracket-picks';
-import { teamName } from '@/lib/team-name';
-import TeamFlag from '@/app/_components/TeamFlag';
+import { formatMatchDate } from '@/lib/match-date';
 import { saveBracket } from '@/app/actions/bracket-entry';
 import BracketLayout from '@/app/_components/BracketLayout';
+import BracketCard from '@/app/_components/BracketCard';
 import { useT } from '@/app/_components/LangProvider';
 import type { StringKey } from '@/lib/i18n';
 
@@ -14,11 +14,13 @@ export default function BracketFill({
   officialR32,
   initialPicks,
   locked,
+  dates,
 }: {
   bracketId: string;
   officialR32: OfficialR32;
   initialPicks: Picks;
   locked: boolean;
+  dates?: Record<number, string | null>;
 }) {
   const t = useT();
   const [picks, setPicks] = useState<Picks>(initialPicks);
@@ -46,28 +48,18 @@ export default function BracketFill({
     });
   }
 
-  function teamBtn(slot: number, team: string | null) {
-    const selected = team !== null && picks[slot] === team;
-    return (
-      <button
-        type="button"
-        className={`fm-btn${selected ? ' sel' : ''}`}
-        disabled={locked || !team}
-        onClick={() => pick(slot, team)}
-      >
-        <TeamFlag code={team} />
-        <span className="fm-nm">{teamName(team)}</span>
-      </button>
-    );
-  }
-
   function card(slot: number) {
     const { teamA, teamB } = contestantsForSlot(slot, officialR32, picks);
     return (
-      <div className="fm-match">
-        {teamBtn(slot, teamA)}
-        {teamBtn(slot, teamB)}
-      </div>
+      <BracketCard
+        teamA={teamA}
+        teamB={teamB}
+        highlight={picks[slot] ?? null}
+        dateLabel={formatMatchDate(dates?.[slot])}
+        isFinal={slot === 31}
+        disabled={locked}
+        onPick={(team) => pick(slot, team)}
+      />
     );
   }
 

@@ -65,6 +65,7 @@ export type UserBracketView = {
   locked: boolean;
   isOwner: boolean;
   name: string | null;
+  dates: Record<number, string | null>;
   brackets: { id: string; name: string; total: number; slots: SlotView[] }[];
 };
 
@@ -78,12 +79,12 @@ export async function getUserBracketView(username: string): Promise<UserBracketV
     select: { id: true, name: true, username: true, firstName: true },
   });
   if (!target) {
-    return { visible: false, locked, isOwner: false, name: null, brackets: [] };
+    return { visible: false, locked, isOwner: false, name: null, dates: {}, brackets: [] };
   }
 
   const isOwner = viewerId === target.id;
   if (!canViewUserBracket({ isOwner, locked })) {
-    return { visible: false, locked, isOwner, name: target.username ?? target.name, brackets: [] };
+    return { visible: false, locked, isOwner, name: target.username ?? target.name, dates: {}, brackets: [] };
   }
 
   const [rows, winners, official] = await Promise.all([
@@ -100,11 +101,15 @@ export async function getUserBracketView(username: string): Promise<UserBracketV
   const targetHandle = target.username ?? target.name;
   const targetDisplay = target.firstName ? `${targetHandle} (${target.firstName})` : targetHandle;
 
+  const dates: Record<number, string | null> = {};
+  for (const s of official.slots) dates[s.slot] = s.kickoff;
+
   return {
     visible: true,
     locked,
     isOwner,
     name: targetDisplay,
+    dates,
     brackets: rows.map((r) => {
       const picks = coercePicks(r.picks);
       return { id: r.id, name: r.name, total: scoreBracket(picks, winners), slots: buildBracketView(officialR32, picks, winners) };

@@ -8,9 +8,11 @@ import { useT } from '@/app/_components/LangProvider';
 export default function OfficialBracketView({
   asItStands,
   confirmed,
+  dates,
 }: {
   asItStands: SlotView[];
   confirmed: SlotView[];
+  dates?: Record<number, string | null>;
 }) {
   const t = useT();
   const [mode, setMode] = useState<'live' | 'confirmed'>('live');
@@ -27,7 +29,7 @@ export default function OfficialBracketView({
           {t('official.confirmed')}
         </button>
       </div>
-      <MarchMadnessBracket slots={slots} />
+      <MarchMadnessBracket slots={slots} dates={dates} />
     </>
   );
 }

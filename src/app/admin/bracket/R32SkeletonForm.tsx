@@ -53,32 +53,32 @@ export default function R32SkeletonForm({
 
   return (
     <div>
-      <table>
+      <table className="adm-table">
         <thead>
           <tr><th>R32</th><th>Team A</th><th>Team B</th><th>Kickoff (local)</th></tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
             <tr key={i}>
-              <td>{i + 1}</td>
-              <td>
+              <td data-label="Game">{i + 1}</td>
+              <td data-label="Team A">
                 <select value={r.teamA} onChange={(e) => update(i, { teamA: e.target.value })}>
                   <option value="">—</option>
                   {teams.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
                 </select>
               </td>
-              <td>
+              <td data-label="Team B">
                 <select value={r.teamB} onChange={(e) => update(i, { teamB: e.target.value })}>
                   <option value="">—</option>
                   {teams.map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
                 </select>
               </td>
-              <td>
+              <td data-label="Kickoff">
                 <input
                   type="datetime-local"
                   value={r.kickoff}
                   onChange={(e) => update(i, { kickoff: e.target.value })}
-                  style={{ width: 220 }}
+                  style={{ width: '100%', maxWidth: 240 }}
                 />
               </td>
             </tr>

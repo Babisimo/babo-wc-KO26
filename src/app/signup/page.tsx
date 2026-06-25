@@ -30,24 +30,24 @@ export default function SignupPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <label htmlFor="firstName">{t('auth.firstName')}</label>
-              <input id="firstName" name="firstName" placeholder="Lionel" required />
+              <input id="firstName" name="firstName" placeholder="Lionel" autoComplete="given-name" required />
             </div>
             <div>
               <label htmlFor="lastName">{t('auth.lastName')}</label>
-              <input id="lastName" name="lastName" placeholder="Messi" required />
+              <input id="lastName" name="lastName" placeholder="Messi" autoComplete="family-name" required />
             </div>
           </div>
           <div>
             <label htmlFor="username">{t('auth.username')}</label>
-            <input id="username" name="username" placeholder="pele_10" required />
+            <input id="username" name="username" placeholder="pele_10" autoComplete="username" required />
           </div>
           <div>
             <label htmlFor="email">{t('auth.email')}</label>
-            <input id="email" name="email" type="email" placeholder="you@example.com" required />
+            <input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required />
           </div>
           <div>
             <label htmlFor="password">{t('auth.password')}</label>
-            <input id="password" name="password" type="password" placeholder={t('auth.passwordHint')} required />
+            <input id="password" name="password" type="password" placeholder={t('auth.passwordHint')} autoComplete="new-password" required />
           </div>
           {state?.errorKey && <p className="banner error">{t(state.errorKey)}</p>}
           <button disabled={pending} type="submit" className="btn-block">{pending ? t('auth.submitting') : t('auth.requestAccount')}</button>

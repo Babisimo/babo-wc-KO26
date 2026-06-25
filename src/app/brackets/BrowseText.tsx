@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import MarchMadnessBracket from '@/app/_components/MarchMadnessBracket';
 import { useT } from '@/app/_components/LangProvider';
@@ -48,21 +49,35 @@ export function PrivateOne() {
 
 export function UserBody({ view }: { view: UserBracketView }) {
   const t = useT();
+  const [sel, setSel] = useState(0);
+
+  if (view.brackets.length === 0) {
+    return <p className="muted">{t('browse.noApproved')}</p>;
+  }
+
+  const multi = view.brackets.length > 1;
+  const b = view.brackets[sel] ?? view.brackets[0];
+  const pts = (n: number) => (view.isOwner ? t('browse.ptsYours', { n }) : t('browse.pts', { n }));
+
   return (
     <>
-      {view.brackets.length === 0 ? (
-        <p className="muted">{t('browse.noApproved')}</p>
-      ) : (
-        view.brackets.map((b) => (
-          <section key={b.id} className="panel" style={{ marginTop: 16 }}>
-            <div className="panel-head">
-              <h2>{b.name}</h2>
-              <span className="pill">{view.isOwner ? t('browse.ptsYours', { n: b.total }) : t('browse.pts', { n: b.total })}</span>
-            </div>
-            <MarchMadnessBracket slots={b.slots} />
-          </section>
-        ))
+      {multi && (
+        <div className="bracket-switch">
+          <label htmlFor="bracket-pick">{t('browse.pick')}</label>
+          <select id="bracket-pick" value={sel} onChange={(e) => setSel(Number(e.target.value))}>
+            {view.brackets.map((bb, i) => (
+              <option key={bb.id} value={i}>{bb.name} — {bb.total} pts</option>
+            ))}
+          </select>
+        </div>
       )}
+      <section className="panel" style={{ marginTop: 16 }}>
+        <div className="panel-head">
+          <h2>{b.name}</h2>
+          <span className="pill">{pts(b.total)}</span>
+        </div>
+        <MarchMadnessBracket slots={b.slots} dates={view.dates} />
+      </section>
     </>
   );
 }

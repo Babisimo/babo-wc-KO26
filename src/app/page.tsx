@@ -13,6 +13,7 @@ export default async function Home() {
   return (
     <HomeContent
       userName={session?.user?.name ?? null}
+      signedIn={!!session?.user?.id}
       board={board}
       lockTimeIso={lockTimeIso}
       lockLabel={lockLabel}

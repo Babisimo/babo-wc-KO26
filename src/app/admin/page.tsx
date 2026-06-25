@@ -34,14 +34,14 @@ export default async function AdminPage() {
         {pending.length === 0 ? (
           <p className="muted">No one waiting.</p>
         ) : (
-          <table>
+          <table className="adm-table">
             <thead><tr><th>Email</th><th>Username</th><th></th></tr></thead>
             <tbody>
               {pending.map((u) => (
                 <tr key={u.id}>
-                  <td>{u.email}</td>
-                  <td className="muted">@{u.username}</td>
-                  <td>
+                  <td data-label="Email">{u.email}</td>
+                  <td data-label="Username" className="muted">@{u.username}</td>
+                  <td data-label="">
                     <div className="row-actions">
                       <ActionButton label="Approve" variant="primary" action={approveUser.bind(null, u.id)} />
                       <ActionButton label="Reject" action={rejectUser.bind(null, u.id)} />
@@ -59,23 +59,23 @@ export default async function AdminPage() {
           <h2>All members</h2>
           <span className="pill">{all.length} total</span>
         </div>
-        <table>
+        <table className="adm-table">
           <thead><tr><th>Username</th><th>First</th><th>Last</th><th>Email</th><th>Credits</th><th></th></tr></thead>
           <tbody>
             {all.map((u) => (
               <tr key={u.id}>
-                <td>@{u.username}{u.isAdmin && <span className="badge warn" style={{ marginLeft: 8 }}>admin</span>}</td>
-                <td>{u.firstName}</td>
-                <td>{u.lastName}</td>
-                <td className="muted" style={{ fontSize: '0.84rem' }}>{u.email}</td>
-                <td>
+                <td data-label="Username">@{u.username}{u.isAdmin && <span className="badge warn" style={{ marginLeft: 8 }}>admin</span>}</td>
+                <td data-label="First">{u.firstName}</td>
+                <td data-label="Last">{u.lastName}</td>
+                <td data-label="Email" className="muted" style={{ fontSize: '0.84rem' }}>{u.email}</td>
+                <td data-label="Credits">
                   <div className="row-actions">
                     <ActionButton label="−1" action={grantCredits.bind(null, u.id, -1)} />
                     <span className="pill">{u.credits}</span>
                     <ActionButton label="+1" action={grantCredits.bind(null, u.id, 1)} />
                   </div>
                 </td>
-                <td>
+                <td data-label="">
                   <div className="row-actions">
                     <ActionButton label={u.isAdmin ? 'Remove admin' : 'Make admin'} action={setAdmin.bind(null, u.id, !u.isAdmin)} />
                     <ActionButton label="Remove" action={removeUser.bind(null, u.id)} />

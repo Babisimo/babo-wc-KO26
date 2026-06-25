@@ -1,5 +1,10 @@
 export const MAX_USERNAME_CHANGES = 2;
 
+/** How many username changes a user has left, given how many they've made. */
+export function usernameChangesRemaining(count: number): number {
+  return Math.max(0, MAX_USERNAME_CHANGES - count);
+}
+
 export type ValidationResult = { ok: true; value: string } | { ok: false; error: string };
 
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;

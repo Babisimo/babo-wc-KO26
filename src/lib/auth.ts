@@ -20,8 +20,12 @@ export interface AppSession {
   expires: string;
 }
 
+// Keep people signed in effectively forever (rolled on activity); they leave by logging out.
+const TEN_YEARS = 60 * 60 * 24 * 365 * 10;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  session: { strategy: 'jwt' },
+  session: { strategy: 'jwt', maxAge: TEN_YEARS },
+  jwt: { maxAge: TEN_YEARS },
   pages: { signIn: '/login' },
   providers: [
     Credentials({

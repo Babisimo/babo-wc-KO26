@@ -17,12 +17,14 @@ export default async function EditBracketPage({ params }: { params: Promise<{ id
   if (error || !view) notFound();
 
   const officialR32 = officialR32FromSlots(official.slots);
+  const dates: Record<number, string | null> = {};
+  for (const s of official.slots) dates[s.slot] = s.kickoff;
 
   return (
     <main className="shell">
       <EditHeader name={view.name} locked={view.locked} />
       <div className="panel reveal reveal-2" style={{ padding: 14 }}>
-        <BracketFill bracketId={view.id} officialR32={officialR32} initialPicks={view.picks} locked={view.locked} />
+        <BracketFill bracketId={view.id} officialR32={officialR32} initialPicks={view.picks} locked={view.locked} dates={dates} />
       </div>
     </main>
   );

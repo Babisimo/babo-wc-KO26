@@ -1,30 +1,34 @@
+'use client';
+
 import type { SlotView } from '@/lib/bracket-view';
-import { teamName } from '@/lib/team-name';
+import { formatMatchDate } from '@/lib/match-date';
 import BracketLayout from './BracketLayout';
-import TeamFlag from './TeamFlag';
+import BracketCard from './BracketCard';
 
-function teamRow(code: string | null, winner: string | null) {
-  const isWin = code !== null && code === winner;
-  return (
-    <div className={`fm-row${isWin ? ' win' : ''}`}>
-      <TeamFlag code={code} />
-      <span className="fm-nm">{teamName(code)}</span>
-      {isWin && <span className="fm-tick">✓</span>}
-    </div>
-  );
-}
-
-function card(s: SlotView | undefined) {
-  if (!s) return <div className="fm-match" />;
-  return (
-    <div className={`fm-match ${s.status}`}>
-      {teamRow(s.teamA, s.officialWinner)}
-      {teamRow(s.teamB, s.officialWinner)}
-    </div>
-  );
-}
-
-export default function MarchMadnessBracket({ slots }: { slots: SlotView[] }) {
+export default function MarchMadnessBracket({
+  slots,
+  dates,
+}: {
+  slots: SlotView[];
+  dates?: Record<number, string | null>;
+}) {
   const bySlot = new Map(slots.map((s) => [s.slot, s]));
-  return <BracketLayout render={(slot) => card(bySlot.get(slot))} />;
+  return (
+    <BracketLayout
+      render={(slot) => {
+        const s = bySlot.get(slot);
+        if (!s) return <BracketCard teamA={null} teamB={null} isFinal={slot === 31} />;
+        return (
+          <BracketCard
+            teamA={s.teamA}
+            teamB={s.teamB}
+            highlight={s.pick ?? s.officialWinner}
+            status={s.status}
+            dateLabel={formatMatchDate(dates?.[slot])}
+            isFinal={slot === 31}
+          />
+        );
+      }}
+    />
+  );
 }

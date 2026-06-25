@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateUsername, validateName, isProfileComplete, MAX_USERNAME_CHANGES } from './profile';
+import { validateUsername, validateName, isProfileComplete, usernameChangesRemaining, MAX_USERNAME_CHANGES } from './profile';
 
 describe('validateUsername', () => {
   it('accepts a valid username', () => {
@@ -56,5 +56,17 @@ describe('isProfileComplete', () => {
 describe('MAX_USERNAME_CHANGES', () => {
   it('is a positive integer', () => {
     expect(MAX_USERNAME_CHANGES).toBeGreaterThan(0);
+  });
+});
+
+describe('usernameChangesRemaining', () => {
+  it('returns the full allowance at zero changes', () => {
+    expect(usernameChangesRemaining(0)).toBe(MAX_USERNAME_CHANGES);
+  });
+  it('decreases with each change', () => {
+    expect(usernameChangesRemaining(1)).toBe(MAX_USERNAME_CHANGES - 1);
+  });
+  it('never goes negative past the cap', () => {
+    expect(usernameChangesRemaining(MAX_USERNAME_CHANGES + 5)).toBe(0);
   });
 });
