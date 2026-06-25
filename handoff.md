@@ -11,12 +11,12 @@ _Last updated: 2026-06-25_
 on a live leaderboard with a pot. Stock **Next.js 15.5 App Router** app with its own **Neon
 Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
-**Current state (all merged to `master`, tip `7459233`, and pushed):**
+**Current state (all merged to `master`, tip `5f04819`, and pushed):**
 - Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there).
-- Verified at last check: **`npx tsc --noEmit` clean · `npx vitest run` 184/184 (33 files) · `npx next build` 16 route pages.**
+- Verified this session: **`npx tsc --noEmit` clean · `npx vitest run` 189/189 (35 files) · `next lint` clean.** (`next build` not re-run this session; last full build was 16 route pages.)
 - DB is live on Neon (us-west-2), schema includes **`Bracket.official`** (migration applied). Last reset to a **clean slate**: admin only, 0 brackets/results, official R32 cleared → the app runs in ESPN **As-it-stands / Confirmed** projection mode off the live group-stage feed.
 
-> Four sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
+> Five sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
 
 **To resume:**
 1. `cd C:\Users\Oswaldo\wc_ko_26 && npm run dev` → http://localhost:3000
@@ -27,9 +27,29 @@ Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
 ## What changed since the original handoff (sessions through 2026-06-25)
 
-Four entries on top of the original 5-feature base. Newest first.
+Five entries on top of the original 5-feature base. Newest first.
 
-### `7459233` / `2a8e4d4` — Early drafts + designate-official brackets (latest session)
+### `5f04819` — Admin pending-approval notifications (latest session)
+Admins now get a live, visible signal when someone requests an account (signs up → `User.status = PENDING`),
+instead of having to open `/admin` and check.
+- **Nav badge.** Red count bubble on the **hamburger button** and the **Admin** nav link, shown only
+  to admins when the count > 0, capped at `99+`, with an EN/ES `aria-label`
+  (`nav.pendingApprovals`). Styles `.nav-bubble` / `.nav-bubble-corner` in `globals.css`
+  (modeled on `.badge`; burger got `position: relative`).
+- **Live polling.** Count is server-rendered into `Nav` (computed in `layout.tsx`, **admin-only** query),
+  then `Nav` polls **`/api/admin/notifications`** every **15s** and updates in place (re-syncs the prop on
+  navigation, keeps last-known count on transient errors, clears on unmount). Does **not** pause on hidden tabs.
+  Route is `GET`, `force-dynamic`, admin-guarded (non-admins → `{count:0}` 403).
+- **Email.** `sendNewSignupNotice` in `src/lib/email.ts` emails **all `isAdmin` users** on signup with a
+  link to `/admin`. **Best-effort**: wrapped in try/catch in `actions/auth.ts` `signup` (never blocks signup),
+  skipped for the bootstrap admin, and silently no-ops when there are no admins or SMTP is unset. **No new env
+  vars** — reuses the existing `GMAIL_USER` / `GMAIL_APP_PASSWORD` (same as password reset) and `APP_URL` for the link.
+- **Extensible count.** `src/lib/notifications.ts` `getAdminNotificationCount()` sums a sources array;
+  only source today is pending-user count. Add a notification type later = one line.
+- New tested libs: `notifications.test.ts`, `email-signup-notice.test.ts` (TDD). Spec:
+  `docs/superpowers/specs/2026-06-25-admin-pending-notifications-design.md`.
+
+### `7459233` / `2a8e4d4` — Early drafts + designate-official brackets
 **The credits model changed.** Creating a bracket is now **free and unlimited** before lock; a
 **credit is spent only when a bracket is marked _Official_** (the paid entry). A user may mark up
 to `credits` brackets official and **switch which are official freely until lock**. Only official
@@ -133,7 +153,7 @@ penalty-safe **ESPN results feed** + round-weighted scoring + leaderboard/pot; p
 cd C:\Users\Oswaldo\wc_ko_26
 npm run dev          # http://localhost:3000 (loads .env)
 npx tsc --noEmit     # types
-npx vitest run     # 184 tests
+npx vitest run     # 189 tests
 npx next build       # production build
 ```
 
@@ -191,11 +211,14 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   `official-r32.ts`, `bracket-name.ts` (`normalizeBracketName`), `bracket-credits.ts`
   (`canCreateBracket` + `canMarkOfficial`), `effective-r32.ts` (`mergeEffectiveR32`),
   `bracket-changes.ts` (`stalePicks`), `bracket-validate.ts` (`validateSubmission` + `validateDraft`),
+  `notifications.ts` (`getAdminNotificationCount` — extensible admin-actionable count),
+  `email.ts` (`sendPasswordResetEmail` + `sendNewSignupNotice`),
   `wc26-seeding.ts` (projections), `standings-feed.ts` (ESPN standings),
   `i18n.ts` (`translate` + dictionary), `teams.ts` (48 teams), `auth*.ts`, `profile.ts`,
   `username-filter.ts`.
-- **Server actions (`src/app/actions/`):** `auth.ts` (signup grants admin 1 credit; returns error
-  KEYS), `admin.ts` (`approveUser` grants 1 credit; `grantCredits`; no bracket-approval actions),
+- **Server actions (`src/app/actions/`):** `auth.ts` (signup grants admin 1 credit; emails admins a
+  best-effort new-signup notice; returns error KEYS), `admin.ts` (`approveUser` grants 1 credit;
+  `grantCredits`; no bracket-approval actions),
   `bracket.ts` (official R32), `bracket-entry.ts` (`listMyBrackets`/`createBracket` (free)/`getBracket`/
   `saveBracket` (partial)/`setBracketOfficial`; returns error KEYS; no `deleteBracket`), `results.ts`,
   `leaderboard.ts` (counts **official** brackets only), `browse.ts`/`compare.ts` (post-lock, official
@@ -203,14 +226,15 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
 - **Pages (`src/app/`, 14):** `page.tsx`+`HomeContent.tsx` (home), `official/`, `bracket/`+`bracket/[id]/`,
   `brackets/`+`brackets/[user]/`, `compare/`, `account/`, `forgot-password/`, `reset-password/`,
   `admin/`+`admin/bracket/`, `login/`, `signup/`. Root `loading.tsx` = navigation spinner.
+  **API route:** `api/admin/notifications/route.ts` (admin-guarded live pending-approval count, polled by `Nav`).
 - **Components (`src/app/_components/`):** `LangProvider.tsx`, `BracketLayout.tsx` (round-tabs+swipe /
   pan-zoom tree), `BracketCard.tsx`, `RoundLabels.tsx`, `MarchMadnessBracket.tsx`, `StageTracker.tsx`
-  (Knockout Stage meter), `TeamFlag.tsx`, `Countdown.tsx`. Plus `Nav.tsx` (client; hamburger + EN/ES toggle).
+  (Knockout Stage meter), `TeamFlag.tsx`, `Countdown.tsx`. Plus `Nav.tsx` (client; hamburger + EN/ES toggle + admin pending-approval badge w/ 15s polling).
 - **DB:** `prisma/schema.prisma` (`User` w/ `credits`; `Team`, `Match`, `Bracket` w/ `name` +
   **`official`**, `PoolConfig`). Seeds: `prisma/seed.ts`, `prisma/seed-preview.ts`; migrations
   `prisma/backfill-credits.ts`, `prisma/backfill-official.ts`.
 - **Stack:** Next.js 15.5 (App Router, stock), React 19, NextAuth v5 beta, Prisma 6 + Neon,
-  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, Vitest 4 (184 tests).
+  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, Vitest 4 (189 tests).
 - **Scratch:** `.superpowers/sdd/progress.md` (gitignored ledger of every task/review this build).
 
 ## Sibling apps (context)
