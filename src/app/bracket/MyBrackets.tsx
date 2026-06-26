@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBracket, setBracketOfficial, type MyBracketRow } from '@/app/actions/bracket-entry';
 import RenameControl from './RenameControl';
-import BracketExportButton from './BracketExportButton';
 import { useT } from '@/app/_components/LangProvider';
 import type { StringKey } from '@/lib/i18n';
 
@@ -82,11 +81,7 @@ export default function MyBrackets({
                     </span>
                   )}
                 </td>
-                <td>
-                  <Link href={`/bracket/${b.id}`} className="btn btn-sm">{t('bracket.edit')}</Link>
-                  {' '}
-                  <BracketExportButton id={b.id} name={b.name} complete={b.complete} />
-                </td>
+                <td><Link href={`/bracket/${b.id}`} className="btn btn-sm">{t('bracket.edit')}</Link></td>
                 <td>
                   {!locked && (
                     b.official ? (

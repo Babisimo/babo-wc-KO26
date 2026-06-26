@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import { auth, type AppSession } from '@/lib/auth';
 import { getBracket } from '@/app/actions/bracket-entry';
 import { getOfficialBracket } from '@/app/actions/bracket';
+import { validateSubmission } from '@/lib/bracket-validate';
 import BracketFill from '../BracketFill';
 import { EditHeader } from '../BracketHeader';
 
@@ -19,9 +20,12 @@ export default async function EditBracketPage({ params }: { params: Promise<{ id
   const dates: Record<number, string | null> = {};
   for (const s of official.slots) dates[s.slot] = s.kickoff;
 
+  // Same completeness rule as the My Brackets list — gates the export button.
+  const complete = validateSubmission(view.effectiveR32, view.picks).ok;
+
   return (
     <main className="shell">
-      <EditHeader id={view.id} name={view.name} locked={view.locked} />
+      <EditHeader id={view.id} name={view.name} locked={view.locked} complete={complete} />
       <div className="panel reveal reveal-2" style={{ padding: 14 }}>
         <BracketFill
           bracketId={view.id}
