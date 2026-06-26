@@ -1,6 +1,6 @@
 # WC26 Knockout Bracket — Handoff
 
-_Last updated: 2026-06-25_
+_Last updated: 2026-06-26_
 
 ---
 
@@ -11,12 +11,12 @@ _Last updated: 2026-06-25_
 on a live leaderboard with a pot. Stock **Next.js 15.5 App Router** app with its own **Neon
 Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
-**Current state (all merged to `master`, tip `c321d95`, and pushed):**
-- Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there).
-- Verified this session: **`npx tsc --noEmit` clean · `npx vitest run` 194/194 (35 files) · `next lint` clean · `next build` 17 routes (incl. `/api/admin/notifications`).**
+**Current state (all merged to `master`, tip `f5ca493`, and pushed):**
+- Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there). Latest session's commits are live in production via that auto-deploy.
+- Verified latest session (2026-06-26): **`npx tsc --noEmit` clean · `npx vitest run` 203/203 (36 files) · `next lint` clean.** (`next build` last verified 17 routes the prior session.)
 - DB is live on Neon (us-west-2), schema includes **`Bracket.official`** (migration applied). Last reset to a **clean slate**: admin only, 0 brackets/results, official R32 cleared → the app runs in ESPN **As-it-stands / Confirmed** projection mode off the live group-stage feed.
 
-> Six sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
+> Seven sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
 
 **To resume:**
 1. `cd C:\Users\Oswaldo\wc_ko_26 && npm run dev` → http://localhost:3000
@@ -27,9 +27,45 @@ Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
 ## What changed since the original handoff (sessions through 2026-06-25)
 
-Six entries on top of the original 5-feature base. Newest first.
+Seven entries on top of the original 5-feature base. Newest first.
 
-### `c321d95` — Signup autofill bugfix + clearer login/signup errors (latest session)
+### `6b484d9`…`f5ca493` — Rename brackets + pre-lock pool visibility, credits-based pot (latest session, 2026-06-26)
+Two requested features plus the pot-model change they implied. **All pushed; live on Vercel.**
+- **Rename brackets.** `renameBracket(id, name)` in `actions/bracket-entry.ts` (ownership-checked,
+  **lock-gated** via `bracket.err.lockedRename`, reuses `normalizeBracketName`). Inline editor
+  `src/app/bracket/RenameControl.tsx` (pencil → input, Enter saves / Esc cancels; hidden once
+  locked) used in the **My Brackets** list and on the pick-page **`EditHeader`** (now takes `id`).
+- **⚠ Pot model changed: `$50 × total credits` (was `$50 × official brackets`).** A player is "in"
+  the moment they hold a credit — no need to mark a bracket official. New tested pure lib
+  `src/lib/pool-stats.ts`: **`computePoolStats(users, entryCents)`** → `{ players = credit-holders,
+  entries = sum of credits, potCents }`, and **`countFilledBrackets(brackets)`** = official brackets
+  with all 31 games picked. `leaderboard.ts` now sizes the pot from credits (still **ranks official
+  brackets only**); `board.players` is unused by UI.
+- **Header pool pill.** `src/app/_components/PoolPill.tsx` — stable credits-based pot with a
+  **filled-vs-paid** count, terse on the bar (**`$X · filled/total`**) with a tap/hover **popover**
+  showing `N brackets × $50 = pot`, filled count, players, and a "see who's in" link to `/brackets`.
+  Data from **`getPoolStats()`** (`actions/pool.ts`: `User.credits>0` + official picks + PoolConfig),
+  fetched in `layout.tsx` (**signed-in only**) and passed to `Nav`.
+- **Pre-lock roster.** `/brackets` now reveals **who's in + how many brackets each holds (= their
+  credits)** BEFORE lock — **names + counts only; picks/scores stay hidden** until lock
+  (`bracket-visibility.ts` unchanged). `getBracketsIndex` (`browse.ts`) + `IndexBody`
+  (`brackets/BrowseText.tsx`); post-lock = the old official-bracket scored table.
+- **Mobile header fix.** The pill overflowed the one-line nav → horizontal scroll. Pill label is
+  terse (full detail in the popover + descriptive `aria-label`); at **≤600px** the pinned "Official"
+  link drops into the hamburger and the pill shrinks (`globals.css` `.nav-official-pinned` /
+  `.nav-official-menu` + media query). Popover uses a **solid dark backing** (was see-through via `.panel`).
+- **New i18n (EN+ES):** `nav.pool` / `nav.poolAria` / `nav.poolBreakdown` / `nav.poolFilled` /
+  `nav.poolPlayers` / `nav.poolView`; `browse.preLockLead` / `browse.preLockNone`; `bracket.rename` /
+  `bracket.renameSave` / `bracket.renameCancel` / `bracket.err.lockedRename`. Spec:
+  `docs/superpowers/specs/2026-06-25-rename-and-prelock-visibility-design.md`.
+- **⚠ Gotcha (reviewed; decided to LEAVE AS-IS):** `approveUser` auto-grants **`credits: 1`**, so
+  **approving any member puts them in the pot (+$50) even if they never paid.** Policy chosen:
+  **manually zero out non-payers** — set an invited viewer's credits to `0` (admin **−1**) so they
+  can still log in and browse but aren't counted. (Verified this session that the recent non-paying
+  invitee was *not* in the pot.) Do **not** rely on approval status to mean "paid" — credits is the
+  source of truth for the pot.
+
+### `c321d95` — Signup autofill bugfix + clearer login/signup errors
 **Real bug found after the notifications shipped:** a tester signed up with **Google autofill** and no
 account was created (so no admin email, no badge — the notifications were correctly reporting 0). **Root
 cause:** the signup **username** field was tagged `autoComplete="username"`, so the browser pasted the
@@ -141,7 +177,8 @@ Design docs live in `docs/superpowers/specs/`, plans in `docs/superpowers/plans/
    bracket is marked _Official_, and only official brackets count.** (Originally: create gated by
    `bracketCount < credits` via `canCreateBracket`.) **1 credit = 1 official bracket = $50; no
    refunds, no user deletion** (decisions are final). Approving a signup grants **1 credit**; admin grants more via **+1 / −1** on the members
-   table (`grantCredits`). Pot = `$50 × total brackets`. `Bracket.status`/`approvedAt`/`approvedBy`
+   table (`grantCredits`). **Pot = `$50 × total credits` (changed latest session — was `$50 × total
+   official brackets`; see the top entry).** `Bracket.status`/`approvedAt`/`approvedBy`
    + the `BracketStatus` enum and the bracket-approval queue were **removed**. Migration:
    `prisma/backfill-credits.ts` set approved users `credits = max(bracketCount, 1)`.
    Rules memory: see the project's `wc-ko-26-credits-rules` memory.
@@ -169,7 +206,7 @@ penalty-safe **ESPN results feed** + round-weighted scoring + leaderboard/pot; p
 cd C:\Users\Oswaldo\wc_ko_26
 npm run dev          # http://localhost:3000 (loads .env)
 npx tsc --noEmit     # types
-npx vitest run     # 194 tests
+npx vitest run     # 203 tests
 npx next build       # production build
 ```
 
@@ -227,6 +264,7 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   `official-r32.ts`, `bracket-name.ts` (`normalizeBracketName`), `bracket-credits.ts`
   (`canCreateBracket` + `canMarkOfficial`), `effective-r32.ts` (`mergeEffectiveR32`),
   `bracket-changes.ts` (`stalePicks`), `bracket-validate.ts` (`validateSubmission` + `validateDraft`),
+  `pool-stats.ts` (`computePoolStats` credits-based players/entries/pot + `countFilledBrackets`),
   `notifications.ts` (`getAdminNotificationCount` — extensible admin-actionable count),
   `email.ts` (`sendPasswordResetEmail` + `sendNewSignupNotice`),
   `wc26-seeding.ts` (projections), `standings-feed.ts` (ESPN standings),
@@ -235,23 +273,27 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
 - **Server actions (`src/app/actions/`):** `auth.ts` (signup grants admin 1 credit; emails admins a
   best-effort new-signup notice; `diagnoseLoginIssue` for specific login-failure messages; returns error
   KEYS), `admin.ts` (`approveUser` grants 1 credit;
-  `grantCredits`; no bracket-approval actions),
+  `grantCredits`; no bracket-approval actions; **`approveUser` auto-grants 1 credit → also adds the
+  member to the pot; zero out non-payers manually**),
   `bracket.ts` (official R32), `bracket-entry.ts` (`listMyBrackets`/`createBracket` (free)/`getBracket`/
-  `saveBracket` (partial)/`setBracketOfficial`; returns error KEYS; no `deleteBracket`), `results.ts`,
-  `leaderboard.ts` (counts **official** brackets only), `browse.ts`/`compare.ts` (post-lock, official
-  only), `projection.ts` (`getProjectedBracket` + `getProjectedR32`).
+  `saveBracket` (partial)/`setBracketOfficial`/**`renameBracket`** (lock-gated); returns error KEYS; no
+  `deleteBracket`), `results.ts`, `leaderboard.ts` (**ranks** official brackets; **pot = $50 × credits**),
+  **`pool.ts`** (`getPoolStats` for the header pill), `browse.ts` (pre-lock roster of credit-holders;
+  picks hidden) / `compare.ts` (post-lock, official only), `projection.ts` (`getProjectedBracket` + `getProjectedR32`).
 - **Pages (`src/app/`, 14):** `page.tsx`+`HomeContent.tsx` (home), `official/`, `bracket/`+`bracket/[id]/`,
   `brackets/`+`brackets/[user]/`, `compare/`, `account/`, `forgot-password/`, `reset-password/`,
   `admin/`+`admin/bracket/`, `login/`, `signup/`. Root `loading.tsx` = navigation spinner.
   **API route:** `api/admin/notifications/route.ts` (admin-guarded live pending-approval count, polled by `Nav`).
 - **Components (`src/app/_components/`):** `LangProvider.tsx`, `BracketLayout.tsx` (round-tabs+swipe /
   pan-zoom tree), `BracketCard.tsx`, `RoundLabels.tsx`, `MarchMadnessBracket.tsx`, `StageTracker.tsx`
-  (Knockout Stage meter), `TeamFlag.tsx`, `Countdown.tsx`. Plus `Nav.tsx` (client; hamburger + EN/ES toggle + admin pending-approval badge w/ 15s polling).
+  (Knockout Stage meter), `TeamFlag.tsx`, `Countdown.tsx`, **`PoolPill.tsx`** (header pot/who's-in pill
+  + breakdown popover). Plus `Nav.tsx` (client; hamburger + EN/ES toggle + admin pending-approval badge
+  w/ 15s polling + the pool pill) and `bracket/RenameControl.tsx` (inline bracket rename).
 - **DB:** `prisma/schema.prisma` (`User` w/ `credits`; `Team`, `Match`, `Bracket` w/ `name` +
   **`official`**, `PoolConfig`). Seeds: `prisma/seed.ts`, `prisma/seed-preview.ts`; migrations
   `prisma/backfill-credits.ts`, `prisma/backfill-official.ts`.
 - **Stack:** Next.js 15.5 (App Router, stock), React 19, NextAuth v5 beta, Prisma 6 + Neon,
-  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, Vitest 4 (194 tests).
+  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, Vitest 4 (203 tests).
 - **Scratch:** `.superpowers/sdd/progress.md` (gitignored ledger of every task/review this build).
 
 ## Sibling apps (context)
