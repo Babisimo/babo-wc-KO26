@@ -16,6 +16,34 @@ export default async function AdminPage() {
     orderBy: { createdAt: 'asc' },
     select: { id: true, username: true, firstName: true, lastName: true, email: true, isAdmin: true, status: true, credits: true },
   });
+  const admins = all.filter((u) => u.isAdmin);
+  const members = all.filter((u) => !u.isAdmin);
+
+  const memberRow = (u: (typeof all)[number]) => (
+    <tr key={u.id}>
+      <td data-label="Username">@{u.username}</td>
+      <td data-label="First">{u.firstName}</td>
+      <td data-label="Last">{u.lastName}</td>
+      <td data-label="Email" className="muted" style={{ fontSize: '0.84rem' }}>{u.email}</td>
+      <td data-label="Credits">
+        <div className="row-actions">
+          <ActionButton label="−1" action={grantCredits.bind(null, u.id, -1)} />
+          <span className="pill">{u.credits}</span>
+          <ActionButton label="+1" action={grantCredits.bind(null, u.id, 1)} />
+        </div>
+      </td>
+      <td data-label="">
+        <div className="row-actions">
+          <ActionButton label={u.isAdmin ? 'Remove admin' : 'Make admin'} action={setAdmin.bind(null, u.id, !u.isAdmin)} />
+          <ActionButton label="Remove" action={removeUser.bind(null, u.id)} />
+        </div>
+      </td>
+    </tr>
+  );
+
+  const memberCols = (
+    <thead><tr><th>Username</th><th>First</th><th>Last</th><th>Email</th><th>Credits</th><th></th></tr></thead>
+  );
 
   return (
     <main className="shell">
@@ -56,35 +84,32 @@ export default async function AdminPage() {
 
       <section className="panel reveal reveal-4" style={{ marginTop: 18 }}>
         <div className="panel-head">
-          <h2>All members</h2>
-          <span className="pill">{all.length} total</span>
+          <h2>Admins</h2>
+          <span className="pill">{admins.length} total</span>
         </div>
-        <table className="adm-table">
-          <thead><tr><th>Username</th><th>First</th><th>Last</th><th>Email</th><th>Credits</th><th></th></tr></thead>
-          <tbody>
-            {all.map((u) => (
-              <tr key={u.id}>
-                <td data-label="Username">@{u.username}{u.isAdmin && <span className="badge warn" style={{ marginLeft: 8 }}>admin</span>}</td>
-                <td data-label="First">{u.firstName}</td>
-                <td data-label="Last">{u.lastName}</td>
-                <td data-label="Email" className="muted" style={{ fontSize: '0.84rem' }}>{u.email}</td>
-                <td data-label="Credits">
-                  <div className="row-actions">
-                    <ActionButton label="−1" action={grantCredits.bind(null, u.id, -1)} />
-                    <span className="pill">{u.credits}</span>
-                    <ActionButton label="+1" action={grantCredits.bind(null, u.id, 1)} />
-                  </div>
-                </td>
-                <td data-label="">
-                  <div className="row-actions">
-                    <ActionButton label={u.isAdmin ? 'Remove admin' : 'Make admin'} action={setAdmin.bind(null, u.id, !u.isAdmin)} />
-                    <ActionButton label="Remove" action={removeUser.bind(null, u.id)} />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {admins.length === 0 ? (
+          <p className="muted">No admins.</p>
+        ) : (
+          <table className="adm-table">
+            {memberCols}
+            <tbody>{admins.map(memberRow)}</tbody>
+          </table>
+        )}
+      </section>
+
+      <section className="panel reveal reveal-4" style={{ marginTop: 18 }}>
+        <div className="panel-head">
+          <h2>Members</h2>
+          <span className="pill">{members.length} total</span>
+        </div>
+        {members.length === 0 ? (
+          <p className="muted">No members yet.</p>
+        ) : (
+          <table className="adm-table">
+            {memberCols}
+            <tbody>{members.map(memberRow)}</tbody>
+          </table>
+        )}
       </section>
     </main>
   );
