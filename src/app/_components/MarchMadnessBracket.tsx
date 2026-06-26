@@ -31,7 +31,9 @@ export default function MarchMadnessBracket({
   };
 
   if (layout === 'static') {
-    return <div className="brd brd-export"><BracketStatic render={render} /></div>;
+    // No `.brd` wrapper here: `.brd { width: 100% }` inside the shrink-to-fit export
+    // stage collapses the layout. `.brd-export` is inline-block, sized to the tree.
+    return <div className="brd-export"><BracketStatic render={render} /></div>;
   }
   return <BracketLayout render={render} />;
 }

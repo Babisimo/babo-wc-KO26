@@ -50,7 +50,17 @@ export default function BracketExportButton({
         if (document.fonts?.ready) await document.fonts.ready;
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-        const dataUrl = await toPng(node, { pixelRatio: 2, cacheBust: true, backgroundColor: '#06150d' });
+        // Capture at the tree's full natural size — passing explicit dimensions
+        // avoids html-to-image inferring a collapsed/zero size and producing a blank PNG.
+        const width = node.scrollWidth;
+        const height = node.scrollHeight;
+        if (!width || !height) throw new Error('empty stage');
+
+        const opts = { width, height, pixelRatio: 2, cacheBust: true, backgroundColor: '#06150d' };
+        // html-to-image's first pass often returns blank/partial while it warms the
+        // font + flag-image cache; a second pass renders reliably.
+        await toPng(node, opts);
+        const dataUrl = await toPng(node, opts);
         if (cancelled) return;
 
         const blob = await (await fetch(dataUrl)).blob();
