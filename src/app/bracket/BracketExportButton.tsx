@@ -56,9 +56,12 @@ export default function BracketExportButton({
         const height = node.scrollHeight;
         if (!width || !height) throw new Error('empty stage');
 
-        const opts = { width, height, pixelRatio: 2, cacheBust: true, backgroundColor: '#06150d' };
-        // html-to-image's first pass often returns blank/partial while it warms the
-        // font + flag-image cache; a second pass renders reliably.
+        // skipFonts: html-to-image otherwise reads every stylesheet's cssRules to inline
+        // web fonts, which throws a SecurityError on any cross-origin sheet and blanks the
+        // whole capture. Skipping it renders the bracket (flags/colors/picks) in a system font.
+        const opts = { width, height, pixelRatio: 2, cacheBust: true, backgroundColor: '#06150d', skipFonts: true };
+        // First pass often returns blank/partial while the flag background-images warm the
+        // cache; a second pass renders reliably.
         await toPng(node, opts);
         const dataUrl = await toPng(node, opts);
         if (cancelled) return;
