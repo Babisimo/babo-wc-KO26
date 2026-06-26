@@ -12,7 +12,7 @@ export function bracketImageFilename(name: string): string {
 
 /** True when the platform can share this file via the Web Share API. SSR- and throw-safe. */
 export function canShareFiles(
-  nav: { canShare?: (data?: unknown) => boolean } | undefined,
+  nav: { canShare?: (data?: ShareData) => boolean } | undefined,
   file: File,
 ): boolean {
   if (!nav || typeof nav.canShare !== 'function') return false;
