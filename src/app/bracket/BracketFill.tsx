@@ -75,7 +75,7 @@ export default function BracketFill({
         <p className="banner error" style={{ marginBottom: 12 }}>{t('bracket.changesWarn', { n: stale.size })}</p>
       )}
 
-      <BracketLayout render={(slot) => card(slot)} />
+      <BracketLayout render={(slot) => card(slot)} roundNav={!locked} />
 
       {!locked && (
         <div className="savebar">

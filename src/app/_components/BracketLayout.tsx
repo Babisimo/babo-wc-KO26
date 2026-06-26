@@ -82,7 +82,7 @@ function RoundBlock({ round, render }: { round: Round; render: (slot: number) =>
 // Mobile round-by-round — swipe left/right (or tap a tab) to move between rounds.
 const SWIPE_MIN = 45; // px of horizontal travel to count as a swipe
 
-function BracketTabs({ render }: { render: (slot: number) => ReactNode }) {
+function BracketTabs({ render, roundNav }: { render: (slot: number) => ReactNode; roundNav?: boolean }) {
   const t = useT();
   const [round, setRound] = useState<Round>('R32');
   const [dir, setDir] = useState(0); // -1 prev, +1 next — drives the slide-in animation
@@ -131,6 +131,12 @@ function BracketTabs({ render }: { render: (slot: number) => ReactNode }) {
       >
         <RoundBlock round={round} render={render} />
       </div>
+      {/* Guided round advance (fill page): hidden on the Final, which has no next round. */}
+      {roundNav && NEXT_ROUND[round] && (
+        <button type="button" className="btn-ghost btn-block brd-nextround" onClick={() => step(1)}>
+          {t('bracket.nextRound')}
+        </button>
+      )}
     </div>
   );
 }
@@ -328,8 +334,10 @@ const VIEW_KEY: Record<BracketView, StringKey> = {
  */
 export default function BracketLayout({
   render,
+  roundNav,
 }: {
   render: (slot: number) => ReactNode;
+  roundNav?: boolean;
 }) {
   const t = useT();
   const [view, setView] = useState<BracketView>('tabs');
@@ -352,7 +360,7 @@ export default function BracketLayout({
       </div>
 
       <BracketZoom render={render} revealKey={view} />
-      <BracketTabs render={render} />
+      <BracketTabs render={render} roundNav={roundNav} />
     </div>
   );
 }

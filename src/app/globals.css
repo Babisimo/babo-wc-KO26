@@ -666,6 +666,7 @@ button.bcard-team:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); 
 .brd-tab-list > *:nth-child(7) { animation-delay: 0.24s; }
 .brd-tab-list > *:nth-child(n+8) { animation-delay: 0.28s; }
 @media (prefers-reduced-motion: reduce) { .brd-tab-list > * { animation: none; } }
+.brd-nextround { margin-top: 14px; }
 
 /* round-selector tabs (one round at a time) — centered column, same width on phone or desktop */
 .brd-tabs-wrap { padding: 4px 0 8px; max-width: 520px; margin: 0 auto; }

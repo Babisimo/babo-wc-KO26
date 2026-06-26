@@ -107,6 +107,7 @@ const en = {
   'bracket.lockedFinal': 'Brackets are locked — picks are final.',
   'bracket.viewRounds': 'Rounds',
   'bracket.viewFull': 'Full',
+  'bracket.nextRound': 'Next round →',
   // countdown
   'countdown.statusLabel': 'Bracket status',
   'countdown.notOpen': 'Not open yet',
@@ -326,6 +327,7 @@ const es: Record<StringKey, string> = {
   'bracket.lockedFinal': 'Las brackets ya cerraron — los picks son finales.',
   'bracket.viewRounds': 'Rondas',
   'bracket.viewFull': 'Completo',
+  'bracket.nextRound': 'Siguiente ronda →',
   // countdown
   'countdown.statusLabel': 'Estado del bracket',
   'countdown.notOpen': 'Todavía no abre',
