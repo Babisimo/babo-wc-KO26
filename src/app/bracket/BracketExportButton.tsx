@@ -38,7 +38,7 @@ export default function BracketExportButton({
     }
   }
 
-  // Capture runs after the off-screen stage has rendered (slots set).
+  // Capture runs after the on-screen (but covered) stage has rendered.
   useEffect(() => {
     if (!slots) return;
     let cancelled = false;
@@ -50,18 +50,18 @@ export default function BracketExportButton({
         if (document.fonts?.ready) await document.fonts.ready;
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-        // Capture at the tree's full natural size — passing explicit dimensions
-        // avoids html-to-image inferring a collapsed/zero size and producing a blank PNG.
+        // Capture at the tree's full natural size. The stage is rendered on-screen
+        // (behind an opaque cover) — content positioned far off-screen is not painted
+        // by the browser and html-to-image would capture a blank.
         const width = node.scrollWidth;
         const height = node.scrollHeight;
         if (!width || !height) throw new Error('empty stage');
 
         // skipFonts: html-to-image otherwise reads every stylesheet's cssRules to inline
-        // web fonts, which throws a SecurityError on any cross-origin sheet and blanks the
-        // whole capture. Skipping it renders the bracket (flags/colors/picks) in a system font.
+        // web fonts, which throws a SecurityError on a cross-origin sheet and blanks the
+        // whole capture. The bracket renders in a system font; flags/colors/picks intact.
         const opts = { width, height, pixelRatio: 2, cacheBust: true, backgroundColor: '#06150d', skipFonts: true };
-        // First pass often returns blank/partial while the flag background-images warm the
-        // cache; a second pass renders reliably.
+        // First pass primes the flag background-image cache; the second renders reliably.
         await toPng(node, opts);
         const dataUrl = await toPng(node, opts);
         if (cancelled) return;
@@ -114,8 +114,13 @@ export default function BracketExportButton({
         </span>
       )}
       {slots && (
-        <div className="brd-export-stage" ref={stageRef} aria-hidden>
-          <MarchMadnessBracket slots={slots} layout="static" />
+        // On-screen so the browser actually paints it, but covered by an opaque panel so
+        // the user never sees the raw bracket flash. html-to-image captures the tree node.
+        <div className="brd-export-portal" aria-hidden>
+          <div className="brd-export-tree" ref={stageRef}>
+            <MarchMadnessBracket slots={slots} layout="static" />
+          </div>
+          <div className="brd-export-cover">{t('bracket.exporting')}</div>
         </div>
       )}
     </>

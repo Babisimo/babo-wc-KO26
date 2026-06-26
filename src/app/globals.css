@@ -655,12 +655,20 @@ button.bcard-team:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); 
 .brd-final-card::before { right: 100%; }
 .brd-final-card::after { left: 100%; }
 
-/* ---- Off-screen render target for exporting a bracket to a PNG ---- */
+/* ---- Render target for exporting a bracket to a PNG ----
+   The tree must be on-screen so the browser paints it (content positioned far
+   off-screen is not painted and html-to-image would capture a blank). It sits at
+   the top-left and is hidden under an opaque cover during the brief capture. */
 .brd-export { display: inline-block; }
-.brd-export-stage {
-  position: fixed; left: -100000px; top: 0; z-index: -1;
-  pointer-events: none;
+.brd-export-portal { position: fixed; inset: 0; z-index: 9999; overflow: hidden; }
+.brd-export-tree {
+  position: absolute; top: 0; left: 0;
   padding: 28px; background: var(--pitch-900);
+}
+.brd-export-cover {
+  position: absolute; inset: 0; background: var(--pitch-900);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--line-dim); font-family: var(--font-display); letter-spacing: 0.04em;
 }
 
 /* Same on every screen: Rounds (swipe/tap between rounds) by default, Full = pan/zoom tree. */
