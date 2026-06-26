@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Big_Shoulders, Hanken_Grotesk } from 'next/font/google';
+import { GoogleAnalytics } from '@next/third-parties/google';
 import './globals.css';
 import 'flag-icons/css/flag-icons.min.css';
 import Nav from './Nav';
@@ -7,6 +8,8 @@ import LangProvider from './_components/LangProvider';
 import { auth, type AppSession } from '@/lib/auth';
 import { getAdminNotificationCount } from '@/lib/notifications';
 import { getPoolStats } from '@/app/actions/pool';
+
+const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
 const display = Big_Shoulders({
   subsets: ['latin'],
@@ -38,6 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Nav signedIn={signedIn} isAdmin={isAdmin} adminNotifications={adminNotifications} pool={pool} />
           {children}
         </LangProvider>
+        {gaId ? <GoogleAnalytics gaId={gaId} /> : null}
       </body>
     </html>
   );

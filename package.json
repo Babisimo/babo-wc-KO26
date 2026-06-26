@@ -17,6 +17,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@next/third-parties": "^16.2.9",
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
     "flag-icons": "^7.5.0",
