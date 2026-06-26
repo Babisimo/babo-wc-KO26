@@ -51,7 +51,9 @@ export default function PoolPill({ pool, onNavigate }: { pool: PoolHeaderStats; 
             fontSize: 13,
             lineHeight: 1.5,
             textAlign: 'left',
-            boxShadow: '0 8px 24px rgba(0,0,0,.25)',
+            background: 'rgba(8, 26, 16, 0.97)',
+            backdropFilter: 'blur(12px) saturate(1.2)',
+            boxShadow: '0 8px 24px rgba(0,0,0,.45)',
           }}
         >
           <p style={{ margin: 0, fontWeight: 600 }}>{t('nav.poolBreakdown', { entries: pool.entries, entry, amount })}</p>
