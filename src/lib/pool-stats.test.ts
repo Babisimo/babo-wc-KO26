@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { computePoolStats } from './pool-stats';
+import { computePoolStats, countFilledBrackets } from './pool-stats';
+
+const picks = (n: number) => Object.fromEntries(Array.from({ length: n }, (_, i) => [i + 1, 'TEAM']));
 
 describe('computePoolStats', () => {
   it('is empty when nobody holds credits', () => {
@@ -21,5 +23,24 @@ describe('computePoolStats', () => {
 
   it('prices the pot as credits times the entry price', () => {
     expect(computePoolStats([{ credits: 2 }], 2500)).toEqual({ players: 1, entries: 2, potCents: 5000 });
+  });
+});
+
+describe('countFilledBrackets', () => {
+  it('is zero with no brackets', () => {
+    expect(countFilledBrackets([])).toBe(0);
+  });
+
+  it('counts a bracket only once all 31 games are picked', () => {
+    expect(countFilledBrackets([{ picks: picks(31) }])).toBe(1);
+    expect(countFilledBrackets([{ picks: picks(30) }])).toBe(0);
+  });
+
+  it('counts only the filled ones in a mix', () => {
+    expect(countFilledBrackets([{ picks: picks(31) }, { picks: picks(10) }, { picks: picks(31) }])).toBe(2);
+  });
+
+  it('ignores blank picks toward completeness', () => {
+    expect(countFilledBrackets([{ picks: { ...picks(30), 31: '' } }])).toBe(0);
   });
 });
