@@ -141,6 +141,17 @@ function BracketTabs({ render, roundNav }: { render: (slot: number) => ReactNode
   );
 }
 
+// Full two-sided tree with no camera — used by the pan/zoom view and by image export.
+export function BracketStatic({ render }: { render: (slot: number) => ReactNode }) {
+  return (
+    <div className="brd-desktop-inner">
+      <Node slot={29} side="left" render={render} />
+      <div className="brd-final"><Centerpiece render={render} /></div>
+      <Node slot={30} side="right" render={render} />
+    </div>
+  );
+}
+
 // ---- desktop (and mobile "Full bracket"): map-style pan/zoom of the two-sided tree ----
 const ZOOM_MIN = 0.2;
 const ZOOM_MAX = 4;
@@ -312,11 +323,7 @@ function BracketZoom({ render, revealKey }: { render: (slot: number) => ReactNod
           ref={panRef}
           style={{ transform: `translate(${cam.tx}px, ${cam.ty}px) scale(${cam.scale})` }}
         >
-          <div className="brd-desktop-inner">
-            <Node slot={29} side="left" render={render} />
-            <div className="brd-final"><Centerpiece render={render} /></div>
-            <Node slot={30} side="right" render={render} />
-          </div>
+          <BracketStatic render={render} />
         </div>
       </div>
     </div>

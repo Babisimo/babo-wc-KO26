@@ -655,6 +655,14 @@ button.bcard-team:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); 
 .brd-final-card::before { right: 100%; }
 .brd-final-card::after { left: 100%; }
 
+/* ---- Off-screen render target for exporting a bracket to a PNG ---- */
+.brd-export { display: inline-block; }
+.brd-export-stage {
+  position: fixed; left: -100000px; top: 0; z-index: -1;
+  pointer-events: none;
+  padding: 28px; background: var(--pitch-900);
+}
+
 /* Same on every screen: Rounds (swipe/tap between rounds) by default, Full = pan/zoom tree. */
 .brd-zoom, .brd-tabs-wrap { display: none; }
 .brd-view-switch { display: flex; justify-content: center; margin-bottom: 12px; }
