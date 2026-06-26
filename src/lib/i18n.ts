@@ -43,6 +43,10 @@ const en = {
   'home.ctaEyebrow': 'Members only',
   'home.ctaTitle': 'Log in to play',
   'home.ctaLead': 'Log in or request an account to fill your bracket and join the pool.',
+  'home.playEyebrow': 'Your brackets',
+  'home.playTitle': 'Make your picks',
+  'home.playLead': 'Create and fill your brackets before lock — pick every game from the Round of 32 to the Final.',
+  'home.playCta': 'Create / edit my brackets',
   // official
   'official.eyebrowReal': 'The real thing',
   'official.eyebrowRoad': 'The road to the final',
@@ -275,6 +279,10 @@ const es: Record<StringKey, string> = {
   'home.ctaEyebrow': 'Solo miembros',
   'home.ctaTitle': "Inicia sesión pa' jugar",
   'home.ctaLead': "Inicia sesión o pide una cuenta pa' llenar tu bracket y entrarle a la quiniela.",
+  'home.playEyebrow': 'Tus brackets',
+  'home.playTitle': 'Haz tus picks',
+  'home.playLead': 'Crea y llena tus brackets antes del cierre — escoge cada partido del Dieciseisavos a la Final.',
+  'home.playCta': 'Crear / editar mis brackets',
   // official
   'official.eyebrowReal': 'Esto va en serio',
   'official.eyebrowRoad': 'El camino a la final',

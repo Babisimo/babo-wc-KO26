@@ -47,6 +47,19 @@ export default function HomeContent({
           </section>
         )}
 
+        {signedIn && (
+          <section className="cta reveal" style={{ marginTop: 18 }}>
+            <div className="cta-text">
+              <p className="eyebrow">{t('home.playEyebrow')}</p>
+              <h2>{t('home.playTitle')}</h2>
+              <p className="muted">{t('home.playLead')}</p>
+            </div>
+            <div className="cta-actions">
+              <Link href="/bracket" className="btn">{t('home.playCta')}</Link>
+            </div>
+          </section>
+        )}
+
         <Countdown lockTimeIso={lockTimeIso} lockLabel={lockLabel} />
       </header>
 
