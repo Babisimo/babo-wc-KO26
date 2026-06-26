@@ -146,6 +146,13 @@ select option { color: #000; }
 }
 .panel-head { display: flex; align-items: center; gap: 12px; justify-content: space-between; flex-wrap: wrap; margin-bottom: 14px; }
 
+/* collapsible panel (native <details>) */
+.adm-collapse > summary { cursor: pointer; list-style: none; margin-bottom: 0; }
+.adm-collapse > summary::-webkit-details-marker { display: none; }
+.adm-collapse-summary:hover h2 { color: var(--gold); }
+.adm-collapse-chev { transition: transform 0.18s ease; color: var(--line-dim); font-size: 1.1rem; }
+.adm-collapse[open] .adm-collapse-chev { transform: rotate(90deg); }
+
 .pill {
   display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid var(--chalk-strong); border-radius: 999px;

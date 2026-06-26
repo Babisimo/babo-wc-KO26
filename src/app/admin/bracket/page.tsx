@@ -46,8 +46,15 @@ export default async function AdminBracketPage() {
       </header>
 
       <section className="panel reveal reveal-2">
-        <h2 style={{ marginBottom: 14 }}>Round-of-32 matchups</h2>
-        <R32SkeletonForm teams={TEAMS} initial={initial} />
+        <details className="adm-collapse">
+          <summary className="panel-head adm-collapse-summary">
+            <h2 style={{ margin: 0 }}>Round-of-32 matchups</h2>
+            <span className="adm-collapse-chev" aria-hidden>▸</span>
+          </summary>
+          <div style={{ marginTop: 14 }}>
+            <R32SkeletonForm teams={TEAMS} initial={initial} />
+          </div>
+        </details>
       </section>
 
       <section className="panel reveal reveal-3" style={{ marginTop: 18 }}>
