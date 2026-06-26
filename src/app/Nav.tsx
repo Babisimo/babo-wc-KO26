@@ -57,8 +57,8 @@ export default function Nav({
       <Link href="/" className="wordmark" onClick={close}>WC26&nbsp;KO</Link>
       <span className="nav-spacer" />
 
-      {/* Pinned to the bar at every screen size, like the EN/ES toggle. */}
-      {signedIn && <Link href="/official" className="navlink nav-pinned" onClick={close}>{t('nav.official')}</Link>}
+      {/* Pinned to the bar on wider screens; on mobile it moves into the menu to leave room. */}
+      {signedIn && <Link href="/official" className="navlink nav-pinned nav-official-pinned" onClick={close}>{t('nav.official')}</Link>}
 
       {/* Who's in + pot, visible to everyone signed in; picks stay hidden until lock. */}
       {signedIn && pool && <PoolPill pool={pool} onNavigate={close} />}
@@ -66,6 +66,8 @@ export default function Nav({
       <div className={`nav-links${open ? ' open' : ''}`}>
         {signedIn ? (
           <>
+            {/* Mobile-only copy of the pinned Official link (hidden on wider screens). */}
+            <Link href="/official" className="navlink nav-official-menu" onClick={close}>{t('nav.official')}</Link>
             <Link href="/" className="navlink" onClick={close}>{t('nav.leaderboard')}</Link>
             <Link href="/bracket" className="navlink" onClick={close}>{t('nav.myBracket')}</Link>
             <Link href="/brackets" className="navlink" onClick={close}>{t('nav.brackets')}</Link>

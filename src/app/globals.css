@@ -201,6 +201,19 @@ select option { color: #000; }
 /* link pinned directly to the bar (always visible, like the EN/ES toggle) */
 .nav-pinned { white-space: nowrap; flex: none; }
 
+/* Official link is pinned on the bar by default; on mobile it moves into the menu. */
+.nav-official-menu { display: none; }
+.nav-pool .pill { white-space: nowrap; }
+
+/* Mobile: drop the pinned Official link into the menu and shrink the pool pill so the
+   header bar never overflows (no horizontal scroll). */
+@media (max-width: 600px) {
+  .topnav { gap: 6px; padding: 10px 14px; }
+  .nav-official-pinned { display: none; }
+  .nav-links .nav-official-menu { display: block; }
+  .nav-pool .pill { padding: 4px 9px; font-size: 0.72rem; }
+}
+
 /* nav links collapse into a hamburger dropdown at every screen size */
 /* override .fm-toggle's margin-bottom so the toggle stays vertically centered in the bar */
 .topnav .nav-lang { margin: 0 0 0 4px; }

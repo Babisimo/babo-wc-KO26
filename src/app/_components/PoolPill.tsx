@@ -19,6 +19,7 @@ export default function PoolPill({ pool, onNavigate }: { pool: PoolHeaderStats; 
   const amount = dollars(pool.potCents);
   const entry = dollars(pool.entryCents);
   const label = t('nav.pool', { amount, filled: pool.filled, entries: pool.entries });
+  const aria = t('nav.poolAria', { amount, filled: pool.filled, entries: pool.entries });
 
   return (
     <div
@@ -31,7 +32,7 @@ export default function PoolPill({ pool, onNavigate }: { pool: PoolHeaderStats; 
         type="button"
         className="nav-pool-btn"
         aria-expanded={open}
-        aria-label={label}
+        aria-label={aria}
         onClick={() => setOpen((v) => !v)}
         style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer' }}
       >
