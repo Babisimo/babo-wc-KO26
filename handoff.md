@@ -11,9 +11,10 @@ _Last updated: 2026-06-26_
 on a live leaderboard with a pot. Stock **Next.js 15.5 App Router** app with its own **Neon
 Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
-**Current state (all merged to `master`, tip `f5ca493`, and pushed):**
+**Current state (all merged to `master`, tip `d4cf65c`, and pushed):**
 - Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there). Latest session's commits are live in production via that auto-deploy.
-- Verified latest session (2026-06-26): **`npx tsc --noEmit` clean · `npx vitest run` 203/203 (36 files) · `next lint` clean.** (`next build` last verified 17 routes the prior session.)
+- Verified latest session (2026-06-26): **`npx tsc --noEmit` clean · `npx vitest run` 212/212 (37 files) · `next lint` clean · `next build` 17 routes.**
+- **New env var this session:** optional **`NEXT_PUBLIC_GA_ID`** (Google Analytics 4). Set in **Vercel → Production** (`G-V2HZMLKPFH`) — it's a build-time `NEXT_PUBLIC_` inline, so a **redeploy is required** after adding/changing it. Analytics only counts from install forward (no retroactive history).
 - DB is live on Neon (us-west-2), schema includes **`Bracket.official`** (migration applied). Last reset to a **clean slate**: admin only, 0 brackets/results, official R32 cleared → the app runs in ESPN **As-it-stands / Confirmed** projection mode off the live group-stage feed.
 
 > Seven sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
@@ -25,11 +26,23 @@ Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
 ---
 
-## What changed since the original handoff (sessions through 2026-06-25)
+## What changed since the original handoff (sessions through 2026-06-26)
 
-Seven entries on top of the original 5-feature base. Newest first.
+Eight entries on top of the original 5-feature base. Newest first.
 
-### `6b484d9`…`f5ca493` — Rename brackets + pre-lock pool visibility, credits-based pot (latest session, 2026-06-26)
+### `7317532`…`d4cf65c` — Google Analytics, home "make your picks" CTA, bracket image export (latest session, 2026-06-26)
+Three additions; all pushed and live on Vercel.
+- **Google Analytics 4.** `@next/third-parties` `<GoogleAnalytics gaId={…} />` in `layout.tsx`, **gated on `NEXT_PUBLIC_GA_ID`** (loads only when set — nothing in dev/unset envs). Var documented in `.env.example`; Measurement ID **`G-V2HZMLKPFH`** (stream `wc-2026-knockout`). Set it in **Vercel → Production**; redeploy to bake it in (build-time inline). No retroactive history.
+- **Home "make your picks" CTA.** Signed-in users get a prominent gold `.cta` banner on `/` (`HomeContent.tsx`) linking to `/bracket`, above the countdown/leaderboard, so creating brackets is obvious (was only the hamburger "My brackets" link). New i18n `home.play*` (EN+ES).
+- **Bracket image export** (brainstorm→spec→plan→build). **Export image** button in the **edit page** header (`EditHeader` in `bracket/BracketHeader.tsx`), shown only when the bracket is **complete** (`validateSubmission` — same rule as the list's Complete badge). Client-only PNG via **`html-to-image`**: `bracket/BracketExportButton.tsx` fetches the bracket (`getBracket` → `buildBracketView`), renders the full two-sided tree from the existing components (`MarchMadnessBracket layout="static"` → new exported **`BracketStatic`** in `BracketLayout.tsx`), snapshots it, then **shares via the Web Share API (mobile) or downloads** (filename = slugified name via `src/lib/bracket-export.ts` `bracketImageFilename`; capability probe `canShareFiles` — both unit-tested). Picks-only image (no scoring colors).
+  - **⚠ Three hard-won gotchas — do NOT regress:**
+    1. **Capture stage must be ON-SCREEN.** At `left:-100000px` the browser never paints it → **blank PNG**. Fixed by rendering at top-left under an opaque "Exporting…" cover (`.brd-export-portal`/`-tree`/`-cover` in `globals.css`), captured by ref, torn down after.
+    2. **`skipFonts: true` is required.** Otherwise html-to-image walks every stylesheet's `cssRules` to inline web fonts and throws a **SecurityError on a cross-origin sheet → blank**. Trade-off: image text uses a **system font**, not the site display font. (Future: embed the two fonts via `fontEmbedCSS` to restore branding.)
+    3. **Web Share needs HTTPS.** On the local LAN dev server (plain http) `navigator.canShare` is unavailable → it always **downloads**; the share sheet only appears on the **HTTPS Vercel** deploy. iOS Safari may still fall back to download if the gesture window lapses (mitigation: single-pass capture).
+  - New: `src/lib/bracket-export.ts` (+test), `BracketExportButton.tsx`. Modified: `BracketLayout.tsx` (export `BracketStatic`, reuse in `BracketZoom`), `MarchMadnessBracket.tsx` (`layout` prop), `BracketHeader.tsx` (`EditHeader` takes `complete`), `bracket/[id]/page.tsx`, `globals.css`, `i18n.ts` (`bracket.export`/`exporting`/`exportFailed` EN+ES). Spec `docs/superpowers/specs/2026-06-26-bracket-image-export-design.md`, plan `docs/superpowers/plans/2026-06-26-bracket-image-export.md`. New deps: `html-to-image`, `@next/third-parties`.
+- **Git identity:** this session's commits are authored **Oswaldo Gonzalez <Oswaldo@calvada.local>** by request — intentional, don't "fix" it (saved as the `git-identity` memory).
+
+### `6b484d9`…`f5ca493` — Rename brackets + pre-lock pool visibility, credits-based pot (2026-06-26)
 Two requested features plus the pot-model change they implied. **All pushed; live on Vercel.**
 - **Rename brackets.** `renameBracket(id, name)` in `actions/bracket-entry.ts` (ownership-checked,
   **lock-gated** via `bracket.err.lockedRename`, reuses `normalizeBracketName`). Inline editor
@@ -206,13 +219,13 @@ penalty-safe **ESPN results feed** + round-weighted scoring + leaderboard/pot; p
 cd C:\Users\Oswaldo\wc_ko_26
 npm run dev          # http://localhost:3000 (loads .env)
 npx tsc --noEmit     # types
-npx vitest run     # 203 tests
+npx vitest run     # 212 tests
 npx next build       # production build
 ```
 
 - **`.env`** (gitignored; only `.env.example` placeholders are committed) holds `DATABASE_URL`,
   `DIRECT_URL`, `AUTH_SECRET`, `ADMIN_EMAIL=gondaniel852@gmail.com`, `APP_URL`, optional
-  `GMAIL_*`.
+  `GMAIL_*`, optional **`NEXT_PUBLIC_GA_ID`** (GA4; also set in Vercel for production).
 - **Stock Next.js 15.5.19** — the `AGENTS.md` note about reading `node_modules/next/dist/docs/`
   came from the sibling `wc26` fork and does **not** apply here (those docs aren't shipped; use
   standard App Router patterns).
@@ -238,6 +251,12 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
    1 credit → create → at-cap message → admin +1 → second bracket → both count in the pot).
 2. **Rotate the Neon DB password** — it was pasted into an earlier chat. Reset in Neon
    (Roles → reset password) and update both URLs in `.env`. (Security item.)
+7. **Confirm `NEXT_PUBLIC_GA_ID` is set in Vercel (Production)** = `G-V2HZMLKPFH`, and redeploy if it
+   was added after the last build (build-time inline). Then check **GA4 → Realtime** shows traffic.
+8. **Bracket export polish (optional):** image text is a system font (`skipFonts`) — embed the two
+   site fonts via html-to-image `fontEmbedCSS` to restore branding; and if **iOS Safari** drops to a
+   download instead of the share sheet, switch the capture to a **single** `toPng` pass to shorten the
+   user-gesture window. See the export gotchas in the latest-session entry above.
 3. **Official R32 field.** Set the real field once the group stage ends (~June 27): at
    `/admin/bracket` or via "Refresh from feed". The live projection engine fills "As it stands /
    Confirmed" meanwhile. `resolveCode` alias gap: names shift until standings finalize — if a team
@@ -265,6 +284,7 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   (`canCreateBracket` + `canMarkOfficial`), `effective-r32.ts` (`mergeEffectiveR32`),
   `bracket-changes.ts` (`stalePicks`), `bracket-validate.ts` (`validateSubmission` + `validateDraft`),
   `pool-stats.ts` (`computePoolStats` credits-based players/entries/pot + `countFilledBrackets`),
+  `bracket-export.ts` (`bracketImageFilename` slug + `canShareFiles` Web Share probe — for image export),
   `notifications.ts` (`getAdminNotificationCount` — extensible admin-actionable count),
   `email.ts` (`sendPasswordResetEmail` + `sendNewSignupNotice`),
   `wc26-seeding.ts` (projections), `standings-feed.ts` (ESPN standings),
@@ -288,7 +308,10 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   pan-zoom tree), `BracketCard.tsx`, `RoundLabels.tsx`, `MarchMadnessBracket.tsx`, `StageTracker.tsx`
   (Knockout Stage meter), `TeamFlag.tsx`, `Countdown.tsx`, **`PoolPill.tsx`** (header pot/who's-in pill
   + breakdown popover). Plus `Nav.tsx` (client; hamburger + EN/ES toggle + admin pending-approval badge
-  w/ 15s polling + the pool pill) and `bracket/RenameControl.tsx` (inline bracket rename).
+  w/ 15s polling + the pool pill), `bracket/RenameControl.tsx` (inline bracket rename), and
+  **`bracket/BracketExportButton.tsx`** (PNG export on the edit page; `MarchMadnessBracket layout="static"`
+  + `BracketStatic`; on-screen-covered capture; see export gotchas above). `layout.tsx` renders
+  **`<GoogleAnalytics>`** (`@next/third-parties`) when `NEXT_PUBLIC_GA_ID` is set.
 - **DB:** `prisma/schema.prisma` (`User` w/ `credits`; `Team`, `Match`, `Bracket` w/ `name` +
   **`official`**, `PoolConfig`). Seeds: `prisma/seed.ts`, `prisma/seed-preview.ts`; migrations
   `prisma/backfill-credits.ts`, `prisma/backfill-official.ts`.
