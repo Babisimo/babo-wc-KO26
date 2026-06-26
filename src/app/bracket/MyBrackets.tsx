@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBracket, setBracketOfficial, type MyBracketRow } from '@/app/actions/bracket-entry';
+import RenameControl from './RenameControl';
 import { useT } from '@/app/_components/LangProvider';
 import type { StringKey } from '@/lib/i18n';
 
@@ -67,7 +68,9 @@ export default function MyBrackets({
             {brackets.map((b) => (
               <tr key={b.id}>
                 <td>
-                  <Link href={`/bracket/${b.id}`}>{b.name}</Link>
+                  <RenameControl id={b.id} name={b.name} locked={locked}>
+                    <Link href={`/bracket/${b.id}`}>{b.name}</Link>
+                  </RenameControl>
                   {b.official && <span className="pill" style={{ marginLeft: 8 }}>{t('bracket.officialBadge')}</span>}
                   <span className="muted" style={{ marginLeft: 8, fontSize: 12 }}>
                     {b.complete ? t('bracket.statusComplete') : t('bracket.statusPartial')}

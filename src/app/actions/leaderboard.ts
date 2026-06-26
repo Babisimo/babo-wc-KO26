@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { currentWinners } from '@/app/actions/results';
 import { scoreBracket } from '@/lib/scoring';
 import { rankEntries, potSplit, type RankedEntry } from '@/lib/leaderboard-rank';
+import { computePoolStats } from '@/lib/pool-stats';
 import { computeStage, type Stage } from '@/lib/tournament-stage';
 import type { Picks } from '@/lib/bracket-picks';
 
@@ -29,13 +30,16 @@ function coercePicks(raw: unknown): Picks {
 }
 
 export async function getLeaderboard(): Promise<LeaderboardData> {
-  const [brackets, winners, config] = await Promise.all([
+  const [brackets, winners, config, creditUsers] = await Promise.all([
     db.bracket.findMany({
-      where: { official: true }, // only designated, paid entries count in the pool
+      where: { official: true }, // only designated, paid entries are ranked on the board
       select: { id: true, userId: true, name: true, picks: true },
     }),
     currentWinners(),
     db.poolConfig.findUnique({ where: { id: 'default' } }),
+    // The pot is sized by credits sold ($50 each), so it reflects everyone who's in even
+    // before they mark a bracket official — matching the header pill.
+    db.user.findMany({ where: { credits: { gt: 0 } }, select: { credits: true } }),
   ]);
 
   const userIds = brackets.map((b) => b.userId);
@@ -61,8 +65,8 @@ export async function getLeaderboard(): Promise<LeaderboardData> {
 
   const entries = rankEntries(scored);
   const entryCents = config?.entryCents ?? 5000;
-  const players = brackets.length; // all brackets = paid entries
-  const potCents = entryCents * players;
+  const pool = computePoolStats(creditUsers, entryCents); // pot/players from credits sold
+  const { players, potCents } = pool;
   const { winners: winEntries, shareCents } = potSplit(entries, potCents);
 
   return {

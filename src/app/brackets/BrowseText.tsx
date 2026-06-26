@@ -12,8 +12,29 @@ export function BrowseTitle() {
 
 export function IndexBody({ index }: { index: BracketsIndex }) {
   const t = useT();
-  if (!index.locked) return <div className="panel"><p className="muted">{t('browse.private')}</p></div>;
-  if (index.entries.length === 0) return <p className="muted">{t('browse.none')}</p>;
+  if (index.entries.length === 0) {
+    return <div className="panel"><p className="muted">{index.locked ? t('browse.none') : t('browse.preLockNone')}</p></div>;
+  }
+  // Before lock: show who's in and how many entries, but no scores and no pick links.
+  if (!index.locked) {
+    return (
+      <div className="panel">
+        <p className="muted" style={{ marginBottom: 12 }}>{t('browse.preLockLead')}</p>
+        <table>
+          <thead><tr><th>#</th><th>{t('browse.player')}</th><th style={{ textAlign: 'right' }}>{t('browse.count')}</th></tr></thead>
+          <tbody>
+            {index.entries.map((e, i) => (
+              <tr key={e.username}>
+                <td className="muted">{i + 1}</td>
+                <td>{e.name}</td>
+                <td className="muted" style={{ textAlign: 'right' }}>{e.count}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
   return (
     <div className="panel">
       <table>

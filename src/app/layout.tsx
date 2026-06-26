@@ -6,6 +6,7 @@ import Nav from './Nav';
 import LangProvider from './_components/LangProvider';
 import { auth, type AppSession } from '@/lib/auth';
 import { getAdminNotificationCount } from '@/lib/notifications';
+import { getPoolStats } from '@/app/actions/pool';
 
 const display = Big_Shoulders({
   subsets: ['latin'],
@@ -23,13 +24,18 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = (await auth()) as AppSession | null;
   const isAdmin = !!session?.user?.isAdmin;
+  const signedIn = !!session?.user?.id;
   // Only admins see the badge, so only pay for the count query when admin.
-  const adminNotifications = isAdmin ? await getAdminNotificationCount() : 0;
+  // The pool pill is signed-in only, so skip its query for signed-out visitors.
+  const [adminNotifications, pool] = await Promise.all([
+    isAdmin ? getAdminNotificationCount() : Promise.resolve(0),
+    signedIn ? getPoolStats() : Promise.resolve(null),
+  ]);
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`} suppressHydrationWarning>
       <body>
         <LangProvider>
-          <Nav signedIn={!!session?.user?.id} isAdmin={isAdmin} adminNotifications={adminNotifications} />
+          <Nav signedIn={signedIn} isAdmin={isAdmin} adminNotifications={adminNotifications} pool={pool} />
           {children}
         </LangProvider>
       </body>

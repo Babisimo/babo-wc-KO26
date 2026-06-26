@@ -21,7 +21,7 @@ export default async function EditBracketPage({ params }: { params: Promise<{ id
 
   return (
     <main className="shell">
-      <EditHeader name={view.name} locked={view.locked} />
+      <EditHeader id={view.id} name={view.name} locked={view.locked} />
       <div className="panel reveal reveal-2" style={{ padding: 14 }}>
         <BracketFill
           bracketId={view.id}

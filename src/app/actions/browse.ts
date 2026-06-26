@@ -24,10 +24,29 @@ export type BracketsIndex = {
   entries: { username: string; name: string; total: number; count: number }[];
 };
 
+function displayName(u: { name: string | null; username: string | null; firstName: string | null }): string {
+  const handle = u.username ?? u.name ?? 'Unknown';
+  return u.firstName ? `${handle} (${u.firstName})` : handle;
+}
+
 export async function getBracketsIndex(): Promise<BracketsIndex> {
   const { locked } = await lockedNow();
-  if (!locked) return { locked: false, entries: [] };
 
+  // Before lock, reveal who's in and how many brackets each holds (= their credits), so the
+  // roster lines up with the header pill. Picks/scores stay hidden until lock.
+  if (!locked) {
+    const users = await db.user.findMany({
+      where: { credits: { gt: 0 } },
+      select: { name: true, username: true, firstName: true, credits: true },
+    });
+    const entries = users
+      .filter((u) => u.username)
+      .map((u) => ({ username: u.username as string, name: displayName(u), total: 0, count: u.credits }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return { locked: false, entries };
+  }
+
+  // After lock, the board is the official brackets, grouped by user: best score + how many.
   const [brackets, winners] = await Promise.all([
     db.bracket.findMany({ where: { official: true }, select: { userId: true, picks: true } }),
     currentWinners(),
@@ -38,18 +57,15 @@ export async function getBracketsIndex(): Promise<BracketsIndex> {
   });
   const byId = new Map(users.map((u) => [u.id, u]));
 
-  // Group all brackets by user: best score + how many.
   const perUser = new Map<string, { username: string; name: string; total: number; count: number }>();
   for (const b of brackets) {
     const u = byId.get(b.userId);
-    const username = u?.username ?? '';
-    if (!username) continue;
+    if (!u || !u.username) continue;
+    const username = u.username;
     const total = scoreBracket(coercePicks(b.picks), winners);
-    const handle = u?.username ?? u?.name ?? 'Unknown';
-    const display = u?.firstName ? `${handle} (${u.firstName})` : handle;
     const cur = perUser.get(b.userId);
     if (!cur) {
-      perUser.set(b.userId, { username, name: display, total, count: 1 });
+      perUser.set(b.userId, { username, name: displayName(u), total, count: 1 });
     } else {
       cur.total = Math.max(cur.total, total);
       cur.count += 1;

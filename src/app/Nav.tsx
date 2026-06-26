@@ -4,15 +4,22 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { logout } from '@/app/actions/auth';
 import { useT, useLang } from '@/app/_components/LangProvider';
+import type { PoolStats } from '@/lib/pool-stats';
+
+function dollars(cents: number): string {
+  return cents % 100 === 0 ? `$${cents / 100}` : `$${(cents / 100).toFixed(2)}`;
+}
 
 export default function Nav({
   signedIn,
   isAdmin,
   adminNotifications = 0,
+  pool = null,
 }: {
   signedIn: boolean;
   isAdmin: boolean;
   adminNotifications?: number;
+  pool?: PoolStats | null;
 }) {
   const t = useT();
   const { lang, setLang } = useLang();
@@ -55,6 +62,18 @@ export default function Nav({
 
       {/* Pinned to the bar at every screen size, like the EN/ES toggle. */}
       {signedIn && <Link href="/official" className="navlink nav-pinned" onClick={close}>{t('nav.official')}</Link>}
+
+      {/* Who's in + pot, visible to everyone signed in; picks stay hidden until lock. */}
+      {signedIn && pool && (
+        <Link
+          href="/brackets"
+          className="nav-pool nav-pinned"
+          onClick={close}
+          aria-label={t('nav.pool', { players: pool.players, entries: pool.entries, amount: dollars(pool.potCents) })}
+        >
+          <span className="pill gold">{t('nav.pool', { players: pool.players, entries: pool.entries, amount: dollars(pool.potCents) })}</span>
+        </Link>
+      )}
 
       <div className={`nav-links${open ? ' open' : ''}`}>
         {signedIn ? (

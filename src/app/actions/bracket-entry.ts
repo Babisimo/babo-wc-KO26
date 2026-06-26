@@ -123,6 +123,24 @@ export async function createBracket(name: string): Promise<{ errorKey?: StringKe
   return { id: created.id };
 }
 
+export async function renameBracket(id: string, name: string): Promise<{ errorKey?: StringKey; name?: string }> {
+  const userId = await requireUserId();
+  if (!userId) return { errorKey: 'bracket.err.notSignedIn' };
+  const row = await db.bracket.findUnique({ where: { id }, select: { userId: true } });
+  if (!row || row.userId !== userId) return { errorKey: 'bracket.err.notFound' };
+
+  const lock = await lockInfo();
+  if (lock.locked) return { errorKey: 'bracket.err.lockedRename' };
+
+  // Blank/invalid input falls back to "Bracket {n}", mirroring create.
+  const used = await db.bracket.count({ where: { userId } });
+  const cleanName = normalizeBracketName(name, used);
+  await db.bracket.update({ where: { id }, data: { name: cleanName } });
+  revalidatePath('/bracket');
+  revalidatePath(`/bracket/${id}`);
+  return { name: cleanName };
+}
+
 export async function setBracketOfficial(id: string, official: boolean): Promise<{ errorKey?: StringKey }> {
   const userId = await requireUserId();
   if (!userId) return { errorKey: 'bracket.err.notSignedIn' };

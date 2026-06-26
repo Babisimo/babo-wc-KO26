@@ -1,5 +1,6 @@
 'use client';
 import { useT } from '@/app/_components/LangProvider';
+import RenameControl from './RenameControl';
 
 export function NotOpen() {
   const t = useT();
@@ -25,12 +26,16 @@ export function ListHeader({ locked }: { locked: boolean }) {
   );
 }
 
-export function EditHeader({ name, locked }: { name: string; locked: boolean }) {
+export function EditHeader({ id, name, locked }: { id: string; name: string; locked: boolean }) {
   const t = useT();
   return (
     <header className="reveal" style={{ marginBottom: 18 }}>
       <p className="eyebrow">{t('bracket.eyebrow')} · {name}</p>
-      <h1>{name}</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <RenameControl id={id} name={name} locked={locked}>
+          <h1 style={{ display: 'inline', margin: 0 }}>{name}</h1>
+        </RenameControl>
+      </div>
       <p className="lead">{t('bracket.editLead')}{locked ? ` ${t('common.locked')}` : ''}</p>
     </header>
   );
