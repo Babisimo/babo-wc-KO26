@@ -1,4 +1,4 @@
-export const LOCK_LEAD_MS = 1800_000; // 30 minutes (extended from 1h to give 30 more minutes before lock)
+export const LOCK_LEAD_MS = 600_000; // 10 minutes before first kickoff (lock ~11:50 AM PDT)
 
 /** Earliest non-null R32 kickoff minus the lock lead; null if there are no kickoffs. */
 export function computeLockTime(r32Kickoffs: (Date | null)[]): Date | null {
