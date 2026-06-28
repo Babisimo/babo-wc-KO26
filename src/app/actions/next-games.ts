@@ -11,6 +11,7 @@ import { resolveCode } from '@/lib/team-resolve';
 import { mapScoreboardGames, pickGames, type GameState } from '@/lib/next-games';
 import { gameSlotPick, type SlotParticipants, type PickResult } from '@/lib/game-slot';
 import type { Picks } from '@/lib/bracket-picks';
+import { getBookOdds, type BookLine } from '@/lib/book-odds';
 
 const SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
 // Knockout window (UTC). One request covers the whole range.
@@ -38,6 +39,7 @@ export type GameRow = {
   teamA: string; teamB: string; kickoffIso: string; state: GameState;
   scoreA: number | null; scoreB: number | null;
   yourPick: string | null; result: PickResult | null;
+  odds: { probA: number; probB: number } | null;
 };
 
 export async function getNextGames(): Promise<{ games: GameRow[]; lockNote: string | null; lockTimeIso: string | null; lockLabel: string | null }> {
@@ -59,6 +61,16 @@ export async function getNextGames(): Promise<{ games: GameRow[]; lockNote: stri
     }
   }
 
+  const bookLines: BookLine[] = await getBookOdds().catch(() => []);
+
+  function oddsFor(teamA: string, teamB: string): { probA: number; probB: number } | null {
+    const l = bookLines.find(
+      (x) => (x.codeA === teamA && x.codeB === teamB) || (x.codeA === teamB && x.codeB === teamA),
+    );
+    if (!l) return null;
+    return l.codeA === teamA ? { probA: l.probA, probB: l.probB } : { probA: l.probB, probB: l.probA };
+  }
+
   let games: GameRow[] = [];
   try {
     const res = await fetch(`${SCOREBOARD}?dates=${DATES}`, { next: { revalidate: 15 } });
@@ -66,7 +78,7 @@ export async function getNextGames(): Promise<{ games: GameRow[]; lockNote: stri
       const parsed = pickGames(mapScoreboardGames(await res.json(), resolveTeam));
       games = parsed.map((g) => {
         const { yourPick, result } = gameSlotPick(slotParticipants, g, topPicks, winners);
-        return { ...g, yourPick, result };
+        return { ...g, yourPick, result, odds: oddsFor(g.teamA, g.teamB) };
       });
     }
   } catch {

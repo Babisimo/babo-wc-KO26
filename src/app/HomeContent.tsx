@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import ChampionBanner from '@/app/_components/ChampionBanner';
 import LockGate from '@/app/_components/LockGate';
+import OddsTeaser from '@/app/_components/OddsTeaser';
 import WhatHappened, { type ResultEventView } from '@/app/_components/WhatHappened';
 import { useT } from '@/app/_components/LangProvider';
 import type { LeaderboardData } from '@/app/actions/leaderboard';
@@ -13,7 +14,7 @@ function dollars(cents: number): string { return `$${(cents / 100).toFixed(2)}`;
 type NextGamesData = Awaited<ReturnType<typeof getNextGames>>;
 
 export default function HomeContent({
-  signedIn, board, nextGames, standing, move, event,
+  signedIn, board, nextGames, standing, move, event, locked,
 }: {
   signedIn: boolean;
   board: LeaderboardData;
@@ -21,6 +22,7 @@ export default function HomeContent({
   standing: { rank: number; total: number } | null;
   move: { dir: 'up' | 'down' | 'same' | 'none'; places: number };
   event: ResultEventView | null;
+  locked: boolean;
 }) {
   const t = useT();
   return (
@@ -69,6 +71,8 @@ export default function HomeContent({
       )}
 
       <WhatHappened event={event} />
+
+      {signedIn && locked && <OddsTeaser />}
 
       {signedIn && (
         <section className="panel reveal reveal-2">

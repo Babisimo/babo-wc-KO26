@@ -72,6 +72,7 @@ export default function Nav({
             <Link href="/bracket" className="navlink" onClick={close}>{t('nav.myBracket')}</Link>
             <Link href="/brackets" className="navlink" onClick={close}>{t('nav.brackets')}</Link>
             <Link href="/compare" className="navlink" onClick={close}>{t('nav.compare')}</Link>
+            <Link href="/odds" className="navlink" onClick={close}>{t('nav.odds')}</Link>
             <Link href="/account" className="navlink" onClick={close}>{t('nav.account')}</Link>
             {isAdmin && (
               <Link href="/admin" className="navlink" onClick={close}>

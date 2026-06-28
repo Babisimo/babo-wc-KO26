@@ -812,3 +812,40 @@ button.bcard-team:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); 
 .move { font-weight: 700; font-size: 0.92em; }
 .move-up { color: var(--grass); }
 .move-down { color: var(--crimson); }
+
+/* odds */
+.state { display: grid; place-items: center; gap: 10px; padding: 48px 0; text-align: center; }
+.state .big { font-size: 1.1rem; font-weight: 700; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.chip { font-size: .78rem; padding: 3px 10px; border-radius: 999px; background: var(--panel-2, #1b2030); color: var(--muted, #9aa4b2); }
+.chip.dim { opacity: .7; }
+.oc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.oc { border: 1px solid var(--line, #2a3142); border-radius: 12px; overflow: hidden; background: var(--panel, #141926); }
+.oc-head { width: 100%; display: grid; grid-template-columns: 28px 1fr 90px auto 20px; align-items: center; gap: 10px;
+  background: none; border: 0; color: inherit; padding: 12px 14px; cursor: pointer; text-align: left; }
+.oc-rank { font-weight: 700; color: var(--muted, #9aa4b2); }
+.oc-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oc-bar { height: 8px; border-radius: 999px; background: var(--panel-2, #1b2030); overflow: hidden; }
+.oc-bar > i { display: block; height: 100%; width: var(--w, 0%); background: linear-gradient(90deg, #38bdf8, #a3e635); }
+.oc-win { text-align: right; } .oc-win b { font-size: 1rem; } .oc-win small { display: block; font-size: .66rem; color: var(--muted, #9aa4b2); }
+.oc-chev { transition: transform .15s; color: var(--muted, #9aa4b2); }
+.oc.open .oc-chev { transform: rotate(180deg); }
+.oc-body { padding: 0 14px 14px; border-top: 1px solid var(--line, #2a3142); }
+.oc-stat { font-size: .82rem; color: var(--muted, #9aa4b2); margin: 10px 0; }
+.oc-lab { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted, #9aa4b2); margin: 8px 0 6px; }
+.og-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.og { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; font-size: .85rem; padding: 3px 0; }
+.og-prob { color: var(--muted, #9aa4b2); } .og-gain { color: #a3e635; font-weight: 600; }
+.team-odds { margin-top: 22px; }
+.to-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.to-row { display: grid; grid-template-columns: 1fr 120px 52px; align-items: center; gap: 10px; font-size: .85rem; }
+.to-bar { height: 6px; border-radius: 999px; background: var(--panel-2, #1b2030); overflow: hidden; }
+.to-bar > i { display: block; height: 100%; width: var(--w, 0%); background: linear-gradient(90deg, #f59e0b, #a3e635); }
+.to-pct { text-align: right; color: var(--muted, #9aa4b2); }
+@media (max-width: 560px) { .oc-head { grid-template-columns: 24px 1fr auto 20px; } .oc-bar { display: none; } }
+
+/* book-odds bar on the next-up strip */
+.ng-odds { display: flex; align-items: center; gap: 6px; grid-column: 1 / -1; margin-top: 6px; }
+.ng-odds i { display: block; height: 5px; border-radius: 999px; width: var(--w, 50%); }
+.ng-odds-a { background: #38bdf8; } .ng-odds-b { background: #f59e0b; }
+.ng-odds em { font-size: .68rem; color: var(--muted, #9aa4b2); font-style: normal; white-space: nowrap; }

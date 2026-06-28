@@ -44,6 +44,13 @@ export default function NextGames({ initial }: { initial: Data }) {
                   : <span className="ng-score">{g.scoreA ?? 0}–{g.scoreB ?? 0}{g.state === 'in' ? <em className="ng-live"> {t('home.live')}</em> : <em className="ng-final"> {t('home.final')}</em>}</span>}
               </span>
               <span className="ng-team ng-team-b">{teamName(g.teamB)} <TeamFlag code={g.teamB} /></span>
+              {g.odds && (
+                <span className="ng-odds" aria-hidden>
+                  <i className="ng-odds-a" style={{ ['--w' as string]: `${Math.round(g.odds.probA * 100)}%` }} />
+                  <i className="ng-odds-b" style={{ ['--w' as string]: `${Math.round(g.odds.probB * 100)}%` }} />
+                  <em>{Math.round(g.odds.probA * 100)}%–{Math.round(g.odds.probB * 100)}%</em>
+                </span>
+              )}
               {g.yourPick && (
                 <span className={`ng-pick result-${g.result}`}>
                   {t('home.yourPick')}: {teamName(g.yourPick)}
