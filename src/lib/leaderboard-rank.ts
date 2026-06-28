@@ -21,7 +21,10 @@ export function potSplit(
   ranked: RankedEntry[],
   potCents: number,
 ): { winners: RankedEntry[]; shareCents: number } {
-  const winners = ranked.filter((e) => e.rank === 1);
+  // No leader until someone has actually scored — at 0 points everyone ties for rank 1,
+  // so flagging them all as "leader" is meaningless. Only count rank-1 once the top score > 0.
+  const topScored = (ranked[0]?.total ?? 0) > 0;
+  const winners = topScored ? ranked.filter((e) => e.rank === 1) : [];
   const shareCents = winners.length > 0 ? Math.floor(potCents / winners.length) : 0;
   return { winners, shareCents };
 }
