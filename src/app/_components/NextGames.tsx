@@ -44,8 +44,8 @@ export default function NextGames({ initial }: { initial: Data }) {
               {g.yourPick && (
                 <span className={`ng-pick result-${g.result}`}>
                   {t('home.yourPick')}: {teamName(g.yourPick)}
-                  {g.result === 'won' && <span aria-hidden="true"> ✓</span>}
-                  {g.result === 'busted' && <span aria-hidden="true"> ✗</span>}
+                  {g.result === 'won' && (<><span className="sr-only"> {t('home.pickWon')}</span><span aria-hidden="true"> ✓</span></>)}
+                  {g.result === 'busted' && (<><span className="sr-only"> {t('home.pickBusted')}</span><span aria-hidden="true"> ✗</span></>)}
                 </span>
               )}
             </li>

@@ -61,7 +61,7 @@ export async function getNextGames(): Promise<{ games: GameRow[]; lockNote: stri
 
   let games: GameRow[] = [];
   try {
-    const res = await fetch(`${SCOREBOARD}?dates=${DATES}`, { cache: 'no-store' });
+    const res = await fetch(`${SCOREBOARD}?dates=${DATES}`, { next: { revalidate: 15 } });
     if (res.ok) {
       const parsed = pickGames(mapScoreboardGames(await res.json(), resolveTeam));
       games = parsed.map((g) => {
