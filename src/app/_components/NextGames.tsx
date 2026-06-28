@@ -15,14 +15,17 @@ export default function NextGames({ initial }: { initial: Data }) {
   const [now, setNow] = useState<number>(() => Date.now());
 
   useEffect(() => {
-    const tick = setInterval(() => setNow(Date.now()), 1000);
-    const poll = setInterval(async () => {
+    let alive = true;
+    const refresh = async () => {
       try {
         const res = await fetch('/api/next-games', { cache: 'no-store' });
-        if (res.ok) setData(await res.json());
+        if (res.ok && alive) setData(await res.json());
       } catch { /* keep last-known on transient errors */ }
-    }, 30000);
-    return () => { clearInterval(tick); clearInterval(poll); };
+    };
+    refresh(); // immediate: a strip that just popped in at lock shows current games right away
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    const poll = setInterval(refresh, 30000);
+    return () => { alive = false; clearInterval(tick); clearInterval(poll); };
   }, []);
 
   return (

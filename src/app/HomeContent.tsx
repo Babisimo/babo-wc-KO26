@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import ChampionBanner from '@/app/_components/ChampionBanner';
-import NextGames from '@/app/_components/NextGames';
+import LockGate from '@/app/_components/LockGate';
 import { useT } from '@/app/_components/LangProvider';
 import type { LeaderboardData } from '@/app/actions/leaderboard';
 import type { getNextGames } from '@/app/actions/next-games';
@@ -31,7 +31,7 @@ export default function HomeContent({
         )}
       </header>
 
-      <NextGames initial={nextGames} />
+      <LockGate data={nextGames} />
 
       {!signedIn && (
         <section className="cta reveal" style={{ marginTop: 4, marginBottom: 18 }}>

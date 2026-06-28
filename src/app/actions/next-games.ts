@@ -40,7 +40,7 @@ export type GameRow = {
   yourPick: string | null; result: PickResult | null;
 };
 
-export async function getNextGames(): Promise<{ games: GameRow[]; lockNote: string | null }> {
+export async function getNextGames(): Promise<{ games: GameRow[]; lockNote: string | null; lockTimeIso: string | null; lockLabel: string | null }> {
   const session = (await auth()) as AppSession | null;
   const userId = session?.user?.id ?? null;
 
@@ -74,7 +74,8 @@ export async function getNextGames(): Promise<{ games: GameRow[]; lockNote: stri
   }
 
   const lockMs = lockTimeIso ? Date.parse(lockTimeIso) : NaN;
-  const lockNote = Number.isFinite(lockMs) && Date.now() < lockMs ? formatLockTimePT(new Date(lockMs)) : null;
+  const lockLabel = Number.isFinite(lockMs) ? formatLockTimePT(new Date(lockMs)) : null;
+  const lockNote = Number.isFinite(lockMs) && Date.now() < lockMs ? lockLabel : null;
 
-  return { games, lockNote };
+  return { games, lockNote, lockTimeIso, lockLabel };
 }
