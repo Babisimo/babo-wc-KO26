@@ -12,7 +12,7 @@ import {
   participantsForSlot,
   type SlotResult,
 } from '@/lib/bracket-structure';
-import { computeLockTime } from '@/lib/lock';
+import { computeLockTime, isLocked } from '@/lib/lock';
 
 export type { R32Entry };
 
@@ -94,10 +94,60 @@ export async function getOfficialBracket(): Promise<{
     });
   }
 
-  const r32Kickoffs = rows
-    .filter((r) => r.round === 'R32')
-    .map((r) => r.kickoff);
-  const lockTime = computeLockTime(r32Kickoffs);
-
+  const r32Kickoffs = rows.filter((r) => r.round === 'R32').map((r) => r.kickoff);
+  const scheduled = computeLockTime(r32Kickoffs);
+  const config = await db.poolConfig.findUnique({ where: { id: 'default' }, select: { lockOverrideIso: true } });
+  const lockTime = config?.lockOverrideIso ?? scheduled; // admin override wins
   return { slots, lockTimeIso: lockTime ? lockTime.toISOString() : null };
+}
+
+/** Set the bracket lock to a specific instant (admin). Powers "Set lock time" and "Lock now". */
+export async function setLockOverride(iso: string): Promise<{ error?: string }> {
+  await requireAdmin();
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { error: 'Invalid date.' };
+  await db.poolConfig.upsert({
+    where: { id: 'default' },
+    update: { lockOverrideIso: d },
+    create: { id: 'default', lockOverrideIso: d },
+  });
+  revalidatePath('/');
+  revalidatePath('/bracket');
+  revalidatePath('/admin/bracket');
+  return {};
+}
+
+/** Clear the override so the lock reverts to the computed schedule (kickoff − lead). */
+export async function clearLockOverride(): Promise<{ error?: string }> {
+  await requireAdmin();
+  await db.poolConfig.upsert({
+    where: { id: 'default' },
+    update: { lockOverrideIso: null },
+    create: { id: 'default' },
+  });
+  revalidatePath('/');
+  revalidatePath('/bracket');
+  revalidatePath('/admin/bracket');
+  return {};
+}
+
+/** Lock state for the admin panel: the override, the computed schedule, the effective lock, and whether it's locked now. */
+export async function getLockState(): Promise<{
+  overrideIso: string | null;
+  scheduledIso: string | null;
+  effectiveIso: string | null;
+  locked: boolean;
+}> {
+  await requireAdmin();
+  const rows = await db.match.findMany({ where: { round: 'R32' }, select: { kickoff: true } });
+  const scheduled = computeLockTime(rows.map((r) => r.kickoff));
+  const config = await db.poolConfig.findUnique({ where: { id: 'default' }, select: { lockOverrideIso: true } });
+  const override = config?.lockOverrideIso ?? null;
+  const effective = override ?? scheduled;
+  return {
+    overrideIso: override ? override.toISOString() : null,
+    scheduledIso: scheduled ? scheduled.toISOString() : null,
+    effectiveIso: effective ? effective.toISOString() : null,
+    locked: isLocked(new Date(), effective),
+  };
 }
