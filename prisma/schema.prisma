@@ -77,11 +77,24 @@ model Bracket {
   name        String    @default("Bracket 1")
   picks       Json      @default("{}")
   official    Boolean   @default(false) // designated paid entry; counts in pot/leaderboard
+  previousRank Int?                      // rank just before the latest results change; for movement ▲/▼
   submittedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([userId])
+}
+
+model ResultEvent {
+  id          String   @id @default(cuid())
+  slot        Int
+  winner      String
+  loser       String
+  bustedCount Int
+  newLeader   String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model PoolConfig {
