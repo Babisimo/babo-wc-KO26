@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { setLockOverride, clearLockOverride } from '@/app/actions/bracket';
 import { isoToLocalInput, localInputToIso } from '@/lib/datetime-local';
@@ -21,6 +21,10 @@ export default function LockControl({
   const [pending, start] = useTransition();
   const [local, setLocal] = useState<string>(() => isoToLocalInput(effectiveIso ?? ''));
   const [error, setError] = useState<string | null>(null);
+
+  // Re-sync the input when the server state changes (e.g. after "Use schedule" clears the
+  // override) so a later "Set lock time" can't re-apply a just-cleared value.
+  useEffect(() => { setLocal(isoToLocalInput(effectiveIso ?? '')); }, [effectiveIso]);
 
   const fmt = (iso: string | null) => (iso ? formatLockTimePT(new Date(iso)) : '—');
 
@@ -63,7 +67,7 @@ export default function LockControl({
           </button>
         )}
       </div>
-      {error && <span className="banner error" style={{ display: 'inline-block', marginTop: 10, padding: '6px 12px' }}>{error}</span>}
+      {error && <span className="banner error" role="alert" style={{ display: 'inline-block', marginTop: 10, padding: '6px 12px' }}>{error}</span>}
     </div>
   );
 }
