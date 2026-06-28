@@ -57,7 +57,7 @@ export default function PoolPill({ pool, onNavigate }: { pool: PoolHeaderStats; 
           }}
         >
           <p style={{ margin: 0, fontWeight: 600 }}>{t('nav.poolBreakdown', { bracketsIn: pool.bracketsIn, entry, amount })}</p>
-          <p className="muted" style={{ margin: '4px 0 0' }}>{t('nav.poolFilled', { filled: pool.filled, bracketsIn: pool.bracketsIn })}</p>
+          <p className="muted" style={{ margin: '4px 0 8px' }}>{t('nav.poolFilled', { filled: pool.filled, bracketsIn: pool.bracketsIn })}</p>
           <Link href="/brackets" onClick={() => { setOpen(false); onNavigate?.(); }}>{t('nav.poolView')} →</Link>
         </div>
       )}
