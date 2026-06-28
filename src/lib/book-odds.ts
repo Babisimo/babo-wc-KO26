@@ -7,7 +7,7 @@ const DATES = '20260628-20260720'; // knockout window (UTC), same range as next-
 
 export type BookLine = { codeA: string; codeB: string; probA: number; probB: number };
 
-export function americanToImplied(odds: string | number | null | undefined): number {
+export function americanToImplied(odds: unknown): number {
   const v = parseInt(String(odds ?? ''), 10);
   if (!Number.isFinite(v) || v === 0) return 0;
   return v > 0 ? 100 / (v + 100) : -v / (-v + 100);
