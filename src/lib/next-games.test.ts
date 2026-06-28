@@ -36,3 +36,26 @@ describe('mapScoreboardGames', () => {
     expect(mapScoreboardGames(json, resolve).map((g) => [g.teamA, g.teamB])).toEqual([['RSA', 'CAN']]);
   });
 });
+
+import { pickGames } from './next-games';
+
+describe('pickGames', () => {
+  const g = (teamA: string, teamB: string, kickoffIso: string, state: 'pre' | 'in' | 'post') =>
+    ({ teamA, teamB, kickoffIso, state, scoreA: null, scoreB: null });
+
+  it('orders live first, then soonest upcoming, then recent finals, capped at 3', () => {
+    const games = [
+      g('A', 'B', '2026-06-30T00:00Z', 'pre'),
+      g('C', 'D', '2026-06-29T00:00Z', 'pre'),
+      g('E', 'F', '2026-06-29T12:00Z', 'in'),
+      g('G', 'H', '2026-06-28T00:00Z', 'post'),
+      g('I', 'J', '2026-06-27T00:00Z', 'post'),
+    ];
+    expect(pickGames(games).map((x) => x.teamA)).toEqual(['E', 'C', 'A']);
+  });
+
+  it('falls back to finals when nothing is upcoming or live', () => {
+    const games = [g('G', 'H', '2026-06-28T00:00Z', 'post'), g('I', 'J', '2026-06-29T00:00Z', 'post')];
+    expect(pickGames(games, 1).map((x) => x.teamA)).toEqual(['I']);
+  });
+});

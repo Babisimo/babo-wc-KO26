@@ -38,3 +38,16 @@ export function mapScoreboardGames(
   }
   return out;
 }
+
+const ms = (iso: string): number => {
+  const n = Date.parse(iso);
+  return Number.isFinite(n) ? n : 0;
+};
+
+/** Up to `limit` games to surface: live first, then soonest upcoming, then most-recent finals. */
+export function pickGames(games: Game[], limit = 3): Game[] {
+  const live = games.filter((g) => g.state === 'in');
+  const upcoming = games.filter((g) => g.state === 'pre').sort((a, b) => ms(a.kickoffIso) - ms(b.kickoffIso));
+  const finals = games.filter((g) => g.state === 'post').sort((a, b) => ms(b.kickoffIso) - ms(a.kickoffIso));
+  return [...live, ...upcoming, ...finals].slice(0, limit);
+}
