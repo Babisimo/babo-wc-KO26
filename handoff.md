@@ -11,11 +11,12 @@ _Last updated: 2026-06-28_
 on a live leaderboard with a pot. Stock **Next.js 15.5 App Router** app with its own **Neon
 Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
-**Current state (all merged to `master`, tip `918d359`, and pushed):**
+**Current state (all merged to `master`, tip `c9827e0`, and pushed):**
 - Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there). Latest session's commits are live in production via that auto-deploy.
-- Verified latest session (2026-06-28): **`npx tsc --noEmit` clean · `npx vitest run` 229/229 (41 files) · `next lint` clean · `next build` clean (incl. new `/api/next-games`).** ⚠ `next build` flakes on Windows with a stale-`.next` `PageNotFoundError` on unrelated pages — `rm -rf .next` before building.
+- Verified latest session (2026-06-28): **`npx tsc --noEmit` clean · `npx vitest run` 232/232 (42 files) · `next lint` clean · `next build` clean.** ⚠ `next build` flakes on Windows with a stale-`.next` `PageNotFoundError` on unrelated pages — `rm -rf .next` before building.
 - **New env var (earlier session):** optional **`NEXT_PUBLIC_GA_ID`** (Google Analytics 4). Set in **Vercel → Production** (`G-V2HZMLKPFH`) — build-time `NEXT_PUBLIC_` inline, so a **redeploy is required** after adding/changing it. Analytics only counts from install forward.
-- DB is live on Neon (us-west-2). Schema: **`Bracket.official`**, **`Bracket.previousRank`** (movement) + new **`ResultEvent`** table (results-drama feed) — all migrated via `prisma db push`. **The official R32 draw is SET** (group stage over; 16 matchups + kickoffs from the live ESPN schedule). The bracket is **open**; **lock = Jun 28, 2026 · 11:50 AM PDT** (`LOCK_LEAD_MS` shortened 1h → 10m this session to give late entrants more time). Picks editable until lock; the projection self-corrects from real fixtures.
+- DB is live on Neon (us-west-2). Schema: **`Bracket.official`**, **`Bracket.previousRank`** (movement), **`ResultEvent`** table (results-drama feed), **`PoolConfig.lockOverrideIso`** (admin lock override) — all migrated via `prisma db push`. **The official R32 draw is SET** (group stage over; 16 matchups + kickoffs from the live ESPN schedule).
+- **Lock:** default = first R32 kickoff − `LOCK_LEAD_MS` (now **10m** → **11:50 AM PDT**), BUT **admins can override it at `/admin/bracket`** (set an exact time / Lock now / Use schedule) — `getOfficialBracket` returns `lockOverrideIso ?? computed`. **Pot = `$50 × official brackets entered`** (was credits-based; "players" count removed). Post-lock, players can still create/fill **draft** brackets; **official brackets freeze** at lock.
 
 > Seven sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
 
@@ -28,7 +29,16 @@ Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
 ## What changed since the original handoff (sessions through 2026-06-28)
 
-Ten entries on top of the original 5-feature base. Newest first.
+Eleven entries on top of the original 5-feature base. Newest first.
+
+### Admin lock control, lock → 11:50, post-lock drafts, brackets-based pot, "haven't submitted" (2026-06-28, later)
+Five changes, each brainstorm→spec→plan→**subagent-driven** (except the two quick hotfixes). **All merged to `master` and pushed; live on Vercel.** Specs/plans dated `2026-06-28` in `docs/superpowers/`.
+- **Admin bracket-lock control** (`/admin/bracket` → new **`LockControl`** panel). New **`PoolConfig.lockOverrideIso`**; `getOfficialBracket` returns `lockOverrideIso ?? computeLockTime(kickoffs)`, so the override propagates to **every** lock consumer (picks/save, make-official, rename, home countdown + `LockGate`, browse, compare, games strip). Actions in `actions/bracket.ts`: **`setLockOverride(iso)`** (Set lock time / Lock now), **`clearLockOverride()`** (Use schedule), **`getLockState()`** (override/scheduled/effective/locked for the panel). No more editing a constant + redeploying to change the lock.
+- **Lock pushed to 11:50 AM PDT** — `LOCK_LEAD_MS` 1h → 30m → **10m** (two quick pushes, to give late entrants time). With kickoff = noon PDT, lock = noon − 10m. (The admin override above is now the preferred lever; the constant is just the default.)
+- **Post-lock draft creation** (`bracket-entry.ts` + `MyBrackets.tsx`). Players can **create / fill / rename non-official (draft) brackets even after lock**; **official (entered, scored) brackets still freeze** at lock (save/rename blocked, read-only in the fill page) and a draft **can't be made official after lock** — so no scoring/money integrity impact. `getBracket` reports a draft as unlocked (`locked = lockedNow && official`).
+- **Brackets-based pot.** Pot = **`$50 × official brackets entered`** (was `$50 × credits`); the **"players" count is gone**. `computePoolStats(bracketsIn, entryCents)` (pure, tested); `getPoolStats`/`getLeaderboard` size from the official-bracket count they already fetch (dropped the credit-users queries + `LeaderboardData.players`); `PoolPill` + i18n show `filled/in` (dropped `nav.poolPlayers`, renamed the var to `{bracketsIn}`); admin entry-price copy now "Pot = entry × brackets in". An unused paid credit no longer inflates the pot.
+- **Admin "Haven't submitted" panel** (`/admin`). Read-only list of in-pool members (**approved**, credits ≥ 1) with **no fully-filled official bracket** — "N to chase". Pure `src/lib/admin-stats.ts` `membersMissingEntry` (tested; reuses `countFilledBrackets`).
+- Verified: **`vitest` 232/232 (42 files) · `tsc` clean · `next lint` clean · `next build` ok.**
 
 ### Home → live dashboard + lock gate, 30-min lock extension, results drama (2026-06-28)
 Brainstorm→spec→plan→**subagent-driven** build for two phases, plus a one-off lock tweak. **All merged to `master` and pushed; live on Vercel.** Specs `docs/superpowers/specs/2026-06-27-home-dashboard-live-games-design.md` + `…/2026-06-27-champion-congrats-design.md`; plans `…/plans/2026-06-27-home-dashboard-live-games.md` + `…/2026-06-28-home-results-drama-phase2.md`.
@@ -75,9 +85,10 @@ Two requested features plus the pot-model change they implied. **All pushed; liv
   entries = sum of credits, potCents }`, and **`countFilledBrackets(brackets)`** = official brackets
   with all 31 games picked. `leaderboard.ts` now sizes the pot from credits (still **ranks official
   brackets only**); `board.players` is unused by UI.
-- **Header pool pill.** `src/app/_components/PoolPill.tsx` — stable credits-based pot with a
-  **filled-vs-paid** count, terse on the bar (**`$X · filled/total`**) with a tap/hover **popover**
-  showing `N brackets × $50 = pot`, filled count, players, and a "see who's in" link to `/brackets`.
+- **Header pool pill.** `src/app/_components/PoolPill.tsx` — pot with a
+  **filled-vs-in** count, terse on the bar (**`$X · filled/in`**) with a tap/hover **popover**
+  showing `N brackets × $50 = pot`, filled count, and a "see who's in" link to `/brackets`.
+  ⚠ **The credits/players pot model in this 2026-06-24 entry was SUPERSEDED 2026-06-28** — pot is now `$50 × official brackets entered` and the "players" count was dropped (see the newest changelog entry).
   Data from **`getPoolStats()`** (`actions/pool.ts`: `User.credits>0` + official picks + PoolConfig),
   fetched in `layout.tsx` (**signed-in only**) and passed to `Nav`.
 - **Pre-lock roster.** `/brackets` now reveals **who's in + how many brackets each holds (= their
@@ -302,7 +313,8 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   `official-r32.ts`, `bracket-name.ts` (`normalizeBracketName`), `bracket-credits.ts`
   (`canCreateBracket` + `canMarkOfficial`), `effective-r32.ts` (`mergeEffectiveR32`),
   `bracket-changes.ts` (`stalePicks`), `bracket-validate.ts` (`validateSubmission` + `validateDraft`),
-  `pool-stats.ts` (`computePoolStats` credits-based players/entries/pot + `countFilledBrackets`),
+  `pool-stats.ts` (`computePoolStats(bracketsIn, entryCents)` — pot = official brackets × entry + `countFilledBrackets`),
+  `admin-stats.ts` (`membersMissingEntry` — in-pool members with no fully-filled official bracket, for the "haven't submitted" panel),
   `bracket-export.ts` (`bracketImageFilename` slug + `canShareFiles` Web Share probe — for image export),
   `notifications.ts` (`getAdminNotificationCount` — extensible admin-actionable count),
   `email.ts` (`sendPasswordResetEmail` + `sendNewSignupNotice`),
@@ -319,17 +331,17 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   KEYS), `admin.ts` (`approveUser` grants 1 credit;
   `grantCredits`; no bracket-approval actions; **`approveUser` auto-grants 1 credit → also adds the
   member to the pot; zero out non-payers manually**),
-  `bracket.ts` (official R32), `bracket-entry.ts` (`listMyBrackets`/`createBracket` (free)/`getBracket`/
-  `saveBracket` (partial)/`setBracketOfficial`/**`renameBracket`** (lock-gated); returns error KEYS; no
+  `bracket.ts` (official R32; **override-aware `getOfficialBracket`** = `lockOverrideIso ?? computed` + **`setLockOverride`/`clearLockOverride`/`getLockState`** for the admin lock panel), `bracket-entry.ts` (`listMyBrackets`/`createBracket` (free, **even post-lock**)/`getBracket`/
+  `saveBracket`/`setBracketOfficial`/**`renameBracket`** — **drafts editable anytime; official brackets freeze at lock** (`official && locked`); returns error KEYS; no
   `deleteBracket`), `results.ts` (`setMatchWinner`/`refreshResults` — now also call `buildResultDeltaOps`),
   **`results-delta.ts`** (`buildResultDeltaOps` — previousRank snapshot + `ResultEvent` writes, spliced into the winner `$transaction`),
-  `leaderboard.ts` (**ranks** official brackets; **pot = $50 × credits**; `champions` for the banner; no leader until score > 0),
-  **`next-games.ts`** (`getNextGames` for the home strip + `/api/next-games`), **`pool.ts`** (`getPoolStats` for the header pill),
+  `leaderboard.ts` (**ranks** official brackets; **pot = $50 × official brackets entered**; `champions` for the banner; no leader until score > 0),
+  **`next-games.ts`** (`getNextGames` for the home strip + `/api/next-games`), **`pool.ts`** (`getPoolStats` — brackets-based pot for the header pill),
   `browse.ts` (pre-lock roster of credit-holders; picks hidden) / `compare.ts` (post-lock, official only),
   `projection.ts` (`getProjectedBracket` + `getProjectedR32`).
 - **Pages (`src/app/`, 14):** `page.tsx`+`HomeContent.tsx` (home), `official/`, `bracket/`+`bracket/[id]/`,
   `brackets/`+`brackets/[user]/`, `compare/`, `account/`, `forgot-password/`, `reset-password/`,
-  `admin/`+`admin/bracket/`, `login/`, `signup/`. Root `loading.tsx` = navigation spinner.
+  `admin/` (members + pending + **"Haven't submitted"** panel)+`admin/bracket/` (R32 form, results, **`LockControl`** lock panel), `login/`, `signup/`. Root `loading.tsx` = navigation spinner.
   **API routes:** `api/admin/notifications/route.ts` (admin-guarded pending-approval count, polled by `Nav`) +
   **`api/next-games/route.ts`** (`getNextGames`, polled every 30s by the home games strip).
 - **Components (`src/app/_components/`):** `LangProvider.tsx`, **`LockGate.tsx`** (pre-lock countdown + create-bracket
@@ -344,11 +356,11 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   + `BracketStatic`; on-screen-covered capture; see export gotchas above). `layout.tsx` renders
   **`<GoogleAnalytics>`** (`@next/third-parties`) when `NEXT_PUBLIC_GA_ID` is set.
 - **DB:** `prisma/schema.prisma` (`User` w/ `credits`; `Team`, `Match`, `Bracket` w/ `name` +
-  **`official`** + **`previousRank`**; new **`ResultEvent`**; `PoolConfig`). Seeds: `prisma/seed.ts`,
+  **`official`** + **`previousRank`**; new **`ResultEvent`**; `PoolConfig` w/ **`lockOverrideIso`** (admin lock override)). Seeds: `prisma/seed.ts`,
   `prisma/seed-preview.ts`; migrations `prisma/backfill-credits.ts`, `prisma/backfill-official.ts`.
   **Migrations are `prisma db push`** (stop the dev server first — Windows DLL lock).
 - **Stack:** Next.js 15.5 (App Router, stock), React 19, NextAuth v5 beta, Prisma 6 + Neon,
-  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, `html-to-image`, Vitest 4 (229 tests).
+  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, `html-to-image`, Vitest 4 (232 tests).
 - **Scratch:** `.superpowers/sdd/progress.md` (gitignored ledger of every task/review this build).
 
 ## Sibling apps (context)
