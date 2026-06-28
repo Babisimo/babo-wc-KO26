@@ -4,6 +4,7 @@ import { auth, type AppSession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { approveUser, rejectUser, setAdmin, removeUser, grantCredits } from '@/app/actions/admin';
 import { ActionButton } from './UserRow';
+import { membersMissingEntry } from '@/lib/admin-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,14 @@ export default async function AdminPage() {
   });
   const admins = all.filter((u) => u.isAdmin);
   const members = all.filter((u) => !u.isAdmin);
+
+  // In-pool members (credits ≥ 1) who haven't completed an official entry yet.
+  const poolMembers = members.filter((u) => u.credits > 0);
+  const officialBrackets = await db.bracket.findMany({
+    where: { official: true, userId: { in: poolMembers.map((m) => m.id) } },
+    select: { userId: true, picks: true },
+  });
+  const notSubmitted = membersMissingEntry(poolMembers, officialBrackets);
 
   const memberRow = (u: (typeof all)[number]) => (
     <tr key={u.id}>
@@ -75,6 +84,30 @@ export default async function AdminPage() {
                       <ActionButton label="Reject" action={rejectUser.bind(null, u.id)} />
                     </div>
                   </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className="panel reveal reveal-3" style={{ marginTop: 18 }}>
+        <div className="panel-head">
+          <h2>Haven&apos;t submitted</h2>
+          <span className="pill">{notSubmitted.length} to chase</span>
+        </div>
+        {notSubmitted.length === 0 ? (
+          <p className="muted">Everyone in the pool has a completed bracket. 🎉</p>
+        ) : (
+          <table className="adm-table">
+            <thead><tr><th>Username</th><th>First</th><th>Last</th><th>Email</th></tr></thead>
+            <tbody>
+              {notSubmitted.map((u) => (
+                <tr key={u.id}>
+                  <td data-label="Username">@{u.username}</td>
+                  <td data-label="First">{u.firstName}</td>
+                  <td data-label="Last">{u.lastName}</td>
+                  <td data-label="Email" className="muted" style={{ fontSize: '0.84rem' }}>{u.email}</td>
                 </tr>
               ))}
             </tbody>
