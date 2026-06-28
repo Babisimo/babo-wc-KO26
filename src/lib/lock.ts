@@ -1,6 +1,6 @@
-export const LOCK_LEAD_MS = 3600_000; // 1 hour
+export const LOCK_LEAD_MS = 1800_000; // 30 minutes (extended from 1h to give 30 more minutes before lock)
 
-/** Earliest non-null R32 kickoff minus one hour; null if there are no kickoffs. */
+/** Earliest non-null R32 kickoff minus the lock lead; null if there are no kickoffs. */
 export function computeLockTime(r32Kickoffs: (Date | null)[]): Date | null {
   const times = r32Kickoffs.filter((d): d is Date => d !== null).map((d) => d.getTime());
   if (times.length === 0) return null;

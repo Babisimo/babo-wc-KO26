@@ -2,16 +2,16 @@ import { describe, it, expect } from 'vitest';
 import { LOCK_LEAD_MS, computeLockTime, isLocked, formatLockTimePT } from './lock';
 
 describe('computeLockTime', () => {
-  it('returns earliest kickoff minus one hour', () => {
+  it('returns earliest kickoff minus the lock lead (30 minutes)', () => {
     const a = new Date('2026-07-01T18:00:00Z');
     const b = new Date('2026-07-01T16:00:00Z'); // earliest
     const c = new Date('2026-07-02T16:00:00Z');
     const lock = computeLockTime([a, b, c]);
-    expect(lock?.toISOString()).toBe('2026-07-01T15:00:00.000Z');
+    expect(lock?.toISOString()).toBe('2026-07-01T15:30:00.000Z');
   });
   it('ignores null kickoffs', () => {
     const b = new Date('2026-07-01T16:00:00Z');
-    expect(computeLockTime([null, b, null])?.toISOString()).toBe('2026-07-01T15:00:00.000Z');
+    expect(computeLockTime([null, b, null])?.toISOString()).toBe('2026-07-01T15:30:00.000Z');
   });
   it('returns null when there are no kickoffs', () => {
     expect(computeLockTime([])).toBeNull();
@@ -34,8 +34,8 @@ describe('isLocked', () => {
 });
 
 describe('LOCK_LEAD_MS', () => {
-  it('is one hour', () => {
-    expect(LOCK_LEAD_MS).toBe(3600_000);
+  it('is 30 minutes', () => {
+    expect(LOCK_LEAD_MS).toBe(1800_000);
   });
 });
 
