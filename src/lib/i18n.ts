@@ -277,6 +277,10 @@ const en = {
   'odds.errTitle': 'Couldn\'t load odds',
   'odds.errBody': 'Try again in a moment. ({error})',
   'odds.empty': 'No official brackets yet.',
+  // home odds teaser
+  'home.oddsTeaserTitle': 'Who’s favored to win the pool?',
+  'home.oddsTeaserLead': 'See live win odds for every bracket and the bookmakers’ line on each game.',
+  'home.oddsTeaserCta': 'View odds',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -554,6 +558,10 @@ const es: Record<StringKey, string> = {
   'odds.errTitle': 'No se pudieron cargar',
   'odds.errBody': 'Intenta en un momento. ({error})',
   'odds.empty': 'Todavía no hay brackets oficiales.',
+  // home odds teaser
+  'home.oddsTeaserTitle': '¿Quién es favorito pa\' ganar el pool?',
+  'home.oddsTeaserLead': 'Mira las probabilidades en vivo de cada bracket y la línea de las casas en cada juego.',
+  'home.oddsTeaserCta': 'Ver probabilidades',
 };
 
 export const STRINGS = { en, es } as const;

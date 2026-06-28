@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { getLeaderboard } from '@/app/actions/leaderboard';
 import { getNextGames } from '@/app/actions/next-games';
 import { myStanding, movement } from '@/lib/standing';
+import { isLocked } from '@/lib/lock';
 import HomeContent from './HomeContent';
 import type { ResultEventView } from '@/app/_components/WhatHappened';
 
@@ -31,6 +32,8 @@ export default async function Home() {
     ? { winner: latest.winner, loser: latest.loser, bustedCount: latest.bustedCount, newLeader: latest.newLeader }
     : null;
 
+  const locked = isLocked(new Date(), nextGames.lockTimeIso ? new Date(nextGames.lockTimeIso) : null);
+
   return (
     <HomeContent
       signedIn={!!userId}
@@ -39,6 +42,7 @@ export default async function Home() {
       standing={standing}
       move={move}
       event={event}
+      locked={locked}
     />
   );
 }
