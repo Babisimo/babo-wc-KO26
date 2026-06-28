@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import ChampionBanner from '@/app/_components/ChampionBanner';
 import LockGate from '@/app/_components/LockGate';
+import WhatHappened, { type ResultEventView } from '@/app/_components/WhatHappened';
 import { useT } from '@/app/_components/LangProvider';
 import type { LeaderboardData } from '@/app/actions/leaderboard';
 import type { getNextGames } from '@/app/actions/next-games';
@@ -12,12 +13,14 @@ function dollars(cents: number): string { return `$${(cents / 100).toFixed(2)}`;
 type NextGamesData = Awaited<ReturnType<typeof getNextGames>>;
 
 export default function HomeContent({
-  signedIn, board, nextGames, standing,
+  signedIn, board, nextGames, standing, move, event,
 }: {
   signedIn: boolean;
   board: LeaderboardData;
   nextGames: NextGamesData;
   standing: { rank: number; total: number } | null;
+  move: { dir: 'up' | 'down' | 'same' | 'none'; places: number };
+  event: ResultEventView | null;
 }) {
   const t = useT();
   return (
@@ -27,7 +30,11 @@ export default function HomeContent({
         <p className="eyebrow">{t('home.eyebrow')}</p>
         <h1>{t('home.title')}</h1>
         {standing && (
-          <p className="lead">{t('home.youStanding', { rank: standing.rank, points: standing.total })}</p>
+          <p className="lead">
+            {t('home.youStanding', { rank: standing.rank, points: standing.total })}
+            {move.dir === 'up' && <span className="move move-up"> {t('home.moveUp', { n: move.places })}</span>}
+            {move.dir === 'down' && <span className="move move-down"> {t('home.moveDown', { n: move.places })}</span>}
+          </p>
         )}
       </header>
 
@@ -60,6 +67,8 @@ export default function HomeContent({
           </div>
         </section>
       )}
+
+      <WhatHappened event={event} />
 
       {signedIn && (
         <section className="panel reveal reveal-2">
