@@ -7,22 +7,15 @@ import { officialR32FromSlots } from '@/lib/official-r32';
 import { isLocked } from '@/lib/lock';
 import { getBookOdds } from '@/lib/book-odds';
 import { simulateOdds, type OddsBracket, type OddsReport } from '@/lib/bracket-odds';
-import type { Picks } from '@/lib/bracket-picks';
+import { coercePicks } from '@/lib/picks-json';
 
 const SIMS = 100_000;
 
-function coercePicks(raw: unknown): Picks {
-  const out: Picks = {};
-  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-    for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
-      const slot = Number(k);
-      if (Number.isInteger(slot) && typeof v === 'string') out[slot] = v;
-    }
-  }
-  return out;
-}
+// Bounds the per-window cost to one simulation; concurrent pollers share one cached result.
+const ODDS_TTL_MS = 120_000;
+let cached: { at: number; report: OddsReport } | null = null;
 
-export async function getOdds(): Promise<OddsReport> {
+async function computeOdds(): Promise<OddsReport> {
   const [{ slots, lockTimeIso }, winners, bookLines] = await Promise.all([
     getOfficialBracket(),
     currentWinners(),
@@ -58,4 +51,11 @@ export async function getOdds(): Promise<OddsReport> {
     { officialR32, winners, brackets, bookLines, locked, updatedAt: new Date().toISOString() },
     { sims: SIMS },
   );
+}
+
+export async function getOdds(): Promise<OddsReport> {
+  if (cached && Date.now() - cached.at < ODDS_TTL_MS) return cached.report;
+  const report = await computeOdds();
+  cached = { at: Date.now(), report };
+  return report;
 }
