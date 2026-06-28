@@ -10,6 +10,7 @@ import { applyWinner } from '@/lib/official-winners';
 import { mapEspnKnockout, resolveOfficialWinners } from '@/lib/results-feed';
 import { TOTAL_SLOTS } from '@/lib/bracket-structure';
 import { winnersToPicks, type OfficialWinners } from '@/lib/scoring';
+import { buildResultDeltaOps } from '@/app/actions/results-delta';
 
 const ESPN_KO_URL =
   'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260628-20260720';
@@ -64,8 +65,9 @@ export async function setMatchWinner(slot: number, winner: string | null): Promi
       );
     }
   }
-  if (persistOps.length > 0) {
-    await db.$transaction(persistOps);
+  const deltaOps = await buildResultDeltaOps(before, after);
+  if (persistOps.length > 0 || deltaOps.length > 0) {
+    await db.$transaction([...persistOps, ...deltaOps]);
   }
 
   revalidatePath('/admin/bracket');
@@ -109,15 +111,16 @@ export async function refreshResults(): Promise<{ error?: string; updated?: numb
     changes.push({ slot: s, next });
   }
 
-  if (changes.length > 0) {
-    await db.$transaction(
-      changes.map((c) =>
-        db.match.update({
-          where: { slot: c.slot },
-          data: { actualWinner: c.next, winnerSource: c.next === null ? null : 'FEED' },
-        }),
+  const after: OfficialWinners = { ...existing };
+  for (const c of changes) after[c.slot] = c.next;
+  const deltaOps = await buildResultDeltaOps(existing, after);
+  if (changes.length > 0 || deltaOps.length > 0) {
+    await db.$transaction([
+      ...changes.map((c) =>
+        db.match.update({ where: { slot: c.slot }, data: { actualWinner: c.next, winnerSource: c.next === null ? null : 'FEED' } }),
       ),
-    );
+      ...deltaOps,
+    ]);
   }
 
   revalidatePath('/admin/bracket');
