@@ -20,8 +20,9 @@ export default async function AdminPage() {
   const admins = all.filter((u) => u.isAdmin);
   const members = all.filter((u) => !u.isAdmin);
 
-  // In-pool members (credits ≥ 1) who haven't completed an official entry yet.
-  const poolMembers = members.filter((u) => u.credits > 0);
+  // In-pool members (approved, credits ≥ 1) who haven't completed an official entry yet.
+  // status guard so a rejected-but-still-credited member doesn't show up.
+  const poolMembers = members.filter((u) => u.credits > 0 && u.status === 'APPROVED');
   const officialBrackets = await db.bracket.findMany({
     where: { official: true, userId: { in: poolMembers.map((m) => m.id) } },
     select: { userId: true, picks: true },
