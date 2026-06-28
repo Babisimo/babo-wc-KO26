@@ -31,7 +31,21 @@ export default function HomeContent({
         )}
       </header>
 
-      <LockGate data={nextGames} />
+      <LockGate
+        data={nextGames}
+        preLock={signedIn ? (
+          <section className="cta reveal" style={{ marginBottom: 18 }}>
+            <div className="cta-text">
+              <p className="eyebrow">{t('home.playEyebrow')}</p>
+              <h2>{t('home.playTitle')}</h2>
+              <p className="muted">{t('home.playLead')}</p>
+            </div>
+            <div className="cta-actions">
+              <Link href="/bracket" className="btn">{t('home.playCta')}</Link>
+            </div>
+          </section>
+        ) : undefined}
+      />
 
       {!signedIn && (
         <section className="cta reveal" style={{ marginTop: 4, marginBottom: 18 }}>
