@@ -1,6 +1,6 @@
 # WC26 Knockout Bracket — Handoff
 
-_Last updated: 2026-06-27_
+_Last updated: 2026-06-28_
 
 ---
 
@@ -11,24 +11,35 @@ _Last updated: 2026-06-27_
 on a live leaderboard with a pot. Stock **Next.js 15.5 App Router** app with its own **Neon
 Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
-**Current state (all merged to `master`, tip `d4cf65c`, and pushed):**
+**Current state (all merged to `master`, tip `918d359`, and pushed):**
 - Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there). Latest session's commits are live in production via that auto-deploy.
-- Verified latest session (2026-06-26): **`npx tsc --noEmit` clean · `npx vitest run` 212/212 (37 files) · `next lint` clean · `next build` 17 routes.**
-- **New env var this session:** optional **`NEXT_PUBLIC_GA_ID`** (Google Analytics 4). Set in **Vercel → Production** (`G-V2HZMLKPFH`) — it's a build-time `NEXT_PUBLIC_` inline, so a **redeploy is required** after adding/changing it. Analytics only counts from install forward (no retroactive history).
-- DB is live on Neon (us-west-2), schema includes **`Bracket.official`** (migration applied). **The official R32 draw is now SET** (group stage over; 16 matchups + kickoffs written from the live ESPN schedule, 2026-06-27) — the bracket is **open** with a real lock countdown (Jun 28, 2026 · 11:00 AM PDT). Picks remain editable until lock; the projection now self-corrects from real fixtures (see the newest changelog entry).
+- Verified latest session (2026-06-28): **`npx tsc --noEmit` clean · `npx vitest run` 229/229 (41 files) · `next lint` clean · `next build` clean (incl. new `/api/next-games`).** ⚠ `next build` flakes on Windows with a stale-`.next` `PageNotFoundError` on unrelated pages — `rm -rf .next` before building.
+- **New env var (earlier session):** optional **`NEXT_PUBLIC_GA_ID`** (Google Analytics 4). Set in **Vercel → Production** (`G-V2HZMLKPFH`) — build-time `NEXT_PUBLIC_` inline, so a **redeploy is required** after adding/changing it. Analytics only counts from install forward.
+- DB is live on Neon (us-west-2). Schema: **`Bracket.official`**, **`Bracket.previousRank`** (movement) + new **`ResultEvent`** table (results-drama feed) — all migrated via `prisma db push`. **The official R32 draw is SET** (group stage over; 16 matchups + kickoffs from the live ESPN schedule). The bracket is **open**; **lock = Jun 28, 2026 · 11:30 AM PDT** (lead shortened from 1h → 30m this session). Picks editable until lock; the projection self-corrects from real fixtures.
 
 > Seven sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
 
 **To resume:**
 1. `cd C:\Users\Oswaldo\wc_ko_26 && npm run dev` → http://localhost:3000
 2. Log in as admin: **gondaniel852@gmail.com** (the `ADMIN_EMAIL`; auto-approved + admin + auto-granted 1 credit).
-3. Public pages: `/` (leaderboard), `/official` (real/projected bracket + EN/ES toggle in nav), `/bracket` (your brackets), `/brackets` (browse, post-lock). Admin: `/admin`, `/admin/bracket`.
+3. Public pages: `/` (dashboard: lock gate / live games strip + your standing + leaderboard), `/official` (real/projected bracket + EN/ES toggle in nav), `/bracket` (your brackets), `/brackets` (browse, post-lock). Admin: `/admin`, `/admin/bracket`.
 
 ---
 
-## What changed since the original handoff (sessions through 2026-06-27)
+## What changed since the original handoff (sessions through 2026-06-28)
 
-Nine entries on top of the original 5-feature base. Newest first.
+Ten entries on top of the original 5-feature base. Newest first.
+
+### Home → live dashboard + lock gate, 30-min lock extension, results drama (2026-06-28)
+Brainstorm→spec→plan→**subagent-driven** build for two phases, plus a one-off lock tweak. **All merged to `master` and pushed; live on Vercel.** Specs `docs/superpowers/specs/2026-06-27-home-dashboard-live-games-design.md` + `…/2026-06-27-champion-congrats-design.md`; plans `…/plans/2026-06-27-home-dashboard-live-games.md` + `…/2026-06-28-home-results-drama-phase2.md`.
+- **Home is now a personal dashboard** (replaced the old hero + countdown + stage-meter stack). Top→bottom (signed-in): champion banner (gated) → tiny hero + **your standing** line (`You: 3rd · 24 pts`, gated on `stage.started`) → **lock gate** → leaderboard. The old `Countdown`/`StageTracker` are no longer rendered on `/` (components still exist; `StageTracker` is still used by `/official`).
+- **"Next up" games strip + lock gate.** `LockGate` (`_components/LockGate.tsx`) shows the **"brackets lock in" countdown + a "create your own bracket" card** (signed-in) BEFORE lock; the instant the timer hits zero it **live-swaps** to the **`NextGames`** strip (no refresh) and strips both. The strip shows up to 3 games (live → upcoming → recent-final) from the **ESPN scoreboard**, each with your **pick + ✓/✗**, and **polls `/api/next-games` every 30s**. New libs `next-games.ts` (`mapScoreboardGames`+`pickGames`), `game-slot.ts` (`gameSlotPick`), `standing.ts` (`myStanding`+`movement`); action `actions/next-games.ts` (`getNextGames` — top-scoring official bracket supplies "your pick"; ESPN fetch `next:{revalidate:15}`).
+- **Pool champion congrats banner** (`ChampionBanner.tsx`) — gold banner naming the pool winner(s) once the Final is scored; ties → co-champions; pot share each. Pure `champion.ts`. Renders nothing until the tournament ends.
+- **Leaderboard fix:** no "🏆 leader" badge/pill until the top score is **> 0** (at 0 everyone tied → all were flagged). `potSplit` returns no winners until points are on the board.
+- **Lock extended +30 min:** `LOCK_LEAD_MS` 1h→30m, so lock = earliest R32 kickoff − 30m (**11:30 AM PDT**). Gives players more time to submit.
+- **Phase 2 — results drama** (movement + "what just happened"). Schema: **`Bracket.previousRank`** + **`ResultEvent`** (slot/winner/loser/bustedCount/newLeader). On every winner change (`setMatchWinner`/`refreshResults`), `actions/results-delta.ts` `buildResultDeltaOps` snapshots each official bracket's **pre-change rank** → `previousRank` and writes a **`ResultEvent`** per newly-decided slot — **atomically in the same `$transaction`** as the winner writes (a drama-path throw rolls back the winner write too, by design). Pure `result-delta.ts` (`resultDelta`: newly-decided events + busted count + leader change). UI: **movement ▲/▼** in the standing line + **`WhatHappened.tsx`** drama line (`⚡ {winner} beat {loser} — {n} busted · {leader} takes #1`), server-rendered from the latest `ResultEvent`. **Activates only once an admin records winners** (no `previousRank`/events exist yet).
+- **i18n:** new `home.*` keys (nextUp/live/final/kickoffIn/yourPick/pickWon/pickBusted/picksLockAt/noGames/youStanding/moveUp/moveDown/bustedLine/takesFirst, champOne/champMany, common.and) + restored `home.play*` for the create-bracket card — all EN+ES (Sonoran), drift-guard enforced.
+- **⚠ Deferred fast-follows** (logged in `.superpowers/sdd/progress.md`): movement/drama are **server-rendered only** (update on navigation/refresh, not live-polled like the strip); append-only `ResultEvent` can show a **stale drama line after an admin winner reversal**; `leaderDisplay` can say "takes #1" on a tie-catch-up / name a leader at 0 pts (vs `potSplit`'s >0 rule); `getNextGames`/page do duplicate `currentWinners()`/bracket reads; `coercePicks`+display-name are hand-copied in 3 places (parity by hand, not structural); `NextGames` poll has no `AbortController`.
 
 ### Official R32 draw SET + projection self-corrects from fixtures + champion banner (2026-06-27)
 Group stage finished, so this session opened the bracket and hardened the projection. **Code is committed; the official R32 write was a one-off data op against the live Neon DB.**
@@ -298,6 +309,9 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   `wc26-seeding.ts` (projections; `assignThirds` now a pre-fixture fallback), `standings-feed.ts` (ESPN standings),
   `r32-fixtures.ts` (`mapEspnSchedule` + `reconcileSeedWithFixtures` + `fixtureMismatches` — corrects the
   projection from the real ESPN schedule), `champion.ts` (`championAnnouncement` + `joinNames` — pool winner banner),
+  `next-games.ts` (`mapScoreboardGames` + `pickGames` — ESPN scoreboard → "Next up" strip) +
+  `game-slot.ts` (`gameSlotPick` — fixture→slot→your-pick+✓/✗), `standing.ts` (`myStanding` + `movement`),
+  `result-delta.ts` (`resultDelta` — newly-decided events + busted count + leader change for the drama line),
   `i18n.ts` (`translate` + dictionary), `teams.ts` (48 teams), `auth*.ts`, `profile.ts`,
   `username-filter.ts`.
 - **Server actions (`src/app/actions/`):** `auth.ts` (signup grants admin 1 credit; emails admins a
@@ -307,26 +321,34 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   member to the pot; zero out non-payers manually**),
   `bracket.ts` (official R32), `bracket-entry.ts` (`listMyBrackets`/`createBracket` (free)/`getBracket`/
   `saveBracket` (partial)/`setBracketOfficial`/**`renameBracket`** (lock-gated); returns error KEYS; no
-  `deleteBracket`), `results.ts`, `leaderboard.ts` (**ranks** official brackets; **pot = $50 × credits**),
-  **`pool.ts`** (`getPoolStats` for the header pill), `browse.ts` (pre-lock roster of credit-holders;
-  picks hidden) / `compare.ts` (post-lock, official only), `projection.ts` (`getProjectedBracket` + `getProjectedR32`).
+  `deleteBracket`), `results.ts` (`setMatchWinner`/`refreshResults` — now also call `buildResultDeltaOps`),
+  **`results-delta.ts`** (`buildResultDeltaOps` — previousRank snapshot + `ResultEvent` writes, spliced into the winner `$transaction`),
+  `leaderboard.ts` (**ranks** official brackets; **pot = $50 × credits**; `champions` for the banner; no leader until score > 0),
+  **`next-games.ts`** (`getNextGames` for the home strip + `/api/next-games`), **`pool.ts`** (`getPoolStats` for the header pill),
+  `browse.ts` (pre-lock roster of credit-holders; picks hidden) / `compare.ts` (post-lock, official only),
+  `projection.ts` (`getProjectedBracket` + `getProjectedR32`).
 - **Pages (`src/app/`, 14):** `page.tsx`+`HomeContent.tsx` (home), `official/`, `bracket/`+`bracket/[id]/`,
   `brackets/`+`brackets/[user]/`, `compare/`, `account/`, `forgot-password/`, `reset-password/`,
   `admin/`+`admin/bracket/`, `login/`, `signup/`. Root `loading.tsx` = navigation spinner.
-  **API route:** `api/admin/notifications/route.ts` (admin-guarded live pending-approval count, polled by `Nav`).
-- **Components (`src/app/_components/`):** `LangProvider.tsx`, `BracketLayout.tsx` (round-tabs+swipe /
+  **API routes:** `api/admin/notifications/route.ts` (admin-guarded pending-approval count, polled by `Nav`) +
+  **`api/next-games/route.ts`** (`getNextGames`, polled every 30s by the home games strip).
+- **Components (`src/app/_components/`):** `LangProvider.tsx`, **`LockGate.tsx`** (pre-lock countdown + create-bracket
+  card → live-swaps to `NextGames` at lock), **`NextGames.tsx`** (live games strip, 30s poll), **`ChampionBanner.tsx`**
+  (pool winner banner), **`WhatHappened.tsx`** (results drama line), `BracketLayout.tsx` (round-tabs+swipe /
   pan-zoom tree), `BracketCard.tsx`, `RoundLabels.tsx`, `MarchMadnessBracket.tsx`, `StageTracker.tsx`
-  (Knockout Stage meter), `TeamFlag.tsx`, `Countdown.tsx`, **`PoolPill.tsx`** (header pot/who's-in pill
+  (Knockout Stage meter; only `/official` uses it now), `TeamFlag.tsx`, `Countdown.tsx` (home renders it via `LockGate`),
+  **`PoolPill.tsx`** (header pot/who's-in pill
   + breakdown popover). Plus `Nav.tsx` (client; hamburger + EN/ES toggle + admin pending-approval badge
   w/ 15s polling + the pool pill), `bracket/RenameControl.tsx` (inline bracket rename), and
   **`bracket/BracketExportButton.tsx`** (PNG export on the edit page; `MarchMadnessBracket layout="static"`
   + `BracketStatic`; on-screen-covered capture; see export gotchas above). `layout.tsx` renders
   **`<GoogleAnalytics>`** (`@next/third-parties`) when `NEXT_PUBLIC_GA_ID` is set.
 - **DB:** `prisma/schema.prisma` (`User` w/ `credits`; `Team`, `Match`, `Bracket` w/ `name` +
-  **`official`**, `PoolConfig`). Seeds: `prisma/seed.ts`, `prisma/seed-preview.ts`; migrations
-  `prisma/backfill-credits.ts`, `prisma/backfill-official.ts`.
+  **`official`** + **`previousRank`**; new **`ResultEvent`**; `PoolConfig`). Seeds: `prisma/seed.ts`,
+  `prisma/seed-preview.ts`; migrations `prisma/backfill-credits.ts`, `prisma/backfill-official.ts`.
+  **Migrations are `prisma db push`** (stop the dev server first — Windows DLL lock).
 - **Stack:** Next.js 15.5 (App Router, stock), React 19, NextAuth v5 beta, Prisma 6 + Neon,
-  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, Vitest 4 (203 tests).
+  Tailwind v4 + hand-written CSS (`src/app/globals.css`), `flag-icons`, `html-to-image`, Vitest 4 (229 tests).
 - **Scratch:** `.superpowers/sdd/progress.md` (gitignored ledger of every task/review this build).
 
 ## Sibling apps (context)
