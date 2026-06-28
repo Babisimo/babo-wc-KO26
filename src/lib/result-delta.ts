@@ -1,5 +1,6 @@
 import { scoreBracket } from '@/lib/scoring';
 import { rankEntries } from '@/lib/leaderboard-rank';
+import { TOTAL_SLOTS } from '@/lib/bracket-structure';
 
 export type WinnerMap = Record<number, string | null>;
 export type SlotTeams = Record<number, { teamA: string | null; teamB: string | null }>;
@@ -27,7 +28,7 @@ export function resultDelta(
   brackets: DeltaBracket[],
 ): { events: ResultEventData[]; newLeader: string | null } {
   const events: ResultEventData[] = [];
-  for (let slot = 1; slot <= 31; slot++) {
+  for (let slot = 1; slot <= TOTAL_SLOTS; slot++) {
     const before = oldW[slot] ?? null;
     const after = newW[slot] ?? null;
     if (before || !after) continue; // only no-winner → winner
