@@ -68,7 +68,7 @@ export default function MyBrackets({
             {brackets.map((b) => (
               <tr key={b.id}>
                 <td>
-                  <RenameControl id={b.id} name={b.name} locked={locked}>
+                  <RenameControl id={b.id} name={b.name} locked={locked && b.official}>
                     <Link href={`/bracket/${b.id}`}>{b.name}</Link>
                   </RenameControl>
                   {b.official && <span className="pill" style={{ marginLeft: 8 }}>{t('bracket.officialBadge')}</span>}
@@ -101,12 +101,10 @@ export default function MyBrackets({
         </table>
       )}
 
-      {!locked && (
-        <div className="savebar" style={{ marginTop: 14 }}>
-          <input type="text" value={name} maxLength={32} placeholder={t('bracket.newPlaceholder')} onChange={(e) => setName(e.target.value)} style={{ maxWidth: 240 }} />
-          <button type="button" disabled={pending} onClick={add}>{pending ? t('bracket.working') : t('bracket.new')}</button>
-        </div>
-      )}
+      <div className="savebar" style={{ marginTop: 14 }}>
+        <input type="text" value={name} maxLength={32} placeholder={t('bracket.newPlaceholder')} onChange={(e) => setName(e.target.value)} style={{ maxWidth: 240 }} />
+        <button type="button" disabled={pending} onClick={add}>{pending ? t('bracket.working') : t('bracket.new')}</button>
+      </div>
       {error && <p className="banner error" style={{ marginTop: 12 }}>{t(error)}</p>}
     </div>
   );

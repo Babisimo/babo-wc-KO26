@@ -111,11 +111,10 @@ export async function listMyBrackets(): Promise<{ error?: string; brackets?: MyB
 export async function createBracket(name: string): Promise<{ errorKey?: StringKey; id?: string }> {
   const userId = await requireUserId();
   if (!userId) return { errorKey: 'bracket.err.notSignedIn' };
-  const lock = await lockInfo();
-  if (lock.locked) return { errorKey: 'bracket.err.lockedNew' };
 
-  // Drafts are free and unlimited before lock — no credit is spent here. A credit is only
-  // committed when the user designates a bracket official (setBracketOfficial).
+  // Drafts are free and unlimited — even after lock. Players can keep building brackets; they
+  // just can't enter one (mark it official) once locked. No credit is spent here. A credit is
+  // only committed when the user designates a bracket official (setBracketOfficial).
   const used = await db.bracket.count({ where: { userId } });
   const cleanName = normalizeBracketName(name, used + 1);
   const created = await db.bracket.create({ data: { userId, name: cleanName, picks: {} }, select: { id: true } });
@@ -126,11 +125,14 @@ export async function createBracket(name: string): Promise<{ errorKey?: StringKe
 export async function renameBracket(id: string, name: string): Promise<{ errorKey?: StringKey; name?: string }> {
   const userId = await requireUserId();
   if (!userId) return { errorKey: 'bracket.err.notSignedIn' };
-  const row = await db.bracket.findUnique({ where: { id }, select: { userId: true } });
+  const row = await db.bracket.findUnique({ where: { id }, select: { userId: true, official: true } });
   if (!row || row.userId !== userId) return { errorKey: 'bracket.err.notFound' };
 
-  const lock = await lockInfo();
-  if (lock.locked) return { errorKey: 'bracket.err.lockedRename' };
+  // Official brackets freeze (name included) at lock; drafts can always be renamed.
+  if (row.official) {
+    const lock = await lockInfo();
+    if (lock.locked) return { errorKey: 'bracket.err.lockedRename' };
+  }
 
   // Blank/invalid input falls back to "Bracket {n}", mirroring create.
   const used = await db.bracket.count({ where: { userId } });
@@ -183,7 +185,8 @@ export async function getBracket(id: string): Promise<{ error?: string; view?: B
       staleSlots: stalePicks(eff.r32, picks),
       submittedAt: row.submittedAt ? row.submittedAt.toISOString() : null,
       lockTimeIso: eff.lockTimeIso,
-      locked: lockedNow(eff.lockTimeIso),
+      // Drafts stay editable after lock; only official (entered) brackets freeze.
+      locked: lockedNow(eff.lockTimeIso) && row.official,
       drawFinal: eff.drawFinal,
     },
   };
@@ -192,11 +195,12 @@ export async function getBracket(id: string): Promise<{ error?: string; view?: B
 export async function saveBracket(id: string, picks: Picks): Promise<{ errorKey?: StringKey }> {
   const userId = await requireUserId();
   if (!userId) return { errorKey: 'bracket.err.notSignedIn' };
-  const row = await db.bracket.findUnique({ where: { id }, select: { userId: true } });
+  const row = await db.bracket.findUnique({ where: { id }, select: { userId: true, official: true } });
   if (!row || row.userId !== userId) return { errorKey: 'bracket.err.notFound' };
 
   const eff = await getEffectiveR32();
-  if (lockedNow(eff.lockTimeIso)) return { errorKey: 'bracket.err.lockedEdit' };
+  // Official (entered) brackets freeze at lock for scoring integrity; drafts stay editable.
+  if (row.official && lockedNow(eff.lockTimeIso)) return { errorKey: 'bracket.err.lockedEdit' };
 
   // Drafts may be incomplete; only the picks that are present must be valid contestants.
   const check = validateDraft(eff.r32, picks);
