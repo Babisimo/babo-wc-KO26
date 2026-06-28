@@ -31,7 +31,7 @@ export default function NextGames({ initial }: { initial: Data }) {
       {data.games.length === 0 ? (
         <p className="muted">{t('home.noGames')}</p>
       ) : (
-        <ul className="nextup-list">
+        <ul className="nextup-list" aria-live="polite">
           {data.games.map((g) => (
             <li key={`${g.teamA}-${g.teamB}`} className={`nextup-game state-${g.state}`}>
               <span className="ng-team"><TeamFlag code={g.teamA} /> {teamName(g.teamA)}</span>
@@ -44,8 +44,8 @@ export default function NextGames({ initial }: { initial: Data }) {
               {g.yourPick && (
                 <span className={`ng-pick result-${g.result}`}>
                   {t('home.yourPick')}: {teamName(g.yourPick)}
-                  {g.result === 'won' && ' ✓'}
-                  {g.result === 'busted' && ' ✗'}
+                  {g.result === 'won' && <span aria-hidden="true"> ✓</span>}
+                  {g.result === 'busted' && <span aria-hidden="true"> ✗</span>}
                 </span>
               )}
             </li>
