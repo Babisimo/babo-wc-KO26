@@ -101,5 +101,6 @@ model PoolConfig {
   id         String   @id @default("default")
   potCents   Int      @default(0)    // legacy fixed pot (unused; pot is now entry x players)
   entryCents Int      @default(5000) // per-player entry price in cents (default $50)
+  lockOverrideIso DateTime?           // admin lock-time override; null = use the computed schedule
   updatedAt  DateTime @updatedAt
 }
