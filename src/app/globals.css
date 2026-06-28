@@ -271,6 +271,16 @@ select option { color: #000; }
     linear-gradient(180deg, rgba(255, 210, 63, 0.09), rgba(255, 255, 255, 0.015));
   box-shadow: var(--shadow);
 }
+.champ {
+  margin-bottom: 18px; padding: 16px 20px;
+  border: 1px solid rgba(255, 210, 63, 0.6); border-radius: var(--radius);
+  background:
+    radial-gradient(700px 240px at 50% 0%, rgba(255, 210, 63, 0.22), transparent 70%),
+    linear-gradient(180deg, rgba(255, 210, 63, 0.14), rgba(255, 255, 255, 0.02));
+  box-shadow: var(--shadow);
+  color: var(--gold); font-weight: 700; font-size: 1.15rem; line-height: 1.4;
+  text-align: center; text-wrap: balance;
+}
 .cta-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .cta-actions .btn, .cta-actions .btn-ghost {
   flex: 1; min-width: 150px; padding: 12px 22px; text-align: center; justify-content: center;

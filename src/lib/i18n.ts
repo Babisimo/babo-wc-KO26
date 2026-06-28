@@ -6,6 +6,7 @@ const en = {
   // common
   'common.loading': 'Loading…',
   'common.locked': 'Brackets are locked.',
+  'common.and': 'and',
   // nav
   'nav.leaderboard': 'Leaderboard',
   'nav.official': 'Official Bracket',
@@ -40,6 +41,8 @@ const en = {
   'home.player': 'Player',
   'home.points': 'Points',
   'home.leaderBadge': '🏆 leader',
+  'home.champOne': '🏆 Congrats to {name} — pool champion! Wins {amount}.',
+  'home.champMany': '🏆 Congrats to {names} — co-champions! {amount} each.',
   'home.ctaEyebrow': 'Members only',
   'home.ctaTitle': 'Log in to play',
   'home.ctaLead': 'Log in or request an account to fill your bracket and join the pool.',
@@ -247,6 +250,7 @@ export type Lang = 'en' | 'es';
 const es: Record<StringKey, string> = {
   'common.loading': 'Cargando…',
   'common.locked': 'Las brackets ya están cerradas.',
+  'common.and': 'y',
   'nav.leaderboard': 'Tabla',
   'nav.official': 'Bracket Oficial',
   'nav.myBracket': 'Tus brackets',
@@ -279,6 +283,8 @@ const es: Record<StringKey, string> = {
   'home.player': 'Jugador',
   'home.points': 'Puntos',
   'home.leaderBadge': '🏆 líder',
+  'home.champOne': '🏆 ¡Felicidades a {name} — campeón del pool! Se lleva {amount}.',
+  'home.champMany': '🏆 ¡Felicidades a {names} — co-campeones! {amount} cada quien.',
   'home.ctaEyebrow': 'Solo miembros',
   'home.ctaTitle': "Inicia sesión pa' jugar",
   'home.ctaLead': "Inicia sesión o pide una cuenta pa' llenar tu bracket y entrarle a la quiniela.",

@@ -6,6 +6,7 @@ import { scoreBracket } from '@/lib/scoring';
 import { rankEntries, potSplit, type RankedEntry } from '@/lib/leaderboard-rank';
 import { computePoolStats } from '@/lib/pool-stats';
 import { computeStage, type Stage } from '@/lib/tournament-stage';
+import { championAnnouncement } from '@/lib/champion';
 import type { Picks } from '@/lib/bracket-picks';
 
 export type LeaderboardData = {
@@ -16,6 +17,7 @@ export type LeaderboardData = {
   winnerKeys: string[];
   shareCents: number;
   stage: Stage;
+  champions: { names: string[]; shareCents: number } | null;
 };
 
 function coercePicks(raw: unknown): Picks {
@@ -68,6 +70,14 @@ export async function getLeaderboard(): Promise<LeaderboardData> {
   const pool = computePoolStats(creditUsers, entryCents); // pot/players from credits sold
   const { players, potCents } = pool;
   const { winners: winEntries, shareCents } = potSplit(entries, potCents);
+  const stage = computeStage(winners);
+
+  // Once the Final is decided, the rank-1 bracket(s) are the pool champion(s). Map each
+  // winning bracket to its owner's display name (deduped inside championAnnouncement).
+  const bracketUserId = new Map(brackets.map((b) => [b.id, b.userId]));
+  const winnerDisplays = winEntries
+    .map((w) => userById.get(bracketUserId.get(w.key) ?? '')?.display)
+    .filter((d): d is string => !!d);
 
   return {
     entries,
@@ -76,6 +86,7 @@ export async function getLeaderboard(): Promise<LeaderboardData> {
     players,
     winnerKeys: winEntries.map((w) => w.key),
     shareCents,
-    stage: computeStage(winners),
+    stage,
+    champions: championAnnouncement(stage, winnerDisplays, shareCents),
   };
 }

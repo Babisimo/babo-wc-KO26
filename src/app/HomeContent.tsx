@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Countdown from '@/app/_components/Countdown';
 import StageTracker from '@/app/_components/StageTracker';
+import ChampionBanner from '@/app/_components/ChampionBanner';
 import { useT } from '@/app/_components/LangProvider';
 import type { LeaderboardData } from '@/app/actions/leaderboard';
 
@@ -26,6 +27,7 @@ export default function HomeContent({
   const t = useT();
   return (
     <main className="shell">
+      <ChampionBanner champions={board.champions} />
       <header className="reveal" style={{ marginBottom: 26 }}>
         <p className="eyebrow">{t('home.eyebrow')}</p>
         <h1>{t('home.title')}</h1>
