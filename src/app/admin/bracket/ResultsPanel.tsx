@@ -50,10 +50,10 @@ export default function ResultsPanel({
           {pending ? 'Working…' : 'Refresh from feed'}
         </button>
         <span style={{ width: 1, height: 22, background: 'var(--chalk)' }} />
-        <label htmlFor="entry" style={{ margin: 0 }}>Entry ($/player)</label>
+        <label htmlFor="entry" style={{ margin: 0 }}>Entry ($/bracket)</label>
         <input id="entry" type="number" step="1" min="0" value={entry} onChange={(e) => setEntryValue(e.target.value)} style={{ width: 100 }} />
         <button type="button" className="btn-ghost" disabled={pending} onClick={() => run(() => setEntryPrice(Number(entry)))}>Set entry</button>
-        <span className="muted" style={{ fontSize: '0.82rem' }}>Pot = entry × players</span>
+        <span className="muted" style={{ fontSize: '0.82rem' }}>Pot = entry × brackets in</span>
       </div>
 
       {msg && <p className={`banner ${msg.kind === 'ok' ? 'ok' : 'error'}`} style={{ marginBottom: 12 }}>{msg.text}</p>}

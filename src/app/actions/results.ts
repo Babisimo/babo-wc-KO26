@@ -128,7 +128,7 @@ export async function refreshResults(): Promise<{ error?: string; updated?: numb
   return { updated: changes.length };
 }
 
-/** Set the per-player entry price (dollars). The pot is this times the number of players. */
+/** Set the per-bracket entry price (dollars). The pot is this times the official brackets entered. */
 export async function setEntryPrice(dollars: number): Promise<{ error?: string }> {
   await requireAdmin();
   if (!Number.isFinite(dollars) || dollars < 0) return { error: 'Enter a valid amount.' };

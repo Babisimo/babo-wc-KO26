@@ -10,16 +10,16 @@ function dollars(cents: number): string {
 }
 
 /**
- * Header pill: stable, credits-based pot with a filled-vs-paid count, and a tap/hover
- * breakdown that explains where the pot comes from and links to the full roster.
+ * Header pill: the brackets-in pot ($entry × entered brackets) with a filled-vs-in count, and a
+ * tap/hover breakdown that explains where the pot comes from and links to the full roster.
  */
 export default function PoolPill({ pool, onNavigate }: { pool: PoolHeaderStats; onNavigate?: () => void }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const amount = dollars(pool.potCents);
   const entry = dollars(pool.entryCents);
-  const label = t('nav.pool', { amount, filled: pool.filled, entries: pool.entries });
-  const aria = t('nav.poolAria', { amount, filled: pool.filled, entries: pool.entries });
+  const label = t('nav.pool', { amount, filled: pool.filled, bracketsIn: pool.bracketsIn });
+  const aria = t('nav.poolAria', { amount, filled: pool.filled, bracketsIn: pool.bracketsIn });
 
   return (
     <div
@@ -56,9 +56,8 @@ export default function PoolPill({ pool, onNavigate }: { pool: PoolHeaderStats; 
             boxShadow: '0 8px 24px rgba(0,0,0,.45)',
           }}
         >
-          <p style={{ margin: 0, fontWeight: 600 }}>{t('nav.poolBreakdown', { entries: pool.entries, entry, amount })}</p>
-          <p className="muted" style={{ margin: '4px 0 0' }}>{t('nav.poolFilled', { filled: pool.filled, entries: pool.entries })}</p>
-          <p className="muted" style={{ margin: '2px 0 8px' }}>{t('nav.poolPlayers', { players: pool.players })}</p>
+          <p style={{ margin: 0, fontWeight: 600 }}>{t('nav.poolBreakdown', { bracketsIn: pool.bracketsIn, entry, amount })}</p>
+          <p className="muted" style={{ margin: '4px 0 8px' }}>{t('nav.poolFilled', { filled: pool.filled, bracketsIn: pool.bracketsIn })}</p>
           <Link href="/brackets" onClick={() => { setOpen(false); onNavigate?.(); }}>{t('nav.poolView')} →</Link>
         </div>
       )}

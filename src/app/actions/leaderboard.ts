@@ -13,7 +13,6 @@ export type LeaderboardData = {
   entries: RankedEntry[];
   potCents: number;
   entryCents: number;
-  players: number;
   winnerKeys: string[];
   shareCents: number;
   stage: Stage;
@@ -32,16 +31,13 @@ function coercePicks(raw: unknown): Picks {
 }
 
 export async function getLeaderboard(): Promise<LeaderboardData> {
-  const [brackets, winners, config, creditUsers] = await Promise.all([
+  const [brackets, winners, config] = await Promise.all([
     db.bracket.findMany({
       where: { official: true }, // only designated, paid entries are ranked on the board
       select: { id: true, userId: true, name: true, picks: true },
     }),
     currentWinners(),
     db.poolConfig.findUnique({ where: { id: 'default' } }),
-    // The pot is sized by credits sold ($50 each), so it reflects everyone who's in even
-    // before they mark a bracket official — matching the header pill.
-    db.user.findMany({ where: { credits: { gt: 0 } }, select: { credits: true } }),
   ]);
 
   const userIds = brackets.map((b) => b.userId);
@@ -67,8 +63,7 @@ export async function getLeaderboard(): Promise<LeaderboardData> {
 
   const entries = rankEntries(scored);
   const entryCents = config?.entryCents ?? 5000;
-  const pool = computePoolStats(creditUsers, entryCents); // pot/players from credits sold
-  const { players, potCents } = pool;
+  const { potCents } = computePoolStats(brackets.length, entryCents); // pot = brackets in × entry
   const { winners: winEntries, shareCents } = potSplit(entries, potCents);
   const stage = computeStage(winners);
 
@@ -83,7 +78,6 @@ export async function getLeaderboard(): Promise<LeaderboardData> {
     entries,
     potCents,
     entryCents,
-    players,
     winnerKeys: winEntries.map((w) => w.key),
     shareCents,
     stage,
