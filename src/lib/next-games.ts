@@ -51,3 +51,24 @@ export function pickGames(games: Game[], limit = 3): Game[] {
   const finals = games.filter((g) => g.state === 'post').sort((a, b) => ms(b.kickoffIso) - ms(a.kickoffIso));
   return [...live, ...upcoming, ...finals].slice(0, limit);
 }
+
+/** How the pool's brackets are split between the two teams of one slot.
+ *  `a`/`b` are fractions (0..1) of the brackets that picked teamA/teamB to advance;
+ *  `voters` is how many brackets picked either side (others left it blank). */
+export type PoolSplit = { a: number; b: number; voters: number };
+
+export function poolSplit(
+  allPicks: Record<number, string>[],
+  slot: number,
+  teamA: string,
+  teamB: string,
+): PoolSplit {
+  let a = 0, b = 0;
+  for (const picks of allPicks) {
+    const p = picks[slot];
+    if (p === teamA) a++;
+    else if (p === teamB) b++;
+  }
+  const voters = a + b;
+  return { a: voters ? a / voters : 0, b: voters ? b / voters : 0, voters };
+}
