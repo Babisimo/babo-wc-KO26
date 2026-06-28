@@ -843,3 +843,9 @@ button.bcard-team:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); 
 .to-bar > i { display: block; height: 100%; width: var(--w, 0%); background: linear-gradient(90deg, #f59e0b, #a3e635); }
 .to-pct { text-align: right; color: var(--muted, #9aa4b2); }
 @media (max-width: 560px) { .oc-head { grid-template-columns: 24px 1fr auto 20px; } .oc-bar { display: none; } }
+
+/* book-odds bar on the next-up strip */
+.ng-odds { display: flex; align-items: center; gap: 6px; grid-column: 1 / -1; margin-top: 6px; }
+.ng-odds i { display: block; height: 5px; border-radius: 999px; width: var(--w, 50%); }
+.ng-odds-a { background: #38bdf8; } .ng-odds-b { background: #f59e0b; }
+.ng-odds em { font-size: .68rem; color: var(--muted, #9aa4b2); font-style: normal; white-space: nowrap; }
