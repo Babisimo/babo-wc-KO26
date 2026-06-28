@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation';
 import { auth, type AppSession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { TEAMS } from '@/lib/teams';
-import { getOfficialBracket } from '@/app/actions/bracket';
+import { getOfficialBracket, getLockState } from '@/app/actions/bracket';
+import LockControl from './LockControl';
 import R32SkeletonForm from './R32SkeletonForm';
 import ResultsPanel from './ResultsPanel';
 import RefreshResultsButton from './RefreshResultsButton';
@@ -24,6 +25,7 @@ export default async function AdminBracketPage() {
   });
 
   const { slots } = await getOfficialBracket();
+  const lockState = await getLockState();
   const entry = ((await db.poolConfig.findUnique({ where: { id: 'default' } }))?.entryCents ?? 5000) / 100;
 
   return (
@@ -33,6 +35,11 @@ export default async function AdminBracketPage() {
         <h1>Official Bracket</h1>
         <p className="lead">Set the Round-of-32 draw and kickoffs, then record results (or pull them from the feed).</p>
       </header>
+
+      <section className="panel reveal" style={{ marginBottom: 18 }}>
+        <h2 style={{ marginTop: 0 }}>Bracket lock</h2>
+        <LockControl {...lockState} />
+      </section>
 
       <section className="panel reveal" style={{ marginBottom: 18 }}>
         <RefreshResultsButton />
