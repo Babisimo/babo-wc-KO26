@@ -1,6 +1,6 @@
 # WC26 Knockout Bracket — Handoff
 
-_Last updated: 2026-06-26_
+_Last updated: 2026-06-27_
 
 ---
 
@@ -15,7 +15,7 @@ Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 - Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there). Latest session's commits are live in production via that auto-deploy.
 - Verified latest session (2026-06-26): **`npx tsc --noEmit` clean · `npx vitest run` 212/212 (37 files) · `next lint` clean · `next build` 17 routes.**
 - **New env var this session:** optional **`NEXT_PUBLIC_GA_ID`** (Google Analytics 4). Set in **Vercel → Production** (`G-V2HZMLKPFH`) — it's a build-time `NEXT_PUBLIC_` inline, so a **redeploy is required** after adding/changing it. Analytics only counts from install forward (no retroactive history).
-- DB is live on Neon (us-west-2), schema includes **`Bracket.official`** (migration applied). Last reset to a **clean slate**: admin only, 0 brackets/results, official R32 cleared → the app runs in ESPN **As-it-stands / Confirmed** projection mode off the live group-stage feed.
+- DB is live on Neon (us-west-2), schema includes **`Bracket.official`** (migration applied). **The official R32 draw is now SET** (group stage over; 16 matchups + kickoffs written from the live ESPN schedule, 2026-06-27) — the bracket is **open** with a real lock countdown (Jun 28, 2026 · 11:00 AM PDT). Picks remain editable until lock; the projection now self-corrects from real fixtures (see the newest changelog entry).
 
 > Seven sessions of work landed since the original 5-feature handoff below — see **"What changed since the original handoff"** next. The 5-feature section and architecture map below are still the foundation; read them for the base app.
 
@@ -26,11 +26,19 @@ Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
 ---
 
-## What changed since the original handoff (sessions through 2026-06-26)
+## What changed since the original handoff (sessions through 2026-06-27)
 
-Eight entries on top of the original 5-feature base. Newest first.
+Nine entries on top of the original 5-feature base. Newest first.
 
-### `7317532`…`d4cf65c` — Google Analytics, home "make your picks" CTA, bracket image export (latest session, 2026-06-26)
+### Official R32 draw SET + projection self-corrects from fixtures + champion banner (2026-06-27)
+Group stage finished, so this session opened the bracket and hardened the projection. **Code is committed; the official R32 write was a one-off data op against the live Neon DB.**
+- **Official R32 draw is now set in the DB** (resolves old pending item #3). All 16 R32 matchups + kickoffs written from the **live ESPN schedule** (scoreboard endpoint), so the home **"Bracket status"** flipped from "Not open yet" to a live countdown and the `/bracket` "draw pending" banner cleared. **Lock = Jun 28, 2026 · 11:00 AM PDT** (first match − 1h). This was an **API-driven write**, not manual entry — the teams/kickoffs came straight from ESPN.
+  - **⚠ The live projection had 3 matchups WRONG** vs the real draw — the best-third-place slots: it showed `GER v BIH`/`FRA v PAR`/`USA v SWE`, real draw is **`GER v PAR`/`FRA v SWE`/`USA v BIH`** (slots 2/5/9). Root cause: `assignThirds` in `wc26-seeding.ts` is a heuristic, not FIFA's official third-place table, and picks a different-but-eligible arrangement when several are valid. Only affected the pre-draw preview; scoring/lock always use the official draw.
+- **Projection now self-corrects from real fixtures** (`src/lib/r32-fixtures.ts`, TDD). `getProjectedR32`/`getProjectedBracket` fetch ESPN's **schedule** and override the heuristic's slots with the real fixtures the moment they're published — matched to slots by each pairing's structurally-fixed (non-third) **anchor** team. Falls back to the `assignThirds` heuristic only **before** fixtures exist (when thirds are genuinely unknowable). A **guard** (`fixtureMismatches`) logs any slot where the heuristic diverges from reality (`console.warn '[projection] R32 heuristic corrected from real fixtures'`). The 2026 case is baked into `r32-fixtures.test.ts` as a regression. **`assignThirds` is now only a pre-fixture fallback** (kept; v1 comment intact).
+- **Pool champion congrats banner** (brainstorm→spec→TDD→build). Gold `.champ` banner at the **top of `HomeContent`** naming the pool winner(s) once the **Final is scored** (gated on `stage.champion`). Handles ties → co-champions. Pure core `src/lib/champion.ts` (`championAnnouncement` gate/dedupe/sort + `joinNames`), new `ChampionBanner.tsx`, `champions` field added to `LeaderboardData` (computed in `getLeaderboard`). New i18n `home.champOne`/`home.champMany`/`common.and` (EN+ES). Spec `docs/superpowers/specs/2026-06-27-champion-congrats-design.md`. Renders nothing until the tournament ends.
+- Verified: **`npx vitest run` 228/228 (39 files) · `tsc --noEmit` clean · `next lint` clean · `next build` ok.**
+
+### `7317532`…`d4cf65c` — Google Analytics, home "make your picks" CTA, bracket image export (2026-06-26)
 Three additions; all pushed and live on Vercel.
 - **Google Analytics 4.** `@next/third-parties` `<GoogleAnalytics gaId={…} />` in `layout.tsx`, **gated on `NEXT_PUBLIC_GA_ID`** (loads only when set — nothing in dev/unset envs). Var documented in `.env.example`; Measurement ID **`G-V2HZMLKPFH`** (stream `wc-2026-knockout`). Set it in **Vercel → Production**; redeploy to bake it in (build-time inline). No retroactive history.
 - **Home "make your picks" CTA.** Signed-in users get a prominent gold `.cta` banner on `/` (`HomeContent.tsx`) linking to `/bracket`, above the countdown/leaderboard, so creating brackets is obvious (was only the hamburger "My brackets" link). New i18n `home.play*` (EN+ES).
@@ -257,11 +265,9 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
    site fonts via html-to-image `fontEmbedCSS` to restore branding; and if **iOS Safari** drops to a
    download instead of the share sheet, switch the capture to a **single** `toPng` pass to shorten the
    user-gesture window. See the export gotchas in the latest-session entry above.
-3. **Official R32 field.** Set the real field once the group stage ends (~June 27): at
-   `/admin/bracket` or via "Refresh from feed". The live projection engine fills "As it stands /
-   Confirmed" meanwhile. `resolveCode` alias gap: names shift until standings finalize — if a team
-   shows "TBD" in projections, add its alias in `src/lib/team-resolve.ts`/`teams.ts` (BIH/Bosnia
-   already handled in `98e01f2`).
+3. ~~**Official R32 field.**~~ **DONE 2026-06-27** — all 16 matchups + kickoffs written from the
+   live ESPN schedule (see newest changelog entry). If a later result needs editing, use
+   `/admin/bracket`. `resolveCode` alias gap still applies for future feeds (BIH/Bosnia handled in `98e01f2`).
 6. **Sim seeds need `official: true`.** `prisma/seed-sim-players.ts` (untracked) creates brackets;
    under the new model they default to drafts, so set `official: true` on them or they won't appear
    on the leaderboard/pot.
@@ -287,7 +293,9 @@ cache, **not a code bug** (production builds are fine). Fix: stop the dev server
   `bracket-export.ts` (`bracketImageFilename` slug + `canShareFiles` Web Share probe — for image export),
   `notifications.ts` (`getAdminNotificationCount` — extensible admin-actionable count),
   `email.ts` (`sendPasswordResetEmail` + `sendNewSignupNotice`),
-  `wc26-seeding.ts` (projections), `standings-feed.ts` (ESPN standings),
+  `wc26-seeding.ts` (projections; `assignThirds` now a pre-fixture fallback), `standings-feed.ts` (ESPN standings),
+  `r32-fixtures.ts` (`mapEspnSchedule` + `reconcileSeedWithFixtures` + `fixtureMismatches` — corrects the
+  projection from the real ESPN schedule), `champion.ts` (`championAnnouncement` + `joinNames` — pool winner banner),
   `i18n.ts` (`translate` + dictionary), `teams.ts` (48 teams), `auth*.ts`, `profile.ts`,
   `username-filter.ts`.
 - **Server actions (`src/app/actions/`):** `auth.ts` (signup grants admin 1 credit; emails admins a
