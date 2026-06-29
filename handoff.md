@@ -11,7 +11,7 @@ _Last updated: 2026-06-28_
 on a live leaderboard with a pot. Stock **Next.js 15.5 App Router** app with its own **Neon
 Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
-**Current state (all merged to `master`, tip `c9827e0`, and pushed):**
+**Current state (all merged to `master`, tip `8ae2e2b`, and pushed):**
 - Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there). Latest session's commits are live in production via that auto-deploy.
 - Verified latest session (2026-06-28): **`npx tsc --noEmit` clean · `npx vitest run` 232/232 (42 files) · `next lint` clean · `next build` clean.** ⚠ `next build` flakes on Windows with a stale-`.next` `PageNotFoundError` on unrelated pages — `rm -rf .next` before building.
 - **New env var (earlier session):** optional **`NEXT_PUBLIC_GA_ID`** (Google Analytics 4). Set in **Vercel → Production** (`G-V2HZMLKPFH`) — build-time `NEXT_PUBLIC_` inline, so a **redeploy is required** after adding/changing it. Analytics only counts from install forward.
@@ -27,9 +27,45 @@ Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
 ---
 
-## What changed since the original handoff (sessions through 2026-06-28)
+## What changed since the original handoff (sessions through 2026-06-29)
 
-Eleven entries on top of the original 5-feature base. Newest first.
+Twelve entries on top of the original 5-feature base. Newest first. (Note: a `feat/odds`
+line of work — pool win% Monte-Carlo + bookmaker lines on `/odds`, pool-vs-books bars on the
+games strip, leaderboard identity — also landed between the `2026-06-28` entry and this one;
+it isn't broken out below. See `git log` `09c96c7…79c168a` and `docs/superpowers/` odds specs.)
+
+### Leaderboard: each bracket's pick for the next match (2026-06-29)
+Brainstorm→spec→TDD→build, ported from the `wc26` sibling's group-stage "nextpick" chips and
+adapted to the knockout model. **Committed + pushed to `master` (`8ae2e2b`); live on Vercel.**
+Spec `docs/superpowers/specs/2026-06-29-leaderboard-current-match-picks-design.md`.
+- **What it does.** Under every official bracket on the home leaderboard, a **flag + 3-letter
+  code chip** shows the team that bracket is backing in the **next not-yet-decided knockout
+  match**, with a compact **codes-only caption** above the table naming it (`Picks · GER v
+  PAR`). A bracket that left that slot blank shows a muted `–`.
+- **Decisions (with the user):** **single next match only** (not the whole upcoming lineup);
+  **flag + code** chips (no team-color fill); **no ✓/✗** — only a not-yet-decided game is ever
+  shown, so there's no won/busted state; **codes-only** caption.
+- **Privacy / lock gate.** Picks are private until lock (same invariant as the pool-consensus
+  bars), so the chips **render only once brackets are locked**; pre-lock the leaderboard is
+  unchanged. `getLeaderboard` returns an empty `nextPicks` until then.
+- **New pure lib** `src/lib/leaderboard-picks.ts` `buildLeaderboardPicks(slots, games,
+  brackets, winners)` (TDD, 6 cases) — finds the **first** game (from `pickGames` order: live →
+  soonest-upcoming → finals) that maps to an official slot AND has no official winner yet, then
+  returns that one game as a header + each bracket's picked team for it. Built on the existing
+  `gameSlotPick` (no second copy of the slot↔fixture/pick logic). `headers` is length 0 or 1.
+- **Shared ESPN fetch** `src/app/actions/scoreboard.ts` `fetchSurfacedGames()` — extracted from
+  `getNextGames`'s inline scoreboard fetch (SCOREBOARD url + `DATES` + `resolveTeam` +
+  `mapScoreboardGames`/`pickGames`, `{revalidate:15}`); **`getNextGames` refactored to use it**
+  (behavior unchanged). De-duplicates rather than copies.
+- **`getLeaderboard`** adds `getOfficialBracket()` to its `Promise.all` (draw slots + lock), and
+  when locked computes `nextPicks: LeaderboardPicks`. `LeaderboardData` gains `nextPicks`.
+- **UI:** `HomeContent.tsx` renders the caption + per-row chip; new `.lb-picks*`/`.lb-pick`
+  (+`.none`) CSS in `globals.css`; new i18n `home.picksCap` (EN+ES, drift-guard satisfied).
+- **⚠ Server-rendered only** (like the movement/drama line) — the chips update on
+  navigation/refresh, not live-polled like the strip. A future fast-follow could fold them into
+  the 30s `/api/next-games` poll. No schema change.
+- Verified: **`tsc --noEmit` clean · `vitest run` 264/264 · `next lint` clean** (and `next
+  build` clean on the pre-tweak revision; the single-match change is logic-only).
 
 ### Admin lock control, lock → 11:50, post-lock drafts, brackets-based pot, "haven't submitted" (2026-06-28, later)
 Five changes, each brainstorm→spec→plan→**subagent-driven** (except the two quick hotfixes). **All merged to `master` and pushed; live on Vercel.** Specs/plans dated `2026-06-28` in `docs/superpowers/`.
