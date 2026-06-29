@@ -1,6 +1,6 @@
 # WC26 Knockout Bracket — Handoff
 
-_Last updated: 2026-06-28_
+_Last updated: 2026-06-29_
 
 ---
 
@@ -11,7 +11,7 @@ _Last updated: 2026-06-28_
 on a live leaderboard with a pot. Stock **Next.js 15.5 App Router** app with its own **Neon
 Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
-**Current state (all merged to `master`, tip `8ae2e2b`, and pushed):**
+**Current state (all merged to `master`, tip `3a8483c`, and pushed):**
 - Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there). Latest session's commits are live in production via that auto-deploy.
 - Verified latest session (2026-06-28): **`npx tsc --noEmit` clean · `npx vitest run` 232/232 (42 files) · `next lint` clean · `next build` clean.** ⚠ `next build` flakes on Windows with a stale-`.next` `PageNotFoundError` on unrelated pages — `rm -rf .next` before building.
 - **New env var (earlier session):** optional **`NEXT_PUBLIC_GA_ID`** (Google Analytics 4). Set in **Vercel → Production** (`G-V2HZMLKPFH`) — build-time `NEXT_PUBLIC_` inline, so a **redeploy is required** after adding/changing it. Analytics only counts from install forward.
@@ -29,10 +29,30 @@ Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
 ## What changed since the original handoff (sessions through 2026-06-29)
 
-Twelve entries on top of the original 5-feature base. Newest first. (Note: a `feat/odds`
+Thirteen entries on top of the original 5-feature base. Newest first. (Note: a `feat/odds`
 line of work — pool win% Monte-Carlo + bookmaker lines on `/odds`, pool-vs-books bars on the
 games strip, leaderboard identity — also landed between the `2026-06-28` entry and this one;
 it isn't broken out below. See `git log` `09c96c7…79c168a` and `docs/superpowers/` odds specs.)
+
+### Per-user lock bypass for late submissions (2026-06-29)
+Lets a specific player still enter/edit a bracket after the global time-lock while everyone
+else stays frozen. **Committed + pushed to `master` (`8a68ad2` write-guards, `3a8483c`
+read-side UI fix); live on Vercel. DB synced via `prisma db push` to prod Neon.**
+- **What it does.** New **`User.bypassLock Boolean @default(false)`** column. When true, that
+  user can mark a bracket **official**, **edit** its picks, and **rename** it past the lock; the
+  bracket still counts in the pot/leaderboard like any other. No admin UI — flip the flag with a
+  direct DB update.
+- **Enforcement (two layers, both required).** Write guards in `src/app/actions/bracket-entry.ts`
+  — `setBracketOfficial`, `saveBracket`, `renameBracket` — gain `&& !(await userBypassesLock(userId))`
+  via the new `userBypassesLock()` helper. **And** the read-side `locked` flag that drives the UI
+  (`getBracket` `view.locked`, `listMyBrackets` `lock.locked`) now subtracts the bypass — without
+  this the server accepted late edits but the UI still hid the controls (the bug that prompted the
+  read-side fix commit). The global lock math in `src/lib/lock.ts` is **unchanged**.
+- **Currently active in prod:** **@daniel_oct** (`cmqzhjb2v0000lh04dsen7t76`) and the **owner's own
+  account** both have `bypassLock = true`, set 2026-06-29, **pending manual revert** (`= false`)
+  when the owner says so. Everyone else is unaffected.
+- Verified: `npx tsc --noEmit` clean. No new tests (behavior gated on a DB flag); guard logic is a
+  one-line `&&` on each existing check.
 
 ### Leaderboard: each bracket's pick for the next match (2026-06-29)
 Brainstorm→spec→TDD→build, ported from the `wc26` sibling's group-stage "nextpick" chips and
