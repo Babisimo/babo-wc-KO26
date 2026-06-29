@@ -103,10 +103,15 @@ export default function HomeContent({
                     <tr key={e.key} className={e.username ? 'row-link' : undefined}>
                       <td><span className={`rank${e.rank <= 3 ? ` r${e.rank}` : ''}`}>{e.rank}</span></td>
                       <td>
-                        {e.username
-                          ? <Link href={`/brackets/${encodeURIComponent(e.username)}`} className="lb-name">{e.name}</Link>
-                          : e.name}
-                        {winner && <span className="pill gold btn-sm" style={{ marginLeft: 8, padding: '2px 9px' }}>{t('home.leaderBadge')}</span>}
+                        <div className="lb-id">
+                          <span className="lb-line1">
+                            {e.username
+                              ? <Link href={`/brackets/${encodeURIComponent(e.username)}`} className="lb-name">{e.bracketName ?? e.name}</Link>
+                              : <span className="lb-name">{e.bracketName ?? e.name}</span>}
+                            {winner && <span className="pill gold lb-badge">{t('home.leaderBadge')}</span>}
+                          </span>
+                          {e.owner && <span className="lb-owner">{e.owner}</span>}
+                        </div>
                       </td>
                       <td className="num"><span className="score">{e.total}</span></td>
                     </tr>
