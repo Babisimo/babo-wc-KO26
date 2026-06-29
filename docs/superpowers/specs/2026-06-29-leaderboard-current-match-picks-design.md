@@ -13,13 +13,16 @@ each current/up-next knockout game.**
 
 ## Decisions (locked with the user)
 
-- **Match scope:** show one chip per game in the **same set the "Next up" strip surfaces** —
-  live now → soonest upcoming → most-recent finals, up to 3 (`pickGames`). The chips under
-  each row line up, in order, with the games shown in that strip directly above the
-  leaderboard.
+- **Match scope:** **not-yet-decided games only** — every live or upcoming knockout game whose
+  slot has no official winner yet, drawn from the same `pickGames` set the "Next up" strip
+  surfaces (up to 3). Finished/decided games are excluded (no recent-final filler). The chips
+  under each row line up, in order, with the live/upcoming games shown in that strip directly
+  above the leaderboard.
+  - Consequence: because only not-yet-decided games appear, **there is no won/busted state** —
+    every chip is "the team this bracket is backing." No ✓/✗ markers.
 - **Chip style:** **country flag + 3-letter code** (on-brand with the app's `flag-icons`).
-  A decided slot colors the chip: green **✓** if that bracket's pick won the slot, red **✗**
-  if it busted, neutral while pending.
+  Neutral chip; live-game chips may carry a subtle accent (optional, not required).
+- **Caption style:** **codes only** above the table, e.g. `Picks · GER v PAR · FRA v SWE`.
 - **Privacy / lock gate:** picks are private until lock (the pool-consensus bars are already
   `null` pre-lock for this reason). **The pick chips render only once brackets are locked.**
   Pre-lock the leaderboard looks exactly as it does today.
@@ -31,14 +34,14 @@ Three small, well-bounded pieces plus a thin render change. No schema change.
 ### 1. Pure core — `src/lib/leaderboard-picks.ts` (unit-tested)
 
 ```ts
-import { gameSlotPick, type SlotParticipants, type PickResult } from '@/lib/game-slot';
+import { gameSlotPick, type SlotParticipants } from '@/lib/game-slot';
 import type { Game } from '@/lib/next-games';
 import type { Picks } from '@/lib/bracket-picks';
 
 export type GamePickHeader = { teamA: string; teamB: string; state: Game['state'] };
-export type GamePickCell = { code: string; result: PickResult } | null; // null = no pick
+export type GamePickCell = { code: string } | null; // null = this bracket left the slot blank
 export type LeaderboardPicks = {
-  headers: GamePickHeader[];                 // surfaced games, in strip order (slot-matched only)
+  headers: GamePickHeader[];                 // not-yet-decided games, in strip order
   cellsByKey: Record<string, GamePickCell[]>; // bracket id -> one cell per header, same order
 };
 
@@ -50,12 +53,13 @@ export function buildLeaderboardPicks(
 ): LeaderboardPicks
 ```
 
-- Keeps only surfaced games that map to a known official slot (a game whose two teams match a
-  slot's `teamA`/`teamB`). Those become `headers` in the given order.
+- Keeps only games that (a) map to a known official slot — both teams match a slot's
+  `teamA`/`teamB` — and (b) are **not yet decided** (`winners[slot] == null`). Those become
+  `headers` in the given order. Finished/decided games are dropped.
 - For each kept game × each bracket, calls the existing `gameSlotPick(slots, game, picks,
-  winners)` → `{ yourPick, result }`. Cell = `yourPick ? { code: yourPick, result } : null`.
-- Pure, no I/O. Reuses the slot↔fixture matching and win/bust logic that already powers the
-  strip's "your pick" — no second copy of that rule.
+  winners)` and takes `yourPick`. Cell = `yourPick ? { code: yourPick } : null`. (Reuses the
+  slot↔fixture matching that already powers the strip's "your pick" — no second copy.)
+- Pure, no I/O.
 
 ### 2. Shared scoreboard fetch — `src/app/actions/scoreboard.ts`
 
@@ -83,20 +87,17 @@ refactored to call this (behavior unchanged).
 
 ### 4. Render — `src/app/HomeContent.tsx` + CSS + i18n
 
-- When `board.nextPicks.headers.length > 0`, show a compact caption above the table naming
-  the surfaced matchups in order, e.g. **"Picks · GER v PAR · FRA v SWE"** (codes only, so
-  the per-row chip order is legible).
+- When `board.nextPicks.headers.length > 0`, show a compact **codes-only** caption above the
+  table naming the matchups in order, e.g. **"Picks · GER v PAR · FRA v SWE"**, so the
+  per-row chip order is legible.
 - In each row's `lb-id` block, after `lb-owner`, render a `lb-picks` chip line from
   `board.nextPicks.cellsByKey[e.key]`: one chip per header, in order.
-  - Pick present → `<TeamFlag code> CODE` with class `won` / `busted` / `pending` and an
-    `sr-only` "survived" / "didn't advance" for decided slots (reuse `home.pickWon` /
-    `home.pickBusted`).
+  - Pick present → `<TeamFlag code> CODE` (neutral chip).
   - No pick (cell `null`) → a muted `–` placeholder so columns stay aligned.
-- New CSS in `globals.css`: `.lb-picks` (wrapping flex row), `.lb-pick` (chip), `.lb-pick.won`
-  / `.busted` / `.pending` / `.none`, `.lb-picks-cap` (caption) — modeled on the existing
-  `.lb-*` and result-color tokens.
-- New i18n keys (EN + ES, drift-guard enforced): `home.picksCap` (caption label "Picks").
-  Win/bust wording reuses the existing `home.pickWon` / `home.pickBusted`.
+- New CSS in `globals.css`: `.lb-picks` (wrapping flex row), `.lb-pick` (chip), `.lb-pick.none`
+  (muted placeholder), `.lb-picks-cap` (caption) — modeled on the existing `.lb-*` tokens.
+- New i18n keys (EN + ES, drift-guard enforced): `home.picksCap` (caption label, e.g. "Picks"
+  / "Picks").
 
 ## Data flow
 
@@ -120,11 +121,11 @@ could fold them into the 30s poll.
 ## Testing
 
 - `src/lib/leaderboard-picks.test.ts` (TDD, pure):
-  - headers built in game order, only for slot-matched games;
-  - per-bracket cell = picked team with `pending` (no winner), `won` (winner === pick),
-    `busted` (winner !== pick);
+  - headers built in game order, only for slot-matched, not-yet-decided games;
+  - per-bracket cell = the team that bracket picked for the slot;
   - `null` cell when the bracket didn't pick that slot;
-  - a surfaced game with no matching slot is excluded from headers and all cells.
+  - a game with no matching slot is excluded from headers and all cells;
+  - a game whose slot already has an official winner is excluded (decided games dropped).
 - Full suite (`vitest`), `tsc --noEmit`, `next lint`, `next build` (rm -rf .next first on
   Windows) must stay green. i18n drift-guard must compile (EN/ES parity).
 
