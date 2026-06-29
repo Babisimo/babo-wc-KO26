@@ -80,6 +80,13 @@ async function lockInfo(): Promise<LockInfo> {
   return { locked: lockedNow(eff.lockTimeIso), lockTimeIso: eff.lockTimeIso, drawFinal: eff.drawFinal };
 }
 
+// A few players may be granted a late pass (User.bypassLock) so they can still enter/edit after
+// the global lock; everyone else stays frozen. Targeted via the admin-set flag, not hard-coded.
+async function userBypassesLock(userId: string): Promise<boolean> {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { bypassLock: true } });
+  return user?.bypassLock ?? false;
+}
+
 export async function listMyBrackets(): Promise<{ error?: string; brackets?: MyBracketRow[]; lock?: LockInfo; credits?: number; officialUsed?: number }> {
   const userId = await requireUserId();
   if (!userId) return { error: 'Not signed in.' };
@@ -131,7 +138,7 @@ export async function renameBracket(id: string, name: string): Promise<{ errorKe
   // Official brackets freeze (name included) at lock; drafts can always be renamed.
   if (row.official) {
     const lock = await lockInfo();
-    if (lock.locked) return { errorKey: 'bracket.err.lockedRename' };
+    if (lock.locked && !(await userBypassesLock(userId))) return { errorKey: 'bracket.err.lockedRename' };
   }
 
   // Blank/invalid input falls back to "Bracket {n}", mirroring create.
@@ -150,7 +157,7 @@ export async function setBracketOfficial(id: string, official: boolean): Promise
   if (!row || row.userId !== userId) return { errorKey: 'bracket.err.notFound' };
 
   const lock = await lockInfo();
-  if (lock.locked) return { errorKey: 'bracket.err.lockedOfficial' };
+  if (lock.locked && !(await userBypassesLock(userId))) return { errorKey: 'bracket.err.lockedOfficial' };
 
   if (official) {
     const [otherOfficial, user] = await Promise.all([
@@ -200,7 +207,7 @@ export async function saveBracket(id: string, picks: Picks): Promise<{ errorKey?
 
   const eff = await getEffectiveR32();
   // Official (entered) brackets freeze at lock for scoring integrity; drafts stay editable.
-  if (row.official && lockedNow(eff.lockTimeIso)) return { errorKey: 'bracket.err.lockedEdit' };
+  if (row.official && lockedNow(eff.lockTimeIso) && !(await userBypassesLock(userId))) return { errorKey: 'bracket.err.lockedEdit' };
 
   // Drafts may be incomplete; only the picks that are present must be valid contestants.
   const check = validateDraft(eff.r32, picks);
