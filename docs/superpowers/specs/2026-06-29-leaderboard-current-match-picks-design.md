@@ -13,13 +13,12 @@ each current/up-next knockout game.**
 
 ## Decisions (locked with the user)
 
-- **Match scope:** **not-yet-decided games only** — every live or upcoming knockout game whose
-  slot has no official winner yet, drawn from the same `pickGames` set the "Next up" strip
-  surfaces (up to 3). Finished/decided games are excluded (no recent-final filler). The chips
-  under each row line up, in order, with the live/upcoming games shown in that strip directly
-  above the leaderboard.
-  - Consequence: because only not-yet-decided games appear, **there is no won/busted state** —
-    every chip is "the team this bracket is backing." No ✓/✗ markers.
+- **Match scope:** **the single next match only** — the first not-yet-decided knockout game
+  (from the `pickGames` order: live → soonest-upcoming → finals) whose slot has no official
+  winner yet. One chip per bracket. Finished/decided games and the rest of the upcoming lineup
+  are excluded.
+  - Consequence: because only a not-yet-decided game appears, **there is no won/busted state** —
+    the chip is "the team this bracket is backing." No ✓/✗ markers.
 - **Chip style:** **country flag + 3-letter code** (on-brand with the app's `flag-icons`).
   Neutral chip; live-game chips may carry a subtle accent (optional, not required).
 - **Caption style:** **codes only** above the table, e.g. `Picks · GER v PAR · FRA v SWE`.
@@ -53,11 +52,11 @@ export function buildLeaderboardPicks(
 ): LeaderboardPicks
 ```
 
-- Keeps only games that (a) map to a known official slot — both teams match a slot's
-  `teamA`/`teamB` — and (b) are **not yet decided** (`winners[slot] == null`). Those become
-  `headers` in the given order. Finished/decided games are dropped.
-- For each kept game × each bracket, calls the existing `gameSlotPick(slots, game, picks,
-  winners)` and takes `yourPick`. Cell = `yourPick ? { code: yourPick } : null`. (Reuses the
+- Finds the **first** game that (a) maps to a known official slot — both teams match a slot's
+  `teamA`/`teamB` — and (b) is **not yet decided** (`winners[slot] == null`). That single game
+  becomes the lone `header` (so `headers` has length 0 or 1).
+- For that game × each bracket, calls the existing `gameSlotPick(slots, game, picks, winners)`
+  and takes `yourPick`. Cell = `yourPick ? { code: yourPick } : null`. (Reuses the
   slot↔fixture matching that already powers the strip's "your pick" — no second copy.)
 - Pure, no I/O.
 
@@ -88,10 +87,9 @@ refactored to call this (behavior unchanged).
 ### 4. Render — `src/app/HomeContent.tsx` + CSS + i18n
 
 - When `board.nextPicks.headers.length > 0`, show a compact **codes-only** caption above the
-  table naming the matchups in order, e.g. **"Picks · GER v PAR · FRA v SWE"**, so the
-  per-row chip order is legible.
+  table naming the next match, e.g. **"Picks · GER v PAR"**.
 - In each row's `lb-id` block, after `lb-owner`, render a `lb-picks` chip line from
-  `board.nextPicks.cellsByKey[e.key]`: one chip per header, in order.
+  `board.nextPicks.cellsByKey[e.key]`: the single chip for the next match.
   - Pick present → `<TeamFlag code> CODE` (neutral chip).
   - No pick (cell `null`) → a muted `–` placeholder so columns stay aligned.
 - New CSS in `globals.css`: `.lb-picks` (wrapping flex row), `.lb-pick` (chip), `.lb-pick.none`
@@ -121,11 +119,12 @@ could fold them into the 30s poll.
 ## Testing
 
 - `src/lib/leaderboard-picks.test.ts` (TDD, pure):
-  - headers built in game order, only for slot-matched, not-yet-decided games;
-  - per-bracket cell = the team that bracket picked for the slot;
+  - surfaces only the next slot-matched, not-yet-decided game (one header);
+  - per-bracket cell = the team that bracket picked for that slot;
   - `null` cell when the bracket didn't pick that slot;
-  - a game with no matching slot is excluded from headers and all cells;
-  - a game whose slot already has an official winner is excluded (decided games dropped).
+  - a game with no matching slot is skipped in favor of the next slot-matched one;
+  - a decided game is skipped in favor of the next not-yet-decided one;
+  - no header when no slot-matched, not-yet-decided game exists.
 - Full suite (`vitest`), `tsc --noEmit`, `next lint`, `next build` (rm -rf .next first on
   Windows) must stay green. i18n drift-guard must compile (EN/ES parity).
 

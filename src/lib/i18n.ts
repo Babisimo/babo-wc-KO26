@@ -66,6 +66,7 @@ const en = {
   'home.oddsAria': '{label}: {a} {pa}%, {b} {pb}%',
   'home.picksLockAt': 'Picks lock {when}',
   'home.noGames': 'Schedule unavailable right now.',
+  'home.picksCap': 'Picks',
   // official
   'official.eyebrowReal': 'The real thing',
   'official.eyebrowRoad': 'The road to the final',
@@ -352,6 +353,7 @@ const es: Record<StringKey, string> = {
   'home.oddsAria': '{label}: {a} {pa}%, {b} {pb}%',
   'home.picksLockAt': 'Los picks cierran {when}',
   'home.noGames': 'No hay horario por ahorita.',
+  'home.picksCap': 'Picks',
   // official
   'official.eyebrowReal': 'Esto va en serio',
   'official.eyebrowRoad': 'El camino a la final',

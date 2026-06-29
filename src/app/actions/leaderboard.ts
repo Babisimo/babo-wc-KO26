@@ -2,11 +2,15 @@
 
 import { db } from '@/lib/db';
 import { currentWinners } from '@/app/actions/results';
+import { getOfficialBracket } from '@/app/actions/bracket';
+import { fetchSurfacedGames } from '@/app/actions/scoreboard';
 import { scoreBracket } from '@/lib/scoring';
 import { rankEntries, potSplit, type RankedEntry } from '@/lib/leaderboard-rank';
 import { computePoolStats } from '@/lib/pool-stats';
 import { computeStage, type Stage } from '@/lib/tournament-stage';
 import { championAnnouncement } from '@/lib/champion';
+import { isLocked } from '@/lib/lock';
+import { buildLeaderboardPicks, type LeaderboardPicks } from '@/lib/leaderboard-picks';
 import type { Picks } from '@/lib/bracket-picks';
 
 export type LeaderboardData = {
@@ -17,6 +21,7 @@ export type LeaderboardData = {
   shareCents: number;
   stage: Stage;
   champions: { names: string[]; shareCents: number } | null;
+  nextPicks: LeaderboardPicks; // per-bracket picks for the current/up-next games (empty pre-lock)
 };
 
 function coercePicks(raw: unknown): Picks {
@@ -31,13 +36,14 @@ function coercePicks(raw: unknown): Picks {
 }
 
 export async function getLeaderboard(): Promise<LeaderboardData> {
-  const [brackets, winners, config] = await Promise.all([
+  const [brackets, winners, config, official] = await Promise.all([
     db.bracket.findMany({
       where: { official: true }, // only designated, paid entries are ranked on the board
       select: { id: true, userId: true, name: true, picks: true },
     }),
     currentWinners(),
     db.poolConfig.findUnique({ where: { id: 'default' } }),
+    getOfficialBracket(), // official draw slots + lock time, for the current-match pick chips
   ]);
 
   const userIds = brackets.map((b) => b.userId);
@@ -76,6 +82,23 @@ export async function getLeaderboard(): Promise<LeaderboardData> {
     .map((w) => userById.get(bracketUserId.get(w.key) ?? '')?.display)
     .filter((d): d is string => !!d);
 
+  // Per-bracket picks for the current/up-next games. Picks are private until lock, so this
+  // stays empty (no leak) until brackets are locked; the games come from the ESPN scoreboard.
+  let nextPicks: LeaderboardPicks = { headers: [], cellsByKey: {} };
+  const locked = isLocked(new Date(), official.lockTimeIso ? new Date(official.lockTimeIso) : null);
+  if (locked) {
+    const games = await fetchSurfacedGames();
+    if (games.length > 0) {
+      const slotParticipants = official.slots.map((s) => ({ slot: s.slot, teamA: s.teamA, teamB: s.teamB }));
+      nextPicks = buildLeaderboardPicks(
+        slotParticipants,
+        games,
+        brackets.map((b) => ({ key: b.id, picks: coercePicks(b.picks) })),
+        winners,
+      );
+    }
+  }
+
   return {
     entries,
     potCents,
@@ -84,5 +107,6 @@ export async function getLeaderboard(): Promise<LeaderboardData> {
     shareCents,
     stage,
     champions: championAnnouncement(stage, winnerDisplays, shareCents),
+    nextPicks,
   };
 }

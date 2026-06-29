@@ -5,6 +5,7 @@ import ChampionBanner from '@/app/_components/ChampionBanner';
 import LockGate from '@/app/_components/LockGate';
 import OddsTeaser from '@/app/_components/OddsTeaser';
 import WhatHappened, { type ResultEventView } from '@/app/_components/WhatHappened';
+import TeamFlag from '@/app/_components/TeamFlag';
 import { useT } from '@/app/_components/LangProvider';
 import type { LeaderboardData } from '@/app/actions/leaderboard';
 import type { getNextGames } from '@/app/actions/next-games';
@@ -90,6 +91,15 @@ export default function HomeContent({
           {board.entries.length === 0 ? (
             <p className="muted">{t('home.empty')}</p>
           ) : (
+            <>
+            {board.nextPicks.headers.length > 0 && (
+              <p className="lb-picks-cap">
+                <span className="lb-picks-cap-label">{t('home.picksCap')}</span>
+                {board.nextPicks.headers.map((h, i) => (
+                  <span key={i} className="lb-picks-cap-game"> · {h.teamA} v {h.teamB}</span>
+                ))}
+              </p>
+            )}
             <table>
               <thead><tr>
                 <th style={{ width: 56 }}>{t('home.rank')}</th>
@@ -111,6 +121,15 @@ export default function HomeContent({
                             {winner && <span className="pill gold lb-badge">{t('home.leaderBadge')}</span>}
                           </span>
                           {e.owner && <span className="lb-owner">{e.owner}</span>}
+                          {board.nextPicks.headers.length > 0 && (
+                            <span className="lb-picks">
+                              {(board.nextPicks.cellsByKey[e.key] ?? []).map((cell, i) => (
+                                cell
+                                  ? <span key={i} className="lb-pick"><TeamFlag code={cell.code} /> {cell.code}</span>
+                                  : <span key={i} className="lb-pick none">–</span>
+                              ))}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="num"><span className="score">{e.total}</span></td>
@@ -119,6 +138,7 @@ export default function HomeContent({
                 })}
               </tbody>
             </table>
+            </>
           )}
         </section>
       )}

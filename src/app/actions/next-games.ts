@@ -4,25 +4,13 @@ import { auth, type AppSession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getOfficialBracket } from '@/app/actions/bracket';
 import { currentWinners } from '@/app/actions/results';
+import { fetchSurfacedGames } from '@/app/actions/scoreboard';
 import { scoreBracket } from '@/lib/scoring';
 import { formatLockTimePT, isLocked } from '@/lib/lock';
-import { TEAMS } from '@/lib/teams';
-import { resolveCode } from '@/lib/team-resolve';
-import { mapScoreboardGames, pickGames, poolSplit, type GameState, type PoolSplit } from '@/lib/next-games';
+import { poolSplit, type GameState, type PoolSplit } from '@/lib/next-games';
 import { gameSlotPick, type SlotParticipants, type PickResult } from '@/lib/game-slot';
 import type { Picks } from '@/lib/bracket-picks';
 import { getBookOdds, type BookLine } from '@/lib/book-odds';
-
-const SCOREBOARD = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
-// Knockout window (UTC). One request covers the whole range.
-const DATES = '20260628-20260720';
-
-const KNOWN = new Set(TEAMS.map((t) => t.code));
-const resolveTeam = (abbr?: string, name?: string): string | null => {
-  if (abbr && KNOWN.has(abbr)) return abbr;
-  const r = resolveCode(name ?? abbr ?? '');
-  return r && KNOWN.has(r) ? r : null;
-};
 
 function coercePicks(raw: unknown): Picks {
   const out: Picks = {};
@@ -81,24 +69,16 @@ export async function getNextGames(): Promise<{ games: GameRow[]; lockNote: stri
     allPicks = rows.map((r) => coercePicks(r.picks));
   }
 
-  let games: GameRow[] = [];
-  try {
-    const res = await fetch(`${SCOREBOARD}?dates=${DATES}`, { next: { revalidate: 15 } });
-    if (res.ok) {
-      const parsed = pickGames(mapScoreboardGames(await res.json(), resolveTeam));
-      games = parsed.map((g) => {
-        const { slot, yourPick, result } = gameSlotPick(slotParticipants, g, topPicks, winners);
-        const split = locked && slot != null ? poolSplit(allPicks, slot, g.teamA, g.teamB) : null;
-        return {
-          ...g, yourPick, result,
-          odds: oddsFor(g.teamA, g.teamB),
-          pool: split && split.voters > 0 ? split : null,
-        };
-      });
-    }
-  } catch {
-    games = []; // feed unreachable → empty strip; page is unaffected
-  }
+  const parsed = await fetchSurfacedGames();
+  const games: GameRow[] = parsed.map((g) => {
+    const { slot, yourPick, result } = gameSlotPick(slotParticipants, g, topPicks, winners);
+    const split = locked && slot != null ? poolSplit(allPicks, slot, g.teamA, g.teamB) : null;
+    return {
+      ...g, yourPick, result,
+      odds: oddsFor(g.teamA, g.teamB),
+      pool: split && split.voters > 0 ? split : null,
+    };
+  });
 
   const lockMs = lockTimeIso ? Date.parse(lockTimeIso) : NaN;
   const lockLabel = Number.isFinite(lockMs) ? formatLockTimePT(new Date(lockMs)) : null;

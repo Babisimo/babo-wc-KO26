@@ -371,6 +371,23 @@ tbody tr.row-link:hover { background: rgba(255, 210, 63, 0.07); }
 .lb-owner { font-size: .8rem; color: var(--line-dim); }
 .lb-badge { padding: 2px 9px; font-size: .7rem; }
 
+/* ---- Leaderboard: current/up-next match pick chips ---- */
+.lb-picks-cap {
+  margin: 0 0 10px; font-size: .78rem; color: var(--line-dim); letter-spacing: .02em;
+}
+.lb-picks-cap-label { color: var(--gold); font-weight: 700; text-transform: uppercase; }
+.lb-picks-cap-game { color: var(--line-dim); }
+.lb-picks { display: inline-flex; flex-wrap: wrap; gap: 6px; margin-top: 3px; }
+.lb-pick {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 1px 8px 1px 6px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: .74rem; font-weight: 700; color: var(--line); letter-spacing: .02em;
+}
+.lb-pick.none {
+  color: var(--line-faint); font-weight: 400; padding: 1px 10px; background: none; border-color: rgba(255,255,255,0.07);
+}
+
 /* ---- Admin tables: collapse to stacked cards on mobile ---- */
 @media (max-width: 640px) {
   .adm-table, .adm-table tbody, .adm-table tr, .adm-table td { display: block; width: 100%; }
