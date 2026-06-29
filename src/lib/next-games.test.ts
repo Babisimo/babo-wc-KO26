@@ -59,3 +59,24 @@ describe('pickGames', () => {
     expect(pickGames(games, 1).map((x) => x.teamA)).toEqual(['I']);
   });
 });
+
+import { poolSplit } from './next-games';
+
+describe('poolSplit', () => {
+  it('tallies the fraction of brackets backing each side of a slot', () => {
+    const picks: Record<number, string>[] = [
+      { 1: 'CAN', 2: 'GER' },
+      { 1: 'CAN' },
+      { 1: 'RSA', 2: 'PAR' },
+      { 2: 'GER' }, // no pick for slot 1 → not a voter
+    ];
+    const r = poolSplit(picks, 1, 'RSA', 'CAN');
+    expect(r.voters).toBe(3); // two CAN, one RSA; the blank doesn't count
+    expect(r.a).toBeCloseTo(1 / 3, 6); // RSA = teamA
+    expect(r.b).toBeCloseTo(2 / 3, 6); // CAN = teamB
+  });
+
+  it('returns zero fractions and zero voters when nobody picked the slot', () => {
+    expect(poolSplit([{ 5: 'BRA' }], 1, 'RSA', 'CAN')).toEqual({ a: 0, b: 0, voters: 0 });
+  });
+});

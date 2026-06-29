@@ -56,6 +56,8 @@ export async function getLeaderboard(): Promise<LeaderboardData> {
     return {
       key: b.id,
       name: `${u?.display ?? 'Unknown'} — ${b.name}`,
+      owner: u?.display ?? 'Unknown',
+      bracketName: b.name,
       username: u?.username ?? null,
       total: scoreBracket(coercePicks(b.picks), winners),
     };

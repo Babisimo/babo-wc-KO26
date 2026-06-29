@@ -42,7 +42,8 @@ async function computeOdds(): Promise<OddsReport> {
     }));
     brackets = rows.map((b) => ({
       key: b.id,
-      name: `${display.get(b.userId) ?? 'Unknown'} — ${b.name}`,
+      owner: display.get(b.userId) ?? 'Unknown',
+      bracketName: b.name,
       picks: coercePicks(b.picks),
     }));
   }

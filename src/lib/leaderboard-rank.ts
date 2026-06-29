@@ -1,4 +1,7 @@
-export type ScoreEntry = { key: string; name: string; total: number; username?: string | null };
+export type ScoreEntry = {
+  key: string; name: string; total: number; username?: string | null;
+  owner?: string; bracketName?: string;
+};
 export type RankedEntry = ScoreEntry & { rank: number };
 
 /** Sort by total desc, then name asc for stable display; ties share a rank (1,1,3,…). */

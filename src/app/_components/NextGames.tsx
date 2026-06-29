@@ -3,14 +3,36 @@
 import { useEffect, useState } from 'react';
 import { useT } from '@/app/_components/LangProvider';
 import TeamFlag from '@/app/_components/TeamFlag';
-import { teamName } from '@/lib/team-name';
+import { teamName, teamColor } from '@/lib/team-name';
 import { formatRemaining } from '@/lib/format-remaining';
 import type { GameRow } from '@/app/actions/next-games';
+import type { StringKey } from '@/lib/i18n';
 
+type T = (key: StringKey, vars?: Record<string, string | number>) => string;
 type Data = { games: GameRow[]; lockNote: string | null };
 
+// One head-to-head bar: two team-colored segments + the win % at each end.
+function OddsBar({ label, teamA, teamB, a, b, t }: {
+  label: string; teamA: string; teamB: string; a: number; b: number; t: T;
+}) {
+  const colorA = teamColor(teamA), colorB = teamColor(teamB);
+  const pa = Math.round(a * 100);
+  const pb = 100 - pa; // ends always read as 100 together
+  return (
+    <div className="ngo" aria-label={t('home.oddsAria', { label, a: teamName(teamA), pa, b: teamName(teamB), pb })}>
+      <span className="ngo-label">{label}</span>
+      <b className="ngo-pct" style={{ color: colorA }}>{pa}%</b>
+      <span className="ngo-bar" aria-hidden>
+        <i style={{ width: `${a * 100}%`, background: colorA }} />
+        <i style={{ width: `${b * 100}%`, background: colorB }} />
+      </span>
+      <b className="ngo-pct ngo-pct-r" style={{ color: colorB }}>{pb}%</b>
+    </div>
+  );
+}
+
 export default function NextGames({ initial }: { initial: Data }) {
-  const t = useT();
+  const t = useT() as T;
   const [data, setData] = useState<Data>(initial);
   const [now, setNow] = useState<number>(() => Date.now());
 
@@ -44,13 +66,14 @@ export default function NextGames({ initial }: { initial: Data }) {
                   : <span className="ng-score">{g.scoreA ?? 0}–{g.scoreB ?? 0}{g.state === 'in' ? <em className="ng-live"> {t('home.live')}</em> : <em className="ng-final"> {t('home.final')}</em>}</span>}
               </span>
               <span className="ng-team ng-team-b">{teamName(g.teamB)} <TeamFlag code={g.teamB} /></span>
-              {g.odds && (
-                <span className="ng-odds" aria-hidden>
-                  <i className="ng-odds-a" style={{ ['--w' as string]: `${Math.round(g.odds.probA * 100)}%` }} />
-                  <i className="ng-odds-b" style={{ ['--w' as string]: `${Math.round(g.odds.probB * 100)}%` }} />
-                  <em>{Math.round(g.odds.probA * 100)}%–{Math.round(g.odds.probB * 100)}%</em>
-                </span>
+
+              {(g.pool || g.odds) && (
+                <div className="ng-odds">
+                  {g.pool && <OddsBar label={t('home.oddsBracket')} teamA={g.teamA} teamB={g.teamB} a={g.pool.a} b={g.pool.b} t={t} />}
+                  {g.odds && <OddsBar label={t('home.oddsBooks')} teamA={g.teamA} teamB={g.teamB} a={g.odds.probA} b={g.odds.probB} t={t} />}
+                </div>
               )}
+
               {g.yourPick && (
                 <span className={`ng-pick result-${g.result}`}>
                   {t('home.yourPick')}: {teamName(g.yourPick)}

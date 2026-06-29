@@ -5,10 +5,10 @@ import { db } from '@/lib/db';
 import { getOfficialBracket } from '@/app/actions/bracket';
 import { currentWinners } from '@/app/actions/results';
 import { scoreBracket } from '@/lib/scoring';
-import { formatLockTimePT } from '@/lib/lock';
+import { formatLockTimePT, isLocked } from '@/lib/lock';
 import { TEAMS } from '@/lib/teams';
 import { resolveCode } from '@/lib/team-resolve';
-import { mapScoreboardGames, pickGames, type GameState } from '@/lib/next-games';
+import { mapScoreboardGames, pickGames, poolSplit, type GameState, type PoolSplit } from '@/lib/next-games';
 import { gameSlotPick, type SlotParticipants, type PickResult } from '@/lib/game-slot';
 import type { Picks } from '@/lib/bracket-picks';
 import { getBookOdds, type BookLine } from '@/lib/book-odds';
@@ -39,7 +39,8 @@ export type GameRow = {
   teamA: string; teamB: string; kickoffIso: string; state: GameState;
   scoreA: number | null; scoreB: number | null;
   yourPick: string | null; result: PickResult | null;
-  odds: { probA: number; probB: number } | null;
+  odds: { probA: number; probB: number } | null; // bookmaker win prob ("The books")
+  pool: PoolSplit | null;                         // how the pool's brackets split ("The bracket"); null pre-lock
 };
 
 export async function getNextGames(): Promise<{ games: GameRow[]; lockNote: string | null; lockTimeIso: string | null; lockLabel: string | null }> {
@@ -71,14 +72,28 @@ export async function getNextGames(): Promise<{ games: GameRow[]; lockNote: stri
     return l.codeA === teamA ? { probA: l.probA, probB: l.probB } : { probA: l.probB, probB: l.probA };
   }
 
+  // "The bracket" consensus needs every official bracket's picks — but those are
+  // private until lock, so only load + tally them once brackets are locked.
+  const locked = isLocked(new Date(), lockTimeIso ? new Date(lockTimeIso) : null);
+  let allPicks: Picks[] = [];
+  if (locked) {
+    const rows = await db.bracket.findMany({ where: { official: true }, select: { picks: true } });
+    allPicks = rows.map((r) => coercePicks(r.picks));
+  }
+
   let games: GameRow[] = [];
   try {
     const res = await fetch(`${SCOREBOARD}?dates=${DATES}`, { next: { revalidate: 15 } });
     if (res.ok) {
       const parsed = pickGames(mapScoreboardGames(await res.json(), resolveTeam));
       games = parsed.map((g) => {
-        const { yourPick, result } = gameSlotPick(slotParticipants, g, topPicks, winners);
-        return { ...g, yourPick, result, odds: oddsFor(g.teamA, g.teamB) };
+        const { slot, yourPick, result } = gameSlotPick(slotParticipants, g, topPicks, winners);
+        const split = locked && slot != null ? poolSplit(allPicks, slot, g.teamA, g.teamB) : null;
+        return {
+          ...g, yourPick, result,
+          odds: oddsFor(g.teamA, g.teamB),
+          pool: split && split.voters > 0 ? split : null,
+        };
       });
     }
   } catch {
