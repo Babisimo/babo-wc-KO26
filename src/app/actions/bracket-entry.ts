@@ -91,11 +91,12 @@ export async function listMyBrackets(): Promise<{ error?: string; brackets?: MyB
   const userId = await requireUserId();
   if (!userId) return { error: 'Not signed in.' };
   const eff = await getEffectiveR32();
-  const lock: LockInfo = { locked: lockedNow(eff.lockTimeIso), lockTimeIso: eff.lockTimeIso, drawFinal: eff.drawFinal };
   const [rows, user] = await Promise.all([
     db.bracket.findMany({ where: { userId }, orderBy: { createdAt: 'asc' }, select: { id: true, name: true, official: true, picks: true, submittedAt: true } }),
-    db.user.findUnique({ where: { id: userId }, select: { credits: true } }),
+    db.user.findUnique({ where: { id: userId }, select: { credits: true, bypassLock: true } }),
   ]);
+  // bypassLock users keep an open UI past the global lock (matches the write-guard bypass).
+  const lock: LockInfo = { locked: lockedNow(eff.lockTimeIso) && !(user?.bypassLock ?? false), lockTimeIso: eff.lockTimeIso, drawFinal: eff.drawFinal };
   const brackets: MyBracketRow[] = rows.map((r) => {
     const picks = coercePicks(r.picks);
     return {
@@ -179,7 +180,7 @@ export async function getBracket(id: string): Promise<{ error?: string; view?: B
   if (!userId) return { error: 'Not signed in.' };
   const row = await db.bracket.findUnique({ where: { id } });
   if (!row || row.userId !== userId) return { error: 'Bracket not found.' };
-  const eff = await getEffectiveR32();
+  const [eff, bypass] = await Promise.all([getEffectiveR32(), userBypassesLock(userId)]);
   const picks = coercePicks(row.picks);
   return {
     view: {
@@ -192,8 +193,9 @@ export async function getBracket(id: string): Promise<{ error?: string; view?: B
       staleSlots: stalePicks(eff.r32, picks),
       submittedAt: row.submittedAt ? row.submittedAt.toISOString() : null,
       lockTimeIso: eff.lockTimeIso,
-      // Drafts stay editable after lock; only official (entered) brackets freeze.
-      locked: lockedNow(eff.lockTimeIso) && row.official,
+      // Drafts stay editable after lock; only official (entered) brackets freeze — unless the
+      // user has a lock bypass, in which case their official bracket stays editable too.
+      locked: lockedNow(eff.lockTimeIso) && row.official && !bypass,
       drawFinal: eff.drawFinal,
     },
   };
