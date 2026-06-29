@@ -1,9 +1,9 @@
-// src/app/odds/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useT, useLang } from '@/app/_components/LangProvider';
-import { teamName } from '@/lib/team-name';
+import TeamFlag from '@/app/_components/TeamFlag';
+import { teamName, teamColor } from '@/lib/team-name';
 import type { OddsReport, BracketOdds, NeedGame } from '@/lib/bracket-odds';
 import type { StringKey } from '@/lib/i18n';
 
@@ -19,35 +19,45 @@ function ago(t: T, updatedAt: string, now: number): string {
 
 const pct = (n: number) => (n >= 10 ? n.toFixed(0) : n >= 1 ? n.toFixed(1) : n > 0 ? n.toFixed(2) : '0');
 
-function NeedRow({ g, t }: { g: NeedGame; t: T }) {
+function NeedChip({ g, t }: { g: NeedGame; t: T }) {
   return (
-    <li className="og">
-      <span className="og-match">{t('odds.needRow', { team: teamName(g.team), opp: g.opponent ? teamName(g.opponent) : '—' })}</span>
-      <span className="og-prob">{Math.round(g.prob * 100)}%</span>
-      <span className="og-gain">+{g.points}</span>
-    </li>
+    <span className="need-chip" title={`${t('odds.needsLabel')} · ${Math.round(g.prob * 100)}% · +${g.points}`}>
+      <TeamFlag code={g.team} /> {teamName(g.team)}
+      <small>{Math.round(g.prob * 100)}%</small>
+    </span>
   );
 }
 
 function BracketCard({ b, rank, open, onToggle, t }: {
   b: BracketOdds; rank: number; open: boolean; onToggle: () => void; t: T;
 }) {
+  const color = teamColor(b.champion);
   return (
-    <li className={`oc ${open ? 'open' : ''}`}>
+    <li className={`oc ${open ? 'open' : ''} ${rank === 1 ? 'oc-lead' : ''}`}>
       <button className="oc-head" onClick={onToggle} aria-expanded={open}>
-        <span className="oc-rank">{rank}</span>
-        <span className="oc-name">{b.name}</span>
-        <span className="oc-bar"><i style={{ ['--w' as string]: `${Math.min(100, b.winPct)}%` }} /></span>
-        <span className="oc-win"><b>{pct(b.winPct)}%</b><small>{t('odds.toWin')}</small></span>
+        <span className="oc-rank">{rank === 1 ? '👑' : rank}</span>
+        <span className="oc-id">
+          <span className="oc-name">{b.bracketName}</span>
+          <span className="oc-owner">{b.owner}</span>
+          {b.champion && (
+            <span className="oc-sub"><TeamFlag code={b.champion} /> {t('odds.backing', { team: teamName(b.champion) })}</span>
+          )}
+        </span>
+        <span className="oc-track"><i style={{ width: `${Math.min(100, b.winPct)}%`, background: color }} /></span>
+        <span className="oc-win"><b style={{ color }}>{pct(b.winPct)}%</b><small>{t('odds.toWin')}</small></span>
         <span className="oc-chev" aria-hidden>▾</span>
       </button>
       {open && (
         <div className="oc-body">
-          <p className="oc-stat">{t('odds.statLine', { now: b.now, exp: b.exp, sole: pct(b.solePct) })}</p>
+          <div className="oc-stats">
+            <span><b>{b.now}</b><small>{t('odds.statNow')}</small></span>
+            <span><b>{b.exp}</b><small>{t('odds.statExp')}</small></span>
+            <span><b>{pct(b.solePct)}%</b><small>{t('odds.statSole')}</small></span>
+          </div>
           {b.needs.length > 0 && (
             <>
               <p className="oc-lab">{t('odds.needsLabel')}</p>
-              <ul className="og-list">{b.needs.map((g) => <NeedRow key={g.slot} g={g} t={t} />)}</ul>
+              <div className="need-row">{b.needs.map((g) => <NeedChip key={g.slot} g={g} t={t} />)}</div>
             </>
           )}
         </div>
@@ -57,15 +67,16 @@ function BracketCard({ b, rank, open, onToggle, t }: {
 }
 
 function TeamOddsList({ data, t }: { data: OddsReport; t: T }) {
+  if (data.teams.length === 0) return null;
   return (
     <section className="team-odds">
       <p className="oc-lab">{t('odds.teamOdds')}</p>
       <ul className="to-list">
         {data.teams.slice(0, 12).map((tm) => (
           <li key={tm.code} className="to-row">
-            <span className="to-name">{teamName(tm.code)}</span>
-            <span className="to-bar"><i style={{ ['--w' as string]: `${Math.min(100, tm.titlePct)}%` }} /></span>
-            <span className="to-pct">{pct(tm.titlePct)}%</span>
+            <span className="to-team"><TeamFlag code={tm.code} /> {teamName(tm.code)}</span>
+            <span className="to-bar"><i style={{ width: `${Math.min(100, tm.titlePct)}%`, background: teamColor(tm.code) }} /></span>
+            <b className="to-pct">{pct(tm.titlePct)}%</b>
           </li>
         ))}
       </ul>
@@ -74,7 +85,7 @@ function TeamOddsList({ data, t }: { data: OddsReport; t: T }) {
 }
 
 export default function OddsPage() {
-  const t = useT();
+  const t = useT() as T;
   const { lang } = useLang();
   const [data, setData] = useState<OddsReport | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -102,7 +113,7 @@ export default function OddsPage() {
   if (error) {
     return (
       <main className="shell">
-        <div className="state"><div className="big" style={{ color: 'var(--bad)' }}>{t('odds.errTitle')}</div>
+        <div className="state"><div className="big" style={{ color: 'var(--crimson)' }}>{t('odds.errTitle')}</div>
         <p className="muted">{t('odds.errBody', { error })}</p></div>
       </main>
     );
@@ -118,14 +129,14 @@ export default function OddsPage() {
   void lang; // formatting hook reserved for future locale-aware numbers
   return (
     <main className="shell">
-      <header className="reveal" style={{ marginBottom: 14 }}>
+      <header className="reveal odds-head">
         <p className="eyebrow">{t('odds.eyebrow')}</p>
         <h1>{t('odds.title')}</h1>
-        <p className="muted">{t('odds.intro')}</p>
+        <p className="lead">{t('odds.intro')}</p>
         <div className="meta">
-          <span className="chip">{t('odds.decided', { decided: data.decided, total: data.total })}</span>
-          <span className="chip">{t('odds.left', { n: data.remaining })}</span>
-          <span className="chip dim">{t('odds.updated', { ago: ago(t, data.updatedAt, now) })}</span>
+          <span className="odds-chip"><span className="odds-chip-dot" /> {t('odds.decided', { decided: data.decided, total: data.total })}</span>
+          <span className="odds-chip">{t('odds.left', { n: data.remaining })}</span>
+          <span className="odds-chip dim">{t('odds.updated', { ago: ago(t, data.updatedAt, now) })}</span>
         </div>
       </header>
 
@@ -139,9 +150,7 @@ export default function OddsPage() {
               ))}
             </ol>
       ) : (
-        <section className="cta reveal" style={{ marginBottom: 16 }}>
-          <div className="cta-text"><p className="muted">{t('odds.lockedSoon')}</p></div>
-        </section>
+        <section className="odds-teaserbox reveal"><p className="muted">{t('odds.lockedSoon')}</p></section>
       )}
 
       <TeamOddsList data={data} t={t} />

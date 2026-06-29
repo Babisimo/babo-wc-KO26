@@ -16,8 +16,8 @@ function fixture() {
   const base: Record<number, string> = {};
   for (let s = 1; s <= 30; s++) base[s] = winners[s] as string;
   const brackets = [
-    { key: 'X', name: 'X', picks: { ...base, 31: 'ARG' } },
-    { key: 'Y', name: 'Y', picks: { ...base, 31: 'FRA' } },
+    { key: 'X', owner: 'X', bracketName: 'X', picks: { ...base, 31: 'ARG' } },
+    { key: 'Y', owner: 'Y', bracketName: 'Y', picks: { ...base, 31: 'FRA' } },
   ];
   const bookLines: BookLine[] = [{ codeA: 'ARG', codeB: 'FRA', probA: 0.6, probB: 0.4 }];
   return { officialR32: {}, winners, brackets, bookLines };
@@ -87,8 +87,8 @@ describe('simulateOdds', () => {
     const base: Record<number, string> = {};
     for (let s = 1; s <= 30; s++) base[s] = f.winners[s] as string;
     const identical = [
-      { key: 'A', name: 'A', picks: { ...base, 31: 'ARG' } },
-      { key: 'B', name: 'B', picks: { ...base, 31: 'ARG' } },
+      { key: 'A', owner: 'A', bracketName: 'A', picks: { ...base, 31: 'ARG' } },
+      { key: 'B', owner: 'B', bracketName: 'B', picks: { ...base, 31: 'ARG' } },
     ];
     const seq = [0.1, 0.9];
     let idx = 0;
@@ -131,7 +131,7 @@ describe('simulateOdds', () => {
     const base: Record<number, string> = {};
     for (let s = 1; s <= 28; s++) base[s] = winners[s] as string;
     const brackets = [
-      { key: 'Z', name: 'Z', picks: { ...base, 29: 'ARG', 30: 'FRA', 31: 'ARG' } },
+      { key: 'Z', owner: 'Z', bracketName: 'Z', picks: { ...base, 29: 'ARG', 30: 'FRA', 31: 'ARG' } },
     ];
     const seq = [0.1, 0.2, 0.3];
     let idx = 0;

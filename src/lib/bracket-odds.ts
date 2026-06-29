@@ -9,12 +9,15 @@ import { scoreBracket, type OfficialWinners } from '@/lib/scoring';
 import { matchupProb } from '@/lib/matchup-prob';
 import type { BookLine } from '@/lib/book-odds';
 
-export interface OddsBracket { key: string; name: string; picks: Picks }
+export interface OddsBracket { key: string; owner: string; bracketName: string; picks: Picks }
 export interface NeedGame {
   slot: number; round: Round; team: string; opponent: string | null; prob: number; points: number;
 }
 export interface BracketOdds {
-  key: string; name: string; now: number; exp: number; winPct: number; solePct: number; needs: NeedGame[];
+  key: string; owner: string; bracketName: string;
+  now: number; exp: number; winPct: number; solePct: number;
+  champion: string | null; // the team this bracket backed to win it all (slot 31 pick)
+  needs: NeedGame[];
 }
 export interface TeamOdds { code: string; titlePct: number }
 export interface OddsReport {
@@ -110,10 +113,11 @@ export function simulateOdds(input: SimInput, opts: SimOpts = {}): OddsReport {
     }
     needs.sort((x, y) => y.points * y.prob - x.points * x.prob);
     return {
-      key: b.key, name: b.name, now: now[i],
+      key: b.key, owner: b.owner, bracketName: b.bracketName, now: now[i],
       exp: round1(ptsSum[i] / sims),
       winPct: round2(100 * anyFirst[i] / sims),
       solePct: round2(100 * sole[i] / sims),
+      champion: b.picks[TOTAL_SLOTS] ?? null,
       needs: needs.slice(0, needN),
     };
   }).sort((a, b) => b.winPct - a.winPct || b.exp - a.exp);

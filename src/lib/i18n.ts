@@ -270,9 +270,11 @@ const en = {
   'odds.minsAgo': '{n} min ago',
   'odds.hoursAgo': '{n} h ago',
   'odds.toWin': 'to win',
-  'odds.statLine': '{now} pts now · {exp} expected · {sole}% outright',
+  'odds.backing': 'backing {team}',
+  'odds.statNow': 'pts now',
+  'odds.statExp': 'projected',
+  'odds.statSole': 'to win outright',
   'odds.needsLabel': 'Still needs',
-  'odds.needRow': '{team} past {opp}',
   'odds.teamOdds': 'Title odds',
   'odds.lockedSoon': 'Player odds go live when brackets lock. Until then, here are the title odds.',
   'odds.loading': 'Crunching the numbers…',
@@ -283,6 +285,7 @@ const en = {
   'home.oddsTeaserTitle': 'Who’s favored to win the pool?',
   'home.oddsTeaserLead': 'See live win odds for every bracket and the bookmakers’ line on each game.',
   'home.oddsTeaserCta': 'View odds',
+  'home.oddsTeaserClose': 'Close',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -553,9 +556,11 @@ const es: Record<StringKey, string> = {
   'odds.minsAgo': 'hace {n} min',
   'odds.hoursAgo': 'hace {n} h',
   'odds.toWin': 'pa\' ganar',
-  'odds.statLine': '{now} pts ya · {exp} esperados · {sole}% solito',
+  'odds.backing': 'le va a {team}',
+  'odds.statNow': 'pts ya',
+  'odds.statExp': 'proyectado',
+  'odds.statSole': 'gana solito',
   'odds.needsLabel': 'Le falta',
-  'odds.needRow': '{team} le gane a {opp}',
   'odds.teamOdds': 'Favoritos al título',
   'odds.lockedSoon': 'Las probabilidades por jugador salen cuando se cierran los brackets. Mientras, aquí están los favoritos.',
   'odds.loading': 'Sacando los números…',
@@ -566,6 +571,7 @@ const es: Record<StringKey, string> = {
   'home.oddsTeaserTitle': '¿Quién es favorito pa\' ganar el pool?',
   'home.oddsTeaserLead': 'Mira las probabilidades en vivo de cada bracket y la línea de las casas en cada juego.',
   'home.oddsTeaserCta': 'Ver probabilidades',
+  'home.oddsTeaserClose': 'Cerrar',
 };
 
 export const STRINGS = { en, es } as const;
