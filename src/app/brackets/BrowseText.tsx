@@ -97,7 +97,7 @@ export function UserBody({ view }: { view: UserBracketView }) {
           <h2>{b.name}</h2>
           <span className="pill">{pts(b.total)}</span>
         </div>
-        <MarchMadnessBracket slots={b.slots} dates={view.dates} />
+        <MarchMadnessBracket slots={b.slots} dates={view.dates} eliminatedBy={view.eliminatedBy} />
       </section>
     </>
   );

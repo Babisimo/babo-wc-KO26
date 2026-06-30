@@ -9,6 +9,7 @@ import OfficialBracketView from './OfficialBracketView';
 import OfficialHeader from './OfficialHeader';
 import { OfficialPanelHead, OfficialNotAvailable } from './OfficialPanelHead';
 import { computeStage } from '@/lib/tournament-stage';
+import { eliminations } from '@/lib/eliminations';
 import type { OfficialWinners } from '@/lib/scoring';
 import type { SlotView } from '@/lib/bracket-view';
 
@@ -35,13 +36,14 @@ export default async function OfficialPage() {
       slot: s.slot, round: s.round, teamA: s.teamA, teamB: s.teamB,
       pick: null, officialWinner: s.winner, status: s.winner ? 'correct' : 'pending',
     }));
+    const eliminatedBy = eliminations(officialR32, winners);
     return (
       <main className="shell">
         <OfficialHeader variant="real" />
         <StageTracker stage={stage} />
         <section className="panel reveal reveal-2">
           <OfficialPanelHead decided={decided} total={official.slots.length} />
-          <MarchMadnessBracket slots={view} dates={dates} />
+          <MarchMadnessBracket slots={view} dates={dates} eliminatedBy={eliminatedBy} />
         </section>
       </main>
     );

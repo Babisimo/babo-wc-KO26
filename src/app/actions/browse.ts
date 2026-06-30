@@ -8,6 +8,7 @@ import { isLocked } from '@/lib/lock';
 import { currentWinners } from '@/app/actions/results';
 import { scoreBracket } from '@/lib/scoring';
 import { buildBracketView, type SlotView } from '@/lib/bracket-view';
+import { eliminations } from '@/lib/eliminations';
 import { canViewUserBracket } from '@/lib/bracket-visibility';
 import { coercePicks } from '@/lib/picks-json';
 
@@ -82,6 +83,7 @@ export type UserBracketView = {
   isOwner: boolean;
   name: string | null;
   dates: Record<number, string | null>;
+  eliminatedBy: Record<string, string>;
   brackets: { id: string; name: string; total: number; slots: SlotView[] }[];
 };
 
@@ -95,12 +97,12 @@ export async function getUserBracketView(username: string): Promise<UserBracketV
     select: { id: true, name: true, username: true, firstName: true },
   });
   if (!target) {
-    return { visible: false, locked, isOwner: false, name: null, dates: {}, brackets: [] };
+    return { visible: false, locked, isOwner: false, name: null, dates: {}, eliminatedBy: {}, brackets: [] };
   }
 
   const isOwner = viewerId === target.id;
   if (!canViewUserBracket({ isOwner, locked })) {
-    return { visible: false, locked, isOwner, name: target.username ?? target.name, dates: {}, brackets: [] };
+    return { visible: false, locked, isOwner, name: target.username ?? target.name, dates: {}, eliminatedBy: {}, brackets: [] };
   }
 
   const [rows, winners, official] = await Promise.all([
@@ -119,6 +121,7 @@ export async function getUserBracketView(username: string): Promise<UserBracketV
 
   const dates: Record<number, string | null> = {};
   for (const s of official.slots) dates[s.slot] = s.kickoff;
+  const eliminatedBy = eliminations(officialR32, winners);
 
   return {
     visible: true,
@@ -126,6 +129,7 @@ export async function getUserBracketView(username: string): Promise<UserBracketV
     isOwner,
     name: targetDisplay,
     dates,
+    eliminatedBy,
     brackets: rows.map((r) => {
       const picks = coercePicks(r.picks);
       return { id: r.id, name: r.name, total: scoreBracket(picks, winners), slots: buildBracketView(officialR32, picks, winners) };

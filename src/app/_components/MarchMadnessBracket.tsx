@@ -9,10 +9,12 @@ export default function MarchMadnessBracket({
   slots,
   dates,
   layout = 'interactive',
+  eliminatedBy,
 }: {
   slots: SlotView[];
   dates?: Record<number, string | null>;
   layout?: 'interactive' | 'static';
+  eliminatedBy?: Record<string, string>;
 }) {
   const bySlot = new Map(slots.map((s) => [s.slot, s]));
   const render = (slot: number) => {
@@ -26,6 +28,7 @@ export default function MarchMadnessBracket({
         status={s.status}
         dateLabel={formatMatchDate(dates?.[slot])}
         isFinal={slot === 31}
+        eliminatedBy={eliminatedBy}
       />
     );
   };
