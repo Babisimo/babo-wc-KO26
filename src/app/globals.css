@@ -638,6 +638,17 @@ button.bcard-team:hover:not(:disabled) { background: rgba(255, 255, 255, 0.07); 
   border-top: 1px solid var(--chalk); text-align: center; font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
 }
 
+/* Eliminated team: struck through wherever it appears, with an eliminator badge. */
+.bcard-team.elim .bcard-code,
+.bcard-team.elim .bcard-name { text-decoration: line-through; opacity: 0.55; }
+.bcard-elimby {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: auto; padding-left: 8px;
+  font-size: 0.72em; font-weight: 700; color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
+.fi.bcard-elimby-flag { width: 16px; height: 12px; border-radius: 2px; }
+
 /* ---- centerpiece (trophy + final) ---- */
 .brd-final-card { position: relative; display: flex; flex-direction: column; align-items: center; }
 .brd-trophy {

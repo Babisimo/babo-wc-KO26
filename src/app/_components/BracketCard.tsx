@@ -2,6 +2,7 @@
 
 import { flagClass } from '@/lib/team-flag';
 import { teamName } from '@/lib/team-name';
+import { useT } from '@/app/_components/LangProvider';
 
 function Flag({ code }: { code: string | null }) {
   const fc = flagClass(code);
@@ -23,6 +24,8 @@ export type BracketCardProps = {
   disabled?: boolean;
   /** When provided, the two halves become tappable pick buttons. */
   onPick?: (team: string) => void;
+  /** Global eliminated-team -> eliminator map; strikes matching teams and shows a badge. */
+  eliminatedBy?: Record<string, string>;
 };
 
 export default function BracketCard({
@@ -35,18 +38,32 @@ export default function BracketCard({
   isFinal,
   disabled,
   onPick,
+  eliminatedBy,
 }: BracketCardProps) {
   const interactive = typeof onPick === 'function';
+  const t = useT();
 
   function side(code: string | null) {
     const sel = code != null && code === highlight;
-    const cls = `bcard-team${sel ? ' sel' : ''}`;
+    const elimBy = code != null ? (eliminatedBy?.[code] ?? null) : null;
+    const cls = `bcard-team${sel ? ' sel' : ''}${elimBy ? ' elim' : ''}`;
     const body = (
       <>
         <Flag code={code} />
         {/* compact code in the dense tree; CSS swaps to the full name in the big mobile tab cards */}
         <span className="bcard-code">{code ?? 'TBD'}</span>
         <span className="bcard-name">{code ? teamName(code) : 'TBD'}</span>
+        {elimBy && (
+          <span
+            className="bcard-elimby"
+            title={t('bracket.eliminatedBy', { team: code!, by: elimBy })}
+            aria-label={t('bracket.eliminatedBy', { team: code!, by: elimBy })}
+          >
+            <span aria-hidden>▸</span>
+            <span className={`fi ${flagClass(elimBy) ?? ''} bcard-elimby-flag`} aria-hidden />
+            {elimBy}
+          </span>
+        )}
       </>
     );
     if (interactive) {
