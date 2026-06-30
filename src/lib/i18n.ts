@@ -144,6 +144,7 @@ const en = {
   'bracket.lockedFinal': 'Brackets are locked — picks are final.',
   'bracket.viewRounds': 'Rounds',
   'bracket.viewFull': 'Full',
+  'bracket.eliminatedBy': '{team} eliminated by {by}',
   'bracket.nextRound': 'Next round →',
   // countdown
   'countdown.statusLabel': 'Bracket status',
@@ -431,6 +432,7 @@ const es: Record<StringKey, string> = {
   'bracket.lockedFinal': 'Las brackets ya cerraron — los picks son finales.',
   'bracket.viewRounds': 'Rondas',
   'bracket.viewFull': 'Completo',
+  'bracket.eliminatedBy': '{team} eliminado por {by}',
   'bracket.nextRound': 'Siguiente ronda →',
   // countdown
   'countdown.statusLabel': 'Estado del bracket',
