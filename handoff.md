@@ -1,6 +1,6 @@
 # WC26 Knockout Bracket — Handoff
 
-_Last updated: 2026-06-29_
+_Last updated: 2026-06-30_
 
 ---
 
@@ -11,7 +11,7 @@ _Last updated: 2026-06-29_
 on a live leaderboard with a pot. Stock **Next.js 15.5 App Router** app with its own **Neon
 Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
-**Current state (all merged to `master`, tip `3a8483c`, and pushed):**
+**Current state (all merged to `master`, tip `c600859`, and pushed):**
 - Remote: **`origin` = https://github.com/Babisimo/babo-wc-KO26.git**; `origin/master == master`. Auto-deploys to **Vercel** (all env vars set there). Latest session's commits are live in production via that auto-deploy.
 - Verified latest session (2026-06-28): **`npx tsc --noEmit` clean · `npx vitest run` 232/232 (42 files) · `next lint` clean · `next build` clean.** ⚠ `next build` flakes on Windows with a stale-`.next` `PageNotFoundError` on unrelated pages — `rm -rf .next` before building.
 - **New env var (earlier session):** optional **`NEXT_PUBLIC_GA_ID`** (Google Analytics 4). Set in **Vercel → Production** (`G-V2HZMLKPFH`) — build-time `NEXT_PUBLIC_` inline, so a **redeploy is required** after adding/changing it. Analytics only counts from install forward.
@@ -29,10 +29,42 @@ Postgres** DB. Feature-complete, running locally, and pushed to GitHub.
 
 ## What changed since the original handoff (sessions through 2026-06-29)
 
-Thirteen entries on top of the original 5-feature base. Newest first. (Note: a `feat/odds`
+Fourteen entries on top of the original 5-feature base. Newest first. (Note: a `feat/odds`
 line of work — pool win% Monte-Carlo + bookmaker lines on `/odds`, pool-vs-books bars on the
 games strip, leaderboard identity — also landed between the `2026-06-28` entry and this one;
 it isn't broken out below. See `git log` `09c96c7…79c168a` and `docs/superpowers/` odds specs.)
+
+### Eliminated-team strikethrough + eliminator badge (2026-06-30)
+When a knockout team loses, it now renders **struck through wherever it appears** on the
+read-only bracket views — including the deep "ghost picks" on a bracket that had that team
+going further — with an inline **`▸ <flag> <code>` badge naming who knocked them out**.
+Brainstorm→spec→plan→TDD→build. **Committed + pushed to `master` (`3760021` lib, `c8a95e5`
+i18n, `23026f0` card, `c600859` wiring); live on Vercel.** Spec
+`docs/superpowers/specs/2026-06-30-eliminated-team-strikethrough-design.md`, plan
+`docs/superpowers/plans/2026-06-30-eliminated-team-strikethrough.md`.
+- **New pure lib** `src/lib/eliminations.ts` `eliminations(officialR32, winners)` (TDD, 4
+  cases) → a **global** `Record<eliminatedTeam, eliminatorTeam>`. For each decided slot the
+  loser is the official contestant who isn't the recorded winner; the champion is never a key;
+  slots whose feeders aren't decided yet contribute nothing. **Independent of any user's
+  picks** — the same map strikes the same teams on every bracket.
+- **Threaded through two read-only producers** (the only ones in scope): the `/official`
+  real-results branch (`official/page.tsx`) and `actions/browse.ts` `getUserBracketView`
+  (which also covers **your own** scored bracket via `isOwner` — `/brackets/<you>`).
+  `UserBracketView` gains an `eliminatedBy` field. Passed as one optional prop
+  `MarchMadnessBracket eliminatedBy` → `BracketCard eliminatedBy`.
+- **Render** (`BracketCard`): a matching team gets the `.elim` class (CSS `line-through` +
+  dimmed on both `.bcard-code` and `.bcard-name`) plus the `.bcard-elimby` badge on **every**
+  struck card including the match where they actually lost (decided with the user — no
+  suppression). New i18n `bracket.eliminatedBy` (EN+ES) as the badge `aria-label`/`title`.
+- **Out of scope, untouched** (never receive the prop): the interactive fill page
+  `/bracket/[id]` (`BracketFill`), the pre-draw projection toggle on `/official`
+  (`OfficialBracketView`), and the PNG image export. **No schema change** — pre-lock / before
+  any recorded winner the map is empty and every view renders exactly as before.
+- **⚠ Server-rendered only** (like the movement/drama line and the leaderboard pick chips) —
+  the strikethroughs update on navigation/refresh, **not** live-polled like the games strip.
+  Nothing shows until an admin records a knockout winner at `/admin/bracket`.
+- Verified: **`tsc --noEmit` clean · `vitest run` 268/268 (49 files) · `next lint` clean ·
+  `next build` clean** (`rm -rf .next` first).
 
 ### Per-user lock bypass for late submissions (2026-06-29)
 Lets a specific player still enter/edit a bracket after the global time-lock while everyone
