@@ -17,12 +17,15 @@ who had picked Germany to go deep.
 
 Applies to the **read-only** bracket views:
 
-- `/official` — the real-results tree.
-- `/brackets/[user]` (browse) — any entrant's bracket, post-lock.
-- `/bracket/[id]` and the My Brackets view — your own scored brackets.
+- `/official` — the real-results tree (the branch shown once the real R32 draw is set).
+- `/brackets/[user]` (browse) — any entrant's bracket, post-lock. **Your own scored bracket is
+  this same view with `isOwner === true`**, so browse covers both "other people's" and "your
+  own" scored brackets.
 
-**Out of scope** (unchanged): the interactive fill page (still picking) and the PNG image
-export. These simply don't receive the new prop.
+**Out of scope** (unchanged): the interactive fill/edit page `/bracket/[id]` (still picking —
+renders `BracketFill`, not a scored tree), the pre-draw projection toggle on `/official`
+(`OfficialBracketView` — no recorded knockout winners yet, so the map is empty there anyway),
+and the PNG image export. These simply don't receive the new prop.
 
 ## Core logic — `src/lib/eliminations.ts` (new, pure, TDD)
 
@@ -52,12 +55,13 @@ Test cases (TDD):
 
 ## Threading
 
-`eliminatedBy` is computed server-side wherever the official draw + winners are already in
-scope — the three producers that already call `buildBracketView`:
+`eliminatedBy` is computed server-side wherever the official draw + recorded winners are
+already in scope — the two producers feeding the in-scope read-only trees:
 
-- the `/official` page (builds `asItStands` / `confirmed` slot views),
-- `actions/browse.ts` (`UserBracketView`),
-- `actions/bracket-entry.ts` `getBracket` (own bracket view).
+- the `/official` page real-results branch (already has `officialR32` + `winners` in
+  `official/page.tsx`),
+- `actions/browse.ts` `getUserBracketView` (already has `officialR32` + `winners`; add
+  `eliminatedBy` to `UserBracketView` and pass it through `BrowseText`'s `UserBody`).
 
 Each passes the single map down as one optional prop:
 
