@@ -2,6 +2,7 @@
 
 import { flagClass } from '@/lib/team-flag';
 import { teamName } from '@/lib/team-name';
+import { eliminatorBadge } from '@/lib/eliminations';
 import { useT } from '@/app/_components/LangProvider';
 
 function Flag({ code }: { code: string | null }) {
@@ -45,8 +46,12 @@ export default function BracketCard({
 
   function side(code: string | null) {
     const sel = code != null && code === highlight;
-    const elimBy = code != null ? (eliminatedBy?.[code] ?? null) : null;
-    const cls = `bcard-team${sel ? ' sel' : ''}${elimBy ? ' elim' : ''}`;
+    // Strike through ANY eliminated team wherever it appears...
+    const struck = code != null ? (eliminatedBy?.[code] ?? null) : null;
+    // ...but only badge the eliminator where the player backed a doomed team (their pick,
+    // and it didn't win this slot). Official view + correct guesses show no badge.
+    const elimBy = eliminatorBadge(eliminatedBy, code, sel, status);
+    const cls = `bcard-team${sel ? ' sel' : ''}${struck ? ' elim' : ''}`;
     const body = (
       <>
         <Flag code={code} />

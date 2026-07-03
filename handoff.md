@@ -34,6 +34,25 @@ line of work — pool win% Monte-Carlo + bookmaker lines on `/odds`, pool-vs-boo
 games strip, leaderboard identity — also landed between the `2026-06-28` entry and this one;
 it isn't broken out below. See `git log` `09c96c7…79c168a` and `docs/superpowers/` odds specs.)
 
+### Eliminator badge narrowed to busted picks only (2026-07-02)
+Follow-up to the strikethrough feature below, per the owner: the **strikethrough stays
+everywhere** a team is eliminated, but the **`▸ <flag> <code>` eliminator badge is now
+suppressed** except where a player **backed a doomed team**. Concretely the badge shows only
+when this card side is the player's **pick** AND that pick **did not win the slot**
+(`status !== 'correct'`). Net effect:
+- **Official bracket** (`/official` real results): **no badges at all** — the highlighted side
+  is always the actual slot winner (status 'correct'), so nothing qualifies. Just strikethroughs.
+- **Player brackets**: a team the player **correctly advanced** (e.g. picked PAR over GER) shows
+  **no badge** on the struck loser — and no badge on the winner even if it's eliminated in a
+  *later* round (that slot is 'correct'). The badge appears **only on the rounds the player got
+  wrong** — where they carried an eliminated team forward.
+- **Impl:** new pure `eliminatorBadge(eliminatedBy, code, isPick, status)` in
+  `src/lib/eliminations.ts` (TDD, 7 cases) decides the badge; `BracketCard` now derives the
+  strikethrough (`struck`) and the badge (`elimBy`) **separately** — strikethrough off the raw
+  map, badge off `eliminatorBadge`. No i18n/schema/prop-shape change (still the same
+  `eliminatedBy` map threaded through `MarchMadnessBracket`).
+- Verified: **`tsc --noEmit` clean · `vitest run` 275/275 (49 files) · `next lint` clean.**
+
 ### Eliminated-team strikethrough + eliminator badge (2026-06-30)
 When a knockout team loses, it now renders **struck through wherever it appears** on the
 read-only bracket views — including the deep "ghost picks" on a bracket that had that team
